@@ -104,6 +104,8 @@ venv.bak/
 .mypy_cache/
 
 
-# Data
+# Data and out
 data
 data/*
+out
+out/*
