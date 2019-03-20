@@ -172,7 +172,7 @@ class RandomForestWithBounds:
         m = len(self._trees)
         
         P = []
-        for tree in self._tree:
+        for tree in self._trees:
             P.append(tree.predict(X))
         
         P = np.array(P)
@@ -182,16 +182,16 @@ class RandomForestWithBounds:
         
         else:
             # Compute bounds
-            stats = np.compute_stats(None, P, self._rho)
+            stats = util.compute_stats(None, (P, Y), self._rho)
 
             # Compute bounds
             pi = util.uniform_distribution(len(self._trees))
-            KL = util.computeKL(self._rho, pi)
+            KL = util.compute_kl(self._rho, pi)
 
             pbkl = PBkl(stats['risk_gibbs'], stats['n_min'], KL)
             c1 = C1(stats['risk_gibbs'], stats['disagreement'], stats['n_min'], stats['jn_min'], KL)
             c2 = C2(stats['joint_error'], stats['disagreement'], stats['jn_min'], KL)
-            sh = SH(stats['risk_mv'], val_X.shape[0])
+            sh = SH(stats['risk_mv'], X.shape[0])
 
             bounds = {
                     "PBkl":pbkl,
@@ -200,7 +200,7 @@ class RandomForestWithBounds:
                     "SH":sh
                     }
 
-            stats['n_val'] = val_X.shape[0]
+            stats['n'] = X.shape[0]
 
             return (P, bounds, stats) if return_details else (P, bounds)
 

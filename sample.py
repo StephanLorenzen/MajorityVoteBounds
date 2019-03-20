@@ -6,7 +6,6 @@ m = 100
 
 print("Loading data set ["+dataset+"]...")
 X, Y = mldata.load(dataset)
-import pdb; pdb.set_trace()
 print("Done!")
 
 print("\n######### Bagging #########")

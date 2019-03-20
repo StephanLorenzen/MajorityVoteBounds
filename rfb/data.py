@@ -1,5 +1,5 @@
 import numpy as np
-
+import os
 
 def _letter(path, l1, l2):
     X = np.genfromtxt(path+"letter/letter-recognition.data",delimiter=",",dtype=str)
