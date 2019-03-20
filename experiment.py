@@ -8,12 +8,19 @@ inpath  = 'data/'
 outpath = 'out/'
 
 DATA_SETS = [
-        ('Letter:AB',100),
-        #('Letter:DO',100),
-        #('Letter:OQ',100),
-        #('ILPD',     100),
-        #('Mushroom', 100),
-        ('Credit-A', 100)
+        ('Letter:AB',   200),
+        ('Letter:DO',   200),
+        ('Letter:OQ',   200),
+        ('Tic-Tac-Toe', 200),
+        ('Sonar',       50),
+        ('USVotes',     50),
+        ('WDBC',        100),
+        ('Heart',       50),
+        ('Haberman',    50),
+        ('Ionosphere',  50),
+        ('ILPD',        100),
+        ('Mushroom',    1000),
+        ('Credit-A',    100)
         ]
 
 bag_results    = []

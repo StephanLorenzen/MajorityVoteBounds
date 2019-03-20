@@ -1,6 +1,15 @@
 import numpy as np
 import os
 
+def _remove_missing(path):
+    clean = path+'-known'
+    if not os.path.isfile(clean+".data"):
+        with open(clean+".data",'w') as oc, open(path+".data") as f:
+            for l in f:
+                if "?" not in l:
+                    oc.write(l)
+    return clean
+
 def _letter(path, l1, l2):
     X = np.genfromtxt(path+"letter/letter-recognition.data",delimiter=",",dtype=str)
     y = X[:,0]
@@ -22,16 +31,45 @@ def _tictactoe(path):
     y = X[:,-1]
     X = X[:,:-1]
     return X,y 
+def _sonar(path):
+    X = np.genfromtxt(path+"sonar/sonar.data",delimiter=",",dtype=str)
+    y = X[:,-1]
+    X = X[:,:-1]
+    return X,y 
+def _usvotes(path):
+    data  = path+"usvotes/house-votes-84"
+    clean = _remove_missing(data)
+    X = np.genfromtxt(clean+'.data',delimiter=",",dtype=str)
+    y = X[:,0]
+    X = X[:,1:]
+    return X,y 
+def _wdbc(path):
+    X = np.genfromtxt(path+"wdbc/wdbc.data",delimiter=",",dtype=str)
+    y = X[:,1]
+    X = X[:,2:]
+    return X,y 
+def _heart(path):
+    data  = path+"heart/cleveland"
+    clean = _remove_missing(data)
+    X = np.genfromtxt(clean+".data",delimiter=",",dtype=str)
+    y = X[:,-1].astype(int)
+    # Make binary
+    y[y>0] = 1
+    X = X[:,:-1]
+    return X,y 
+def _haberman(path):
+    X = np.genfromtxt(path+'haberman/haberman.data',delimiter=",",dtype=str)
+    y = X[:,-1]
+    X = X[:,:-1]
+    return X,y 
+def _ionosphere(path):
+    X = np.genfromtxt(path+'ionosphere/ionosphere.data',delimiter=",",dtype=str)
+    y = X[:,-1]
+    X = X[:,:-1]
+    return X,y 
 def _credita(path):
     data  = path+"credit-a/crx"
-    clean = data+"-known"
-    # Create clean file if not exists
-    if not os.path.isfile(clean+".data"):
-        with open(clean+".data",'w') as oc, open(data+".data") as f:
-            for l in f:
-                if "?" not in l:
-                    oc.write(l)
-    
+    clean = _remove_missing(data)
     X=np.genfromtxt(clean+".data",delimiter=",",dtype=str)
     y = X[:,-1]
     X = X[:,:-1]
@@ -41,6 +79,12 @@ DATA_SETS = {
         'Letter:AB':   lambda p: _letter(p, 'A', 'B'),
         'Letter:DO':   lambda p: _letter(p, 'D', 'O'),
         'Letter:OQ':   lambda p: _letter(p, 'O', 'Q'),
+        'Sonar':       _sonar,
+        'USVotes':     _usvotes,
+        'WDBC':        _wdbc,
+        'Heart':       _heart,
+        'Haberman':    _haberman,
+        'Ionosphere':  _ionosphere,
         'ILPD':        _ilpd,
         'Mushroom':    _mushroom,
         'Tic-Tac-Toe': _tictactoe,
