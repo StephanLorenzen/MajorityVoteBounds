@@ -65,7 +65,7 @@ class RandomForestWithBounds:
                         min_samples_leaf=min_samples_leaf,
                         max_depth=max_depth,
                         verbose=0)
-            self._trees.append(tree)
+                self._trees.append(tree)
 
 
     def fit(self, X, Y, val_X=None, val_Y=None, rho=None, return_details=False):
@@ -82,7 +82,7 @@ class RandomForestWithBounds:
                     )
             
             for tree in self._trees:
-                model.fit(X, Y)
+                tree.fit(X, Y)
             self._actual_max_depth = max([t.estimators_[0].tree_.max_depth for t in self._trees])
             return None
         
@@ -130,17 +130,21 @@ class RandomForestWithBounds:
                 self._actual_max_depth = max([t.estimators_[0].tree_.max_depth for t in self._trees])
             
             oob_set, val_set = None, None
+            emp_risk = 0.0
             if self._bootstrap:
                 oob_set = (oob_preds, Y)
+                emp_risk = util.compute_oob_estimate(self._rho, oob_set)
             if validation:
-                val_set = (np.array(val_preds), val_Y)
+                val_preds = np.array(val_preds)
+                val_set  = (val_preds, val_Y)
+                emp_risk = util.compute_mv_risk(self._rho, val_preds, val_Y)
             
             # Compute stats:
-            stats = util.computei_stats(oob_set, val_set, self._rho)
+            stats = util.compute_stats(oob_set, val_set, self._rho)
             
             # Compute bounds
             pi = util.uniform_distribution(len(self._trees))
-            KL = util.computeKL(self._rho, pi)
+            KL = util.compute_kl(self._rho, pi)
 
             pbkl = PBkl(stats['risk_gibbs'], stats['n_min'], KL)
             c1 = C1(stats['risk_gibbs'], stats['disagreement'], stats['n_min'], stats['jn_min'], KL)
@@ -153,9 +157,9 @@ class RandomForestWithBounds:
                     "C2":c2,
                     "SH":sh
                     }
-
-            stats['n_val'] = val_X.shape[0]
-            return (bounds, stats) if return_details else bounds
+            
+            stats['n_val'] = val_X.shape[0] if validation else 0
+            return (emp_risk, bounds, stats) if return_details else (emp_risk, bounds)
 
     def predict(self, X):
         n = X.shape[0]

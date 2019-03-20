@@ -37,7 +37,7 @@ by Germain, Lacasse, Laviolette, Marchand and Roy (JMLR 2015)
 http://graal.ift.ulaval.ca/majorityvote/
 """
 
-from .tools import validate_inputs, xi, solve_kl_inf, solve_kl_sup, c_bound_third_form maximize_c_bound_under_constraints
+from .tools import validate_inputs, xi, solve_kl_inf, solve_kl_sup, c_bound_third_form, maximize_c_bound_under_constraints
 from math import log, sqrt
 
 def C1(empirical_gibbs_risk, empirical_disagreement, m, md, KLQP, delta=0.05):
