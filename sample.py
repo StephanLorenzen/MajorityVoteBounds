@@ -3,6 +3,7 @@ from rfb import data as mldata
 
 dataset = 'Letter:AB'
 m = 100
+lib='sklearn-rfc' # or sklearn-etc or woody (P2.7)
 
 print("Loading data set ["+dataset+"]...")
 X, Y = mldata.load(dataset)
@@ -10,7 +11,7 @@ print("Done!")
 
 print("\n######### Bagging #########")
 print("Fitting random forest and computing bounds...")
-rf = RFWB(n_estimators=m)
+rf = RFWB(n_estimators=m, lib=lib)
 oob_estimate, bounds, details = rf.fit(X, Y, return_details=True)
 print("Done!")
 print("")
@@ -26,7 +27,6 @@ print("  C2:   "+str(bounds['C2']))
 print("\n######### Bagging+Validation #########")
 X, Y, v_X, v_Y = mldata.split(X, Y, 0.5)
 print("Fitting random forest and computing bounds...")
-rf = RFWB(n_estimators=m)
 risk_mv, bounds, details = rf.fit(X, Y, val_X=v_X, val_Y=v_Y, return_details=True)
 print("Done!")
 print("")

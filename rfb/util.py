@@ -111,7 +111,7 @@ def compute_stats(oob_set=None, val_set=None, rho=None):
                 j_mp = dict(zip(j_idx,j_preds))
 
                 dis, jerr, cnt = 0.0, 0.0, 0.0
-                for idx in i_mp.keys() & j_mp.keys():
+                for idx in set(i_mp.keys()) & set(j_mp.keys()): # set(...) wrapper for P2.7 compat
                     y   = targs[idx]
                     i_p = i_mp[idx]
                     j_p = j_mp[idx]

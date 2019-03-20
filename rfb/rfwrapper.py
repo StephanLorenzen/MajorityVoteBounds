@@ -48,7 +48,7 @@ class RandomForestWithBounds:
                         float_type="double",
                         max_depth=max_depth,
                         verbose=0)
-            self._trees.append(tree)
+                self._trees.append(tree)
         else:
             if lib == 'sklearn-rfc':
                 from sklearn.ensemble import RandomForestClassifier as Tree
