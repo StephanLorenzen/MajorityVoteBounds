@@ -17,7 +17,7 @@ import rfb
 
 X, Y = rfb.data.load('Letter:AB')
 
-rf = RFWB(n_estimators=100, lib='sklearn-rfc')
+rf = rfb.RandomForestWithBounds(n_estimators=100, lib='sklearn-rfc')
 oob_estimate, bounds = rf.fit(X, Y)
 ```
 
