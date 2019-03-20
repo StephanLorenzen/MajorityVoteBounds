@@ -22,6 +22,7 @@ DATA_SETS = [
         ('Mushroom',    1000),
         ('Credit-A',    100)
         ]
+DATA_SETS.sort(key=lambda x: x[0])
 
 bag_results    = []
 val_results    = []

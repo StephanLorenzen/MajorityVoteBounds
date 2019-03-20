@@ -1,4 +1,3 @@
-import random
 import numpy as np
 
 from . import util
@@ -16,13 +15,14 @@ class RandomForestWithBounds:
             bootstrap=True,
             max_depth=None,
             seed=None,
-            lib='sklearn-rfc' # or sklearn-erc or woody
+            lib='sklearn-rfc' # or sklearn-etc or woody
             ):
         self._trees            = []
         self._bootstrap        = bootstrap
         self._max_depth        = max_depth
         self._actual_max_depth = max_depth
-       
+        self._prng             = np.random.RandomState(seed)
+
         self._rho = rho
         if rho is None:
             self._rho = (1.0/n_estimators)*np.ones((n_estimators,))
@@ -102,7 +102,7 @@ class RandomForestWithBounds:
                 
                 if self._bootstrap:
                     # Sample points for training (w. replacement)
-                    t_idx = np.random.randint(n, size=n)
+                    t_idx = self._prng.randint(n, size=n)
                     t_X   = X[t_idx]
                     t_Y   = Y[t_idx]
 

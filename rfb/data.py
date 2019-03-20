@@ -112,7 +112,7 @@ def split(X, Y, f):
     return X[:s],Y[:s],X[s:],Y[s:]
 
 
-def load(dataset, path='data/', seed=123):
+def load(dataset, path='data/', seed=0):
     assert(dataset in DATA_SETS)
 
     np.random.seed(seed)
