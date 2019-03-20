@@ -1,12 +1,13 @@
 import numpy as np
 import os
 
-def _remove_missing(path):
+# Remove data points with missing entries
+def _remove_missing(path, sfx='.data'):
     clean = path+'-known'
-    if not os.path.isfile(clean+".data"):
-        with open(clean+".data",'w') as oc, open(path+".data") as f:
+    if not os.path.isfile(clean+sfx):
+        with open(clean+sfx,'w') as oc, open(path+sfx) as f:
             for l in f:
-                if "?" not in l:
+                if "?" not in l and ",," not in l:
                     oc.write(l)
     return clean
 
@@ -17,12 +18,14 @@ def _letter(path, l1, l2):
     idx = (y == l1) | (y == l2)
     return X[idx],y[idx]
 def _ilpd(path):
-    X=np.genfromtxt(path+"ilpd/ilpd.csv",delimiter=",",dtype=str)
+    data  = path+'ilpd/ilpd'
+    clean = _remove_missing(data, sfx='.csv')
+    X = np.genfromtxt(clean+'.csv',delimiter=",",dtype=str)
     y = X[:,-1]
     X = X[:,:-1]
     return X,y
 def _mushroom(path):
-    X=np.genfromtxt(path+"mushrooms/mushrooms.data",delimiter=",",dtype=str)
+    X=np.genfromtxt(path+"mushroom/mushroom.data",delimiter=",",dtype=str)
     y = X[:,0]
     X = X[:,1:]
     return X,y
