@@ -1,7 +1,7 @@
 from math import ceil, log, sqrt, exp
 
 # Compute Igel bound:
-def lamb(emp_risk, n, r, KL, delta=0.5):
+def lamb(emp_risk, n, r, KL, delta=0.05):
 
     lamb = 2.0 / (sqrt((2.0*float(n-r)*emp_risk)/(KL+log(2.0*sqrt(float(n-r))/delta)) + 1.0) + 1.0)
     
@@ -11,7 +11,7 @@ def lamb(emp_risk, n, r, KL, delta=0.5):
 
 
 # Optimize Lambda bound:
-def optimizeLamb(emp_risks, n, r, delta=0.5, eps=0.001):
+def optimizeLamb(emp_risks, n, r, delta=0.05, eps=0.001):
     m = len(emp_risks)
     
     pi  = [1/float(m)] * m
