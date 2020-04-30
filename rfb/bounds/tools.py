@@ -154,12 +154,15 @@ def maximize_c_bound_under_constraints(empirical_disagreement, empirical_joint_e
         d_min = 0.
         d_max = 2 * (sqrt(_e) - _e)
         d_inside_domain = find_d_minimizing_KL_given_e(_e)
-        if empirical_disagreement > 0. and False: # Small hack - should only makes it slightly slower
+        if empirical_disagreement > 0. and False: # Hack
             d_min = optimize.brentq(domain_fct_fixed_e, 1e-9, d_inside_domain)
         if domain_fct_fixed_e(d_max) > 0.:
             d_max = optimize.brentq(domain_fct_fixed_e, d_inside_domain, d_max)
         
-        optimal_d = optimize.fminbound( objective_fct_fixed_e, d_min, d_max)
+        if(d_max<5*10**(-5)): # Small hack
+            optimal_d = 0
+        else:
+            optimal_d = optimize.fminbound( objective_fct_fixed_e, d_min, d_max)
         return objective_fct(_e, optimal_d)
 
     # Solve the optimization problem!

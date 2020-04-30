@@ -11,6 +11,20 @@ def _remove_missing(path, sfx='.data'):
                     oc.write(l)
     return clean
 
+def _read_idx_file(path, d):
+    X = []
+    Y = []
+    with open(path) as f:
+        for l in f:
+            x = np.zeros(d)
+            l = l.strip().split()
+            Y.append(int(l[0]))
+            for pair in l[1:]:
+                (i,v) = pair.split(":")
+                x[int(i)-1] = float(v)
+            X.append(x)
+    return np.array(X),np.array(Y)
+
 def _letter(path, l1, l2):
     X = np.genfromtxt(path+"letter/letter-recognition.data",delimiter=",",dtype=str)
     y = X[:,0]
@@ -77,6 +91,21 @@ def _credita(path):
     y = X[:,-1]
     X = X[:,:-1]
     return X,y
+def _madelon(path):
+    return _read_idx_file(path+"madelon/madelon.data", 500)
+def _phishing(path):
+    return _read_idx_file(path+"phishing/phishing.data", 68)
+def _svmguide1(path):
+    return _read_idx_file(path+"svmguide1/svmguide1.data", 4)
+def _splice(path):
+    return _read_idx_file(path+"splice/splice.data", 60)
+def _adult(path):
+    return _read_idx_file(path+"adult/adult.data", 123)
+def _numer(path):
+    return _read_idx_file(path+"numer/numer.data", 24)
+def _w1a(path):
+    return _read_idx_file(path+"w1a/w1a.data", 300)
+
 
 DATA_SETS = {
         'Letter:AB':   lambda p: _letter(p, 'A', 'B'),
@@ -91,7 +120,14 @@ DATA_SETS = {
         'ILPD':        _ilpd,
         'Mushroom':    _mushroom,
         'Tic-Tac-Toe': _tictactoe,
-        'Credit-A':    _credita
+        'Credit-A':    _credita,
+        'Madelon':     _madelon,
+        'Phishing':    _phishing,
+        'SVMGuide1':   _svmguide1,
+        'Splice':      _splice,
+        'Adult':       _adult,
+        'GermanNumer': _numer,
+        'w1a':         _w1a
         }
 
 def _relabel(V):

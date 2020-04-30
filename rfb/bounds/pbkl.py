@@ -25,7 +25,7 @@ http://graal.ift.ulaval.ca/majorityvote/
 """
 
 from .tools import validate_inputs, xi, solve_kl_sup
-from math import log
+from math import log, sqrt
 
 def PBkl(empirical_gibbs_risk, m, KLQP, delta=0.05):
     """ PAC Bound ZERO of Germain, Lacasse, Laviolette, Marchand and Roy (JMLR 2015)
@@ -40,7 +40,8 @@ def PBkl(empirical_gibbs_risk, m, KLQP, delta=0.05):
     """
     if not validate_inputs(empirical_gibbs_risk, None, m, KLQP, delta): return 1.0
 
-    xi_m = xi(m)
+    #xi_m = xi(m)
+    xi_m = 2*sqrt(m)
     right_hand_side = ( KLQP + log( xi_m / delta ) ) / m
     sup_R = min(1.0, solve_kl_sup(empirical_gibbs_risk, right_hand_side))
 

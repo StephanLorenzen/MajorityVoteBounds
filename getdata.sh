@@ -47,3 +47,46 @@ wget -O ionosphere/ionosphere.data https://archive.ics.uci.edu/ml/machine-learni
 mkdir credit-a
 wget -O credit-a/crx.data https://archive.ics.uci.edu/ml/machine-learning-databases/credit-screening/crx.data
 
+# Get madelon
+mkdir madelon
+wget -O madelon/madelon.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/madelon
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/madelon.t
+cat tmp >> madelon/madelon.data
+rm tmp
+
+# Get phishing
+mkdir phishing
+wget -O phishing/phishing.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/phishing
+
+# Get svmguide1
+mkdir svmguide1
+wget -O svmguide1/svmguide1.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/svmguide1
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/svmguide1.t
+cat tmp >> svmguide1/svmguide1.data
+rm tmp
+
+# Get splice
+mkdir splice
+wget -O splice/splice.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/splice
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/splice.t
+cat tmp >> splice/splice.data
+rm tmp
+
+# Get Adult
+mkdir adult
+wget -O adult/adult.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/a1a.t
+cat tmp >> adult/adult.data
+rm tmp
+
+# Get german.numer
+mkdir numer
+wget -O numer/numer.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/german.numer
+
+# Get w1a
+mkdir w1a
+wget -O w1a/w1a.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/w1a
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/w1a.t
+cat tmp >> w1a/w1a.data
+rm tmp
+
