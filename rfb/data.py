@@ -29,8 +29,11 @@ def _letter(path, l1, l2):
     X = np.genfromtxt(path+"letter/letter-recognition.data",delimiter=",",dtype=str)
     y = X[:,0]
     X = X[:,1:]
-    idx = (y == l1) | (y == l2)
-    return X[idx],y[idx]
+    if l1==None or l2==None:
+        return X,y
+    else:
+        idx = (y == l1) | (y == l2)
+        return X[idx],y[idx]
 def _ilpd(path):
     data  = path+'ilpd/ilpd'
     clean = _remove_missing(data, sfx='.csv')
@@ -105,9 +108,17 @@ def _numer(path):
     return _read_idx_file(path+"numer/numer.data", 24)
 def _w1a(path):
     return _read_idx_file(path+"w1a/w1a.data", 300)
-
+def _mnist(path):
+    return _read_idx_file(path+"mnist/mnist.data", 780)
+def _shuttle(path):
+    return _read_idx_file(path+"shuttle/shuttle.data", 9)
+def _segment(path):
+    return _read_idx_file(path+"segment/segment.data", 19)
+def _pendigits(path):
+    return _read_idx_file(path+"pendigits/pendigits.data", 16)
 
 DATA_SETS = {
+        'Letter':      lambda p: _letter(p, None, None),
         'Letter:AB':   lambda p: _letter(p, 'A', 'B'),
         'Letter:DO':   lambda p: _letter(p, 'D', 'O'),
         'Letter:OQ':   lambda p: _letter(p, 'O', 'Q'),
@@ -127,7 +138,11 @@ DATA_SETS = {
         'Splice':      _splice,
         'Adult':       _adult,
         'GermanNumer': _numer,
-        'w1a':         _w1a
+        'w1a':         _w1a,
+        'mnist':       _mnist,
+        'Shuttle':     _shuttle,
+        'Segment':     _segment,
+        'Pendigits':   _pendigits
         }
 
 def _relabel(V):

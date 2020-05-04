@@ -90,3 +90,30 @@ wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/w1a.t
 cat tmp >> w1a/w1a.data
 rm tmp
 
+# Get mnist
+mkdir mnist
+wget -O mnist/mnist.data.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.bz2
+wget -O tmp.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/mnist.scale.t.bz2
+bzip2 -d mnist/mnist.data.bz2
+bzip2 -d tmp.bz2
+cat tmp >> mnist/mnist.data
+rm tmp
+
+# Get shuttle
+mkdir shuttle
+wget -O shuttle/shuttle.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/shuttle.scale
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/shuttle.scale.t
+cat tmp >> shuttle/shuttle.data
+rm tmp
+
+# Get segment
+mkdir segment
+wget -O segment/segment.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/segment.scale 
+
+# Get pendigits
+mkdir pendigits
+wget -O pendigits/pendigits.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/pendigits
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/pendigits.t
+cat tmp >> pendigits/pendigits.data
+rm tmp
+
