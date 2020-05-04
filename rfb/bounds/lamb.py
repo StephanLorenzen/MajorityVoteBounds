@@ -1,41 +1,43 @@
+import numpy as np
+
 from math import ceil, log, sqrt, exp
+from ..util import kl, uniform_distribution
 
 # Compute Igel bound:
-def lamb(emp_risk, n, r, KL, delta=0.05):
+def lamb(emp_risk, n, KL, delta=0.05):
+    n = float(n)
 
-    lamb = 2.0 / (sqrt((2.0*float(n-r)*emp_risk)/(KL+log(2.0*sqrt(float(n-r))/delta)) + 1.0) + 1.0)
-    
-    bound = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(float(n-r)))/delta))/(lamb*(1.0-lamb/2.0)*float(n-r))
+    lamb = 2.0 / (sqrt((2.0*n*emp_risk)/(KL+log(2.0*sqrt(n)/delta)) + 1.0) + 1.0)
+    bound = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(n))/delta))/(lamb*(1.0-lamb/2.0)*n)
 
     return min(1.0,2.0*bound)
 
 
 # Optimize Lambda bound:
-def optimizeLamb(emp_risks, n, r, delta=0.05, eps=0.001):
+def optimizeLamb(emp_risks, n, delta=0.05, eps=0.001):
     m = len(emp_risks)
-    
-    pi  = [1/float(m)] * m
-    rho = [1/float(m)] * m
-    KL = 0.0
-    
-    lamb = 1.0
-    emp_risk = sum(emp_risks) / float(m)
+    n = float(n)
 
-    bound = 1.0
-    upd = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(float(n-r)))/delta))/(lamb*(1.0-lamb/2.0)*float(n-r))
+    pi  = uniform_distribution(m)
+    rho = uniform_distribution(m)
+    KL = kl(rho,pi)
+
+    lamb = 1.0
+    emp_risk = np.average(emp_risks, weights=rho)
+
+    upd = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(n))/delta))/(lamb*(1.0-lamb/2.0)*n)
+    bound = upd+2*eps
 
     while bound-upd > eps:
         bound = upd
-        lamb = 2.0 / (sqrt((2.0*float(n-r)*emp_risk)/(KL+log(2.0*sqrt(float(n-r))/delta)) + 1.0) + 1.0)
+        lamb = 2.0 / (sqrt((2.0*n*emp_risk)/(KL+log(2.0*sqrt(n)/delta)) + 1.0) + 1.0)
         for h in range(m):
-            rho[h] = pi[h]*exp(-lamb*float(n-r)*emp_risks[h])
-        norm = float(sum(rho))
-        rho = [r/norm for r in rho]
+            rho[h] = pi[h]*exp(-lamb*n*emp_risks[h])
+        rho /= np.sum(rho)
 
+        emp_risk = np.average(emp_risks, weights=rho)
+        KL = kl(rho,pi)
 
-        emp_risk = sum([rho[h]*emp_risks[h] for h in range(m)])
-        KL = computeKL(rho,pi)
+        upd = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(n))/delta))/(lamb*(1.0-lamb/2.0)*n) 
 
-        upd = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(float(n-r)))/delta))/(lamb*(1.0-lamb/2.0)*float(n-r)) 
-
-    return rho
+    return bound, rho, lamb

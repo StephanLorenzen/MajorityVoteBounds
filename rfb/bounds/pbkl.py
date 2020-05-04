@@ -38,7 +38,8 @@ def PBkl(empirical_gibbs_risk, m, KLQP, delta=0.05):
     KLQP : Kullback-Leibler divergence between prior and posterior
     delta : confidence parameter (default=0.05)
     """
-    if not validate_inputs(empirical_gibbs_risk, None, m, KLQP, delta): return 1.0
+    # Don't validate - gibbs_risk may be > 0.5 in non-binary case 
+    #if not validate_inputs(empirical_gibbs_risk, None, m, KLQP, delta): return 1.0
 
     #xi_m = xi(m)
     xi_m = 2*sqrt(m)

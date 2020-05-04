@@ -43,7 +43,7 @@ def optimizeMV2(emp_jerr_mat, n, delta=0.05, eps=0.0001):
     bp       = b+2*eps
     while abs(b-bp) > eps:
         bp = b
-        print(bp)
+        #print(bp)
         # Optimize rho
         bpr = b+2*eps
         while abs(b-bpr) > eps:
@@ -81,7 +81,7 @@ def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
     def _optLam(emp_risk, KL):
         return 2.0 / (sqrt((2.0*n*emp_risk)/(KL+log(4.0*sqrt(n)/delta)) + 1) + 1)
     def _optGam(emp_dis, KL):
-        return min(2.0, sqrt( (4.0*KL+log(16.0*un/delta**2)) / (un*emp_dis) ))
+        return min(2.0, sqrt( (4.0*KL+log(16.0*un/delta**2)) / (un*emp_dis) )) if emp_dis > 10**-9 else 2.0
     def _optRho(lam, gam, rho):
         a = 2.0/(1.0-lam/2.0)
         b = 1-lam/2.0
@@ -117,7 +117,7 @@ def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
     bp = b+2*eps
     while abs(b-bp) > eps:
         bp = b
-        print("MV2u",bp)
+        #print("MV2u",bp)
         # Optimize rho
         bpr = b+2*eps
         while abs(b-bpr) > eps:

@@ -1,7 +1,7 @@
 import numpy as np
 
 from . import util
-from .bounds import SH, PBkl, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
 
 class RandomForestWithBounds:
     def __init__(
@@ -65,12 +65,14 @@ class RandomForestWithBounds:
                         verbose=0)
                 self._trees.append(tree)
 
-        # OOB stats
+        # Some fitting stats
         self._OOB = None
+        self._classes = None
 
     def fit(self, X, Y):
         X, Y = np.array(X), np.array(Y)
-        
+        self._classes = np.unique(Y)
+
         # No bootstrapping
         if not self._bootstrap:
             self._OOB = None
@@ -158,7 +160,9 @@ class RandomForestWithBounds:
 
         stats = self.stats(val_data, unlabeled_data, incl_oob)
         if(bound=='Lambda'):
-            return (1.0, self._rho, 0.0)
+            (optLambda, rho, lam) = optimizeLamb(stats['risks'], stats['n_min'])
+            self._rho = rho
+            return (optLambda, rho, lam)
         elif(bound=='MV2'):
             if unlabeled_data is None:
                 (optMV2, rho, lam) = optimizeMV2(stats['tandem_risks'], stats['n2_min'])
@@ -178,11 +182,13 @@ class RandomForestWithBounds:
         
             stats = self.stats(val_data, unlabeled_data, incl_oob)
         
+        C = self._classes.shape[0]
+
         pi = util.uniform_distribution(len(self._trees))
         KL = util.kl(self._rho, pi)
         pbkl = PBkl(stats['risk'], stats['n_min'], KL)
-        c1   = C1(stats['risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
-        c2   = C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
+        c1   = 1.0 if C>2 else C1(stats['risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
+        c2   = 1.0 if C>2 else C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
         mv2  = MV2(stats['tandem_risk'], stats['n2_min'], KL)
         bounds = { "PBkl":pbkl, "C1":c1, "C2":c2, "MV2":mv2 }
         
