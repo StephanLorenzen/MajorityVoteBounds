@@ -19,11 +19,14 @@ DATA_SETS = [
         ('SVMGuide1',   200),
         ('w1a',         200),
         ('Phishing',    200),
-        #('Madelon',     200),
         ('Letter:AB',   200),
         ('Letter:DO',   200),
         ('Letter:OQ',   200),
         ('Mushroom',    200),
+        ('Letter',      200),
+        ('Shuttle',     200),
+        ('Segment',     200),
+        ('Pendigits',   200)
         ]
 DATA_SETS.sort(key=lambda x: x[0])
     
@@ -43,16 +46,18 @@ else:
 
 for dataset,m in DATA_SETS:
     print("##### "+dataset+" #####")
-
     X,Y = mldata.load(dataset, path=inpath)
-    
+    C = np.unique(Y).shape[0]
+    print("n =",X.shape[0],"d =",X.shape[1],"#classes =",C)
+    print("") 
+
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8)
     
     print("Training forest for ["+dataset+"] with bagging")
     rf = RFWB(n_estimators=m,max_depth=max_depth,max_features=max_features)
     _  = rf.fit(trainX,trainY)
     _, mv_risk = rf.predict(testX,testY)
-    n = (trainX.shape[0], 0, testX.shape[0])
+    n = (trainX.shape[0], 0, testX.shape[0], trainX.shape[1])
     stats  = rf.stats()
     bounds = rf.bounds(stats=stats)
     bag_results[0].append((mv_risk, n, bounds, stats))
@@ -67,7 +72,7 @@ for dataset,m in DATA_SETS:
     rf = RFWB(n_estimators=m,max_depth=max_depth,max_features=max_features)
     _ = rf.fit(trainX,trainY)
     _, mv_risk = rf.predict(testX,testY)
-    n = (trainX.shape[0], valX.shape[0], testX.shape[0])
+    n = (trainX.shape[0], valX.shape[0], testX.shape[0], trainX.shape[1])
     stats  = rf.stats(val_data=(valX,valY))
     bounds = rf.bounds(val_data=(valX,valY), stats=stats)
     bagval_results[0].append((mv_risk, n, bounds, stats))
@@ -78,7 +83,7 @@ for dataset,m in DATA_SETS:
     
     # No need to retrain for val set only
     print("Computing bounds on validation set only")
-    n = (trainX.shape[0], valX.shape[0], testX.shape[0])
+    n = (trainX.shape[0], valX.shape[0], testX.shape[0], trainX.shape[1])
     stats  = rf.stats(val_data=(valX,valY), incl_oob=False)
     bounds = rf.bounds(val_data=(valX,valY), incl_oob=False, stats=stats)
     val_results[0].append((mv_risk, n, bounds, stats))
@@ -87,6 +92,7 @@ for dataset,m in DATA_SETS:
     bounds = rf.bounds(val_data=(valX,valY), unlabeled_data=testX, incl_oob=False, stats=stats)
     val_results[1].append((mv_risk, n, bounds, stats))
     
+    print("") 
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
@@ -94,9 +100,9 @@ def _write_outfile(name, results):
     prec = 5
     name = ("ds-" if weak else "rf-")+name
     with open(outpath+name+'.csv', 'w') as f:
-        f.write('dataset;n_train;n_val;n_test;m;mv_risk;gibbs;disagreement;u_disagreement;tandem_risk;pbkl;c1;c2;mv2;mv2u;sh;best_tree;worst_tree\n')
+        f.write('dataset;n_train;n_val;n_test;d;m;mv_risk;gibbs;disagreement;u_disagreement;tandem_risk;pbkl;c1;c2;mv2;mv2u;sh;best_tree;worst_tree\n')
         for (ds,m), (risk_mv, n, bounds, stats) in zip(DATA_SETS, results):
-            f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(m)+';'+
+            f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(m)+';'+
                     (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(13)])+'\n')
                     .format(risk_mv,
                         stats['risk'],
