@@ -19,7 +19,7 @@ def MV2u(emp_risk, emp_dis, n, nu, KL, delta=0.05):
     d_lb  = solve_kl_inf(emp_dis, d_rhs)
     return min(1.0, 4*g_ub - 2*d_lb)
 
-def optimizeMV2(emp_jerr_mat, n, delta=0.05, eps=0.0001):
+def optimizeMV2(emp_jerr_mat, n, delta=0.05, eps=10**-9):
     m = emp_jerr_mat.shape[0]
     rho = uniform_distribution(m)
     pi  = uniform_distribution(m)
@@ -29,30 +29,31 @@ def optimizeMV2(emp_jerr_mat, n, delta=0.05, eps=0.0001):
         return np.average(np.average(emp_jerr_mat, weights=rho, axis=0), weights=rho)
     
     def _optLam(jerr, KL):
-        return 2.0 / (sqrt((2.0*n*jerr)/(2.0*KL+log(4.0*sqrt(n)/delta)) + 1) + 1)
-    def _optRho(i, lam, rho):
-        return pi[i]*exp(-lam*n*np.average(emp_jerr_mat[i,:], weights=rho))
+        return 2.0 / (sqrt((2.0*n*jerr)/(2.0*KL+log(2.0*sqrt(n)/delta)) + 1) + 1)
+    def _optRho(lam, rho):
+        emp_jerr_list = np.average(emp_jerr_mat, weights=rho, axis=0)
+        
+        nrho = np.zeros(rho.shape[0])
+        for i in range(rho.shape[0]):
+            nrho[i] = pi[i]*exp(-lam*n*emp_jerr_list[i])
+        
+        return nrho / np.sum(nrho)
 
     def _bound(emp_jerr, KL, lam):
         return emp_jerr / (1.0 - lam/2.0) + (2.0*KL+log(2.0*sqrt(n)/delta))/(lam*(1.0-lam/2.0)*n)
     
     emp_jerr = _jerr(rho)
     KL       = compute_kl(rho, pi)
-    lam      = _optLam(emp_jerr, KL) #2.0 / (sqrt( (2.0*n*emp_jerr)/(2.0*KL+log(4.0*sqrt(n)/delta)) + 1 ) + 1)
+    lam      = _optLam(emp_jerr, KL)
     b        = _bound(emp_jerr, KL, lam)
     bp       = b+2*eps
     while abs(b-bp) > eps:
         bp = b
-        #print(bp)
         # Optimize rho
         bpr = b+2*eps
         while abs(b-bpr) > eps:
             bpr = b
-            nrho = np.zeros(m)
-            for i in range(m):
-                nrho[i] = _optRho(i, lam, rho)
-            # Normalize
-            nrho = nrho / np.sum(nrho)
+            nrho = _optRho(lam, rho)
             emp_jerr = _jerr(nrho)
             KL       = compute_kl(nrho, pi)
             b = _bound(emp_jerr, KL, lam)
@@ -70,7 +71,7 @@ def optimizeMV2(emp_jerr_mat, n, delta=0.05, eps=0.0001):
 
     return (min(1.0,4*b), rho, lam)
 
-def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
+def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=10**-9):
     m = emp_risk_list.shape[0]
     pi  = uniform_distribution(m)
     
@@ -81,18 +82,18 @@ def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
     def _optLam(emp_risk, KL):
         return 2.0 / (sqrt((2.0*n*emp_risk)/(KL+log(4.0*sqrt(n)/delta)) + 1) + 1)
     def _optGam(emp_dis, KL):
-        return min(2.0, sqrt( (4.0*KL+log(16.0*un/delta**2)) / (un*emp_dis) )) if emp_dis > 10**-9 else 2.0
+        if un*emp_dis < 10**-9:
+            return 2.0
+        return min(2.0, sqrt( (4.0*KL+log(16.0*un/delta**2)) / (un*emp_dis) ))
     def _optRho(lam, gam, rho):
         a = 2.0/(1.0-lam/2.0)
         b = 1-lam/2.0
         c = 2.0/(lam*(1.0-lam/2.0)*n) + 2.0/(gam*un)
 
-        emp_risk      = np.average(emp_risk_list, weights=rho)
         emp_dis_list = np.average(emp_dis_mat, weights=rho, axis=0)
-        
         nrho = np.zeros(rho.shape[0])
         for i in range(rho.shape[0]):
-            nrho[i] = pi[i]*exp(-(a/c)*emp_risk+2.0*(b/c)*emp_dis_list[i])
+            nrho[i] = pi[i]*exp(-(a/c)*emp_risk_list[i]+2.0*(b/c)*emp_dis_list[i])
         
         return nrho / np.sum(nrho)
 
@@ -102,7 +103,7 @@ def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
         KL = compute_kl(rho, pi)
 
         grisk = emp_risk/(1.0 - lam/2.0) + (KL+log(4.0*sqrt(n)/delta))/(lam*(1.0-lam/2.0)*n)
-        jrisk = (1.0-gam/2.0)*emp_dis + (2*KL+log(4.0*sqrt(un)/delta))/(gam*un)
+        jrisk = (1.0-gam/2.0)*emp_dis - (2*KL+log(4.0*sqrt(un)/delta))/(gam*un)
    
         return 4*grisk - 2*jrisk
 
@@ -117,7 +118,6 @@ def optimizeMV2u(emp_risk_list, emp_dis_mat, n, un, delta=0.05, eps=0.0001):
     bp = b+2*eps
     while abs(b-bp) > eps:
         bp = b
-        #print("MV2u",bp)
         # Optimize rho
         bpr = b+2*eps
         while abs(b-bpr) > eps:

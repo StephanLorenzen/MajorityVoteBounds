@@ -1,4 +1,6 @@
 import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.utils import check_random_state
 import os
 
 # Remove data points with missing entries
@@ -160,16 +162,18 @@ def _relabel(V):
                 V[j,i] = mp[V[j,i]]
     return V
 
-def split(X, Y, f):
-    n = X.shape[0]
-    s = int(float(f)*float(n))
-    return X[:s],Y[:s],X[s:],Y[s:]
+def split(X, Y, f, random_state=None):
+    #n = X.shape[0]
+    #s = int(float(f)*float(n))
+    prng = check_random_state(random_state)
+    X1,X2,Y1,Y2 = train_test_split(X, Y, test_size=1.0-f, shuffle=True, stratify=Y, random_state=prng)
+    #return X[:s],Y[:s],X[s:],Y[s:]
+    return X1, Y1, X2, Y2
 
-
-def load(dataset, path='data/', seed=0):
+def load(dataset, path='data/'):
     assert(dataset in DATA_SETS)
 
-    np.random.seed(seed)
+    #np.random.seed(seed)
 
     X,Y = DATA_SETS[dataset](path)
     X = _relabel(X)
@@ -178,7 +182,7 @@ def load(dataset, path='data/', seed=0):
     X = X.astype(float)
     Y = Y.astype(int)
 
-    perm = np.random.permutation(X.shape[0])
-    X,Y = X[perm], Y[perm]
+    #perm = np.random.permutation(X.shape[0])
+    #X,Y = X[perm], Y[perm]
     
     return X,Y

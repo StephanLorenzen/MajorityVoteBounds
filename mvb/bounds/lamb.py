@@ -14,7 +14,7 @@ def lamb(emp_risk, n, KL, delta=0.05):
 
 
 # Optimize Lambda bound:
-def optimizeLamb(emp_risks, n, delta=0.05, eps=0.001):
+def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9):
     m = len(emp_risks)
     n = float(n)
 

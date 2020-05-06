@@ -1,69 +1,25 @@
 import numpy as np
+from sklearn.utils import check_random_state
 
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
 
-class RandomForestWithBounds:
+class MVBounds:
     def __init__(
             self,
-            n_estimators,
+            estimators,
             rho=None,
-            criterion="gini",
-            max_features=None,
-            min_samples_split=2,
-            min_samples_leaf=1,
             bootstrap=True,
-            max_depth=None,
-            seed=None,
-            lib='sklearn-rfc' # or sklearn-etc or woody
+            random_state=None,
             ):
-        self._trees            = []
-        self._bootstrap        = bootstrap
-        self._max_depth        = max_depth
-        self._actual_max_depth = max_depth
-        self._prng             = np.random.RandomState(seed)
-
+        self._estimators = estimators
+        m                = len(estimators)  
+        self._bootstrap  = bootstrap
+        self._prng       = check_random_state(random_state)
         self._rho = rho
         if rho is None:
-            self._rho = util.uniform_distribution(n_estimators)
-        assert(self._rho.shape[0] == n_estimators)
-
-        if lib not in ['sklearn-rfc', 'woody']:
-            util.error('Unknown lib: "'+str(lib)+'".')
-        self._lib = lib
-
-        if lib == 'woody':
-            from woody import WoodClassifier as Tree
-            for i in range(n_estimators):
-                tree = Tree(
-                        n_estimators=1,
-                        criterion=criterion,
-                        max_features=max_features,
-                        min_samples_split=min_samples_split,
-                        n_jobs=1,
-                        bootstrap=False,
-                        tree_traversal_mode="dfs",
-                        tree_type="standard",
-                        min_samples_leaf=min_samples_leaf,
-                        float_type="double",
-                        max_depth=max_depth,
-                        verbose=0)
-                self._trees.append(tree)
-        else:
-            if lib == 'sklearn-rfc':
-                from sklearn.ensemble import RandomForestClassifier as Tree
-            for i in range(n_estimators):
-                tree = Tree(
-                        n_estimators=1,
-                        criterion=criterion,
-                        max_features=max_features,
-                        min_samples_split=min_samples_split,
-                        n_jobs=1,
-                        bootstrap=False,
-                        min_samples_leaf=min_samples_leaf,
-                        max_depth=max_depth,
-                        verbose=0)
-                self._trees.append(tree)
+            self._rho = util.uniform_distribution(m)
+        assert(self._rho.shape[0]==m)
 
         # Some fitting stats
         self._OOB = None
@@ -77,10 +33,8 @@ class RandomForestWithBounds:
         if not self._bootstrap:
             self._OOB = None
 
-            for tree in self._trees:
-                tree.fit(X, Y)
-            if self._lib != 'woody':
-                self._actual_max_depth = max([t.estimators_[0].tree_.max_depth for t in self._trees])
+            for est in self._estimators:
+                est.fit(X, Y)
             return None
         
         else:
@@ -88,8 +42,8 @@ class RandomForestWithBounds:
 
             preds = []
             n = X.shape[0]
-            m = len(self._trees)
-            for tree in self._trees:
+            m = len(self._estimators)
+            for est in self._estimators:
                 oob_idx, oob_X = None, None
                 
                 # Sample points for training (w. replacement)
@@ -101,17 +55,14 @@ class RandomForestWithBounds:
                 oob_idx = np.delete(np.arange(n),np.unique(t_idx))
                 oob_X   = X[oob_idx]
 
-                # Fit this tree
-                tree.fit(t_X, t_Y)
+                # Fit this estimator
+                est.fit(t_X, t_Y)
                 # Predict on OOB
-                oob_P = tree.predict(oob_X)
+                oob_P = est.predict(oob_X)
 
                 # Save predictions on oob and validation set for later
                 preds.append((oob_idx, oob_P)) 
 
-            if self._lib != 'woody':
-                self._actual_max_depth = max([t.estimators_[0].tree_.max_depth for t in self._trees])
-            
             risks,n,disagreements,tandem_risks,n2 = util.oob_stats(preds, Y)
 
             self._OOB['n']             = n
@@ -132,30 +83,20 @@ class RandomForestWithBounds:
 
     def predict_all(self, X):
         n = X.shape[0]
-        m = len(self._trees)
+        m = len(self._estimators)
         
         P = []
-        for tree in self._trees:
-            P.append(tree.predict(X))
+        for est in self._estimators:
+            P.append(est.predict(X))
         
         return np.array(P)
 
-    def get_max_depth(self):
-        if self._lib == 'woody':
-            util.warn(
-            'Warning, RandomForestWithBounds.get_max_depth: \
-            Actual max depth not available when using "Woody", \
-            paramter "max_depth" returned.'
-            )
-        return self._actual_max_depth
-    
-
     def optimize_rho(self, bound, val_data=None, unlabeled_data=None, incl_oob=True):
         if bound not in {"Lambda", "MV2"}:
-            util.warn('Warning, RandomForestWithBound.optimize_rho: unknown bound!')
+            util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if val_data is None and not incl_oob:
-            util.warn('Warning, RandomForestWithBound.stats: Missing data!')
+            util.warn('Warning, stats: Missing data!')
             return None
 
         stats = self.stats(val_data, unlabeled_data, incl_oob)
@@ -177,25 +118,26 @@ class RandomForestWithBounds:
         if stats is None:
             incl_oob = incl_oob and self._bootstrap
             if val_data is None and not incl_oob:
-                util.warn('Warning, RandomForestWithBound.stats: Missing data!')
+                util.warn('Warning, stats: Missing data!')
                 return None
         
             stats = self.stats(val_data, unlabeled_data, incl_oob)
         
         C = self._classes.shape[0]
 
-        pi = util.uniform_distribution(len(self._trees))
+        pi = util.uniform_distribution(len(self._estimators))
         KL = util.kl(self._rho, pi)
-        pbkl = PBkl(stats['risk'], stats['n_min'], KL)
-        c1   = 1.0 if C>2 else C1(stats['risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
-        c2   = 1.0 if C>2 else C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
-        mv2  = MV2(stats['tandem_risk'], stats['n2_min'], KL)
-        bounds = { "PBkl":pbkl, "C1":c1, "C2":c2, "MV2":mv2 }
+        bounds = dict()
+        bounds["PBkl"] = PBkl(stats['risk'], stats['n_min'], KL)
+        if C==2:
+            bounds["C1"] = C1(stats['risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
+            bounds["C2"] = C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
+        bounds["MV2"] = MV2(stats['tandem_risk'], stats['n2_min'], KL)
         
         if val_data is not None:
             bounds['SH'] = SH(stats['mv_risk'], stats['n_val'])
         
-        if unlabeled_data is not None:
+        if unlabeled_data is not None and C==2:
             bounds['MV2u'] = MV2u(stats['risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             
         return bounds
@@ -206,7 +148,7 @@ class RandomForestWithBounds:
             util.warn('Warning, RandomForestWithBound.stats: Missing data!')
             return None
 
-        m             = len(self._trees)
+        m             = len(self._estimators)
         n, n2         = np.zeros((m,)), np.zeros((m,m))
         risks         = np.zeros((m,))
         disagreements = np.zeros((m,m))
