@@ -1,151 +1,131 @@
 import sys
 import os
+import numpy as np
+from sklearn.utils import check_random_state
 
-from rfb import RandomForestWithBounds as RFWB
-from rfb import data as mldata
+
+from mvb import RandomForestClassifier as RFC
+from mvb import ExtraTreesClassifier as ETC
+from mvb import data as mldata
 
 inpath  = 'data/'
 outpath = 'out/optimize/'
 
-# tree strength, set None for full
-opts = set(sys.argv)
-weak = '-w' in opts or '--weak' in opts
+SEED = 1000
 
 DATA_SETS = [
-        ('Splice',      100),
-        ##('Adult',       200),
-        ##('GermanNumer', 200),
-        ##('SVMGuide1',   200),
-        ##('w1a',         200),
-        ('Phishing',    100),
-        ##('Madelon',     200),
-        ('Letter:AB',   100),
-        #('Letter:DO',   200),
-        #('Letter:OQ',   200),
-        ('Mushroom',    100),
-        ('Segment',     100),
-        ('Pendigits',   100)
+        'Splice',
+        'Adult',
+        'w1a',
+        'SVMGuide1',
+        'Phishing',
+        'Letter:AB', 
+        'Letter:DO',
+        'Letter:OQ',
+        'Mushroom',
+        'Letter',
+        'Segment',
+        'Shuttle',
+        'Pendigits'
         ]
 DATA_SETS.sort(key=lambda x: x[0])
-    
-max_depth = 2 if weak else None
-prefix = "ds-" if weak else "rf-"
+m = 50
 
-bag_results    = [[], [], [], []]
-bagval_results = [[], [], [], []]
+rf_results = []
+ef_results = []
+ds_results = []
 
-print("Starting optimization tests...")
-if(weak):
-    print(" -> Using decision stumps")
-else:
-    print(" -> Using full trees")
+def _write_dist_file(name, rhos, risks):
+    with open(outpath+name+'.csv', 'w') as f:
+        f.write("h;risk;rho_lam;rho_mv2;rho_mv2u\n")
+        for i,(err,r_lam,r_mv,r_mvu) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2])):
+            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_mv)+";"+str(r_mvu)+"\n")
 
-def _write_dist_file(name, rho, risks):
-    with open(outpath+prefix+name+'.csv', 'w') as f:
-        f.write("h;risk;rho\n")
-        for i,(r,err) in enumerate(zip(rho,risks)):
-            f.write(str(i+1)+";"+str(err)+";"+str(r)+"\n")
-
-for dataset,m in DATA_SETS:
-    print("##### "+dataset+" #####")
-
-    X,Y = mldata.load(dataset, path=inpath)
-    
-    trainX,trainY,testX,testY = mldata.split(X,Y,0.8)
-    
-    print("Training forest for ["+dataset+"] with bagging")
-    n = (trainX.shape[0], 0, testX.shape[0], trainX.shape[1])
-    rf = RFWB(n_estimators=m,max_depth=max_depth)
-    _  = rf.fit(trainX,trainY)
-    _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats()
-    bounds = rf.bounds(stats=stats)
-    bag_results[0].append((mv_risk, n, bounds, stats, 0.0, 0.0))
-    
-    (mv2, mv2_rho, mv2_lam) = rf.optimize_rho('MV2')
-    _, mv2_mv_risk = rf.predict(testX,testY)
-    mv2_stats  = rf.stats()
-    mv2_bounds = rf.bounds(stats=mv2_stats)
-    bag_results[1].append((mv2_mv_risk, n, mv2_bounds, mv2_stats, mv2_lam, 0.0))
-    _write_dist_file("bag-dist-mv2-"+dataset, mv2_rho, mv2_stats['risks'])
-
-    (u_mv2, u_mv2_rho, u_mv2_lam, u_mv2_gam) = rf.optimize_rho('MV2',unlabeled_data=testX)
-    _, u_mv2_mv_risk = rf.predict(testX,testY)
-    u_mv2_stats  = rf.stats(unlabeled_data=testX)
-    u_mv2_bounds = rf.bounds(unlabeled_data=testX, stats=u_mv2_stats)
-    bag_results[2].append((u_mv2_mv_risk, n, u_mv2_bounds, u_mv2_stats, u_mv2_lam, u_mv2_gam))
-    _write_dist_file("bag-dist-umv2-"+dataset, u_mv2_rho, u_mv2_stats['risks'])
-
-    (lam, lam_rho, lam_lam) = rf.optimize_rho('Lambda')
-    _, lam_mv_risk = rf.predict(testX,testY)
-    lam_stats  = rf.stats()
-    lam_bounds = rf.bounds(stats=lam_stats)
-    bag_results[3].append((lam_mv_risk, n, lam_bounds, lam_stats, lam_lam, 0.0))
-    _write_dist_file("bag-dist-lam-"+dataset, lam_rho, lam_stats['risks'])
-
-    # Further split train X and Y
-    trainX,trainY,valX,valY = mldata.split(trainX,trainY,0.5)
-    print("Training forest for ["+dataset+"] with bagging and validation set")
-    n = (trainX.shape[0], valX.shape[0], testX.shape[0], trainX.shape[1])
-    rf = RFWB(n_estimators=m,max_depth=max_depth)
-    _ = rf.fit(trainX,trainY)
-    _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats()
-    bounds = rf.bounds(stats=stats)
-    bagval_results[0].append((mv_risk, n, bounds, stats, 0.0, 0.0))
-    
-    vald = (valX, valY)
-    (mv2, mv2_rho, mv2_lam) = rf.optimize_rho('MV2', val_data=vald)
-    _, mv2_mv_risk = rf.predict(testX,testY)
-    mv2_stats  = rf.stats(val_data=vald)
-    mv2_bounds = rf.bounds(val_data=vald, stats=mv2_stats)
-    bagval_results[1].append((mv2_mv_risk, n, mv2_bounds, mv2_stats, mv2_lam, 0.0))
-    _write_dist_file("bagval-dist-mv2-"+dataset, mv2_rho, mv2_stats['risks'])
-    
-    (u_mv2, u_mv2_rho, u_mv2_lam, u_mv2_gam) = rf.optimize_rho('MV2', val_data=vald, unlabeled_data=testX)
-    _, u_mv2_mv_risk = rf.predict(testX,testY)
-    u_mv2_stats  = rf.stats(val_data=vald, unlabeled_data=testX)
-    u_mv2_bounds = rf.bounds(val_data=vald, unlabeled_data=testX, stats=u_mv2_stats)
-    bagval_results[2].append((u_mv2_mv_risk, n, u_mv2_bounds, u_mv2_stats, u_mv2_lam, u_mv2_gam))
-    _write_dist_file("bagval-dist-umv2-"+dataset, u_mv2_rho, u_mv2_stats['risks'])
-
-    (lam, lam_rho, lam_lam) = rf.optimize_rho('Lambda', val_data=vald)
-    _, lam_mv_risk = rf.predict(testX,testY)
-    lam_stats  = rf.stats(val_data=vald)
-    lam_bounds = rf.bounds(val_data=vald, stats=lam_stats)
-    bagval_results[3].append((lam_mv_risk, n, lam_bounds, lam_stats, lam_lam, 0.0))
-    _write_dist_file("bagval-dist-lam-"+dataset, lam_rho, lam_stats['risks'])
-    
+print("Starting tests...")
 if not os.path.exists(outpath):
     os.makedirs(outpath)
+RAND = check_random_state(SEED)
+
+for name, rf, reslist in [("rf", RFC(m,max_features="sqrt",random_state=RAND), rf_results)]:#, ("ef", ETC(m,max_features="sqrt",random_state=RAND), ef_results), ("ds", RFC(m,max_features=1,max_depth=2,random_state=RAND), ds_results)]:
+    print("Starting "+name+" experiment")
+    for dataset in DATA_SETS:
+        print("##### "+dataset+" #####")
+        X,Y = mldata.load(dataset, path=inpath)
+        C = np.unique(Y).shape[0]
+        print("n =",X.shape[0],"d =",X.shape[1],"#classes =",C)
+        print("") 
+
+        trainX,trainY,testX,testY = mldata.split(X,Y,0.5,random_state=RAND)
+        n = (trainX.shape[0], testX.shape[0], trainX.shape[1], C)
+
+        rhos = []
+        print("Training RFC for ["+dataset+"] with bagging")
+        _  = rf.fit(trainX,trainY)
+        print(" => rho = uniform")
+        _, mv_risk = rf.predict(testX,testY)
+        stats  = rf.stats(unlabeled_data=testX)
+        bounds = rf.bounds(unlabeled_data=testX, stats=stats)
+        res_unf = (mv_risk, stats, bounds)
+        print(" => rho = rho_lambda")
+        (_, rho, _) = rf.optimize_rho('Lambda')
+        _, mv_risk = rf.predict(testX,testY)
+        stats  = rf.stats(unlabeled_data=testX)
+        bounds = rf.bounds(unlabeled_data=testX, stats=stats)
+        res_lam = (mv_risk, stats, bounds)
+        rhos.append(rho)
+        print(" => rho = rho_mv")
+        (_, rho, _) = rf.optimize_rho('MV2')
+        _, mv_risk = rf.predict(testX,testY)
+        stats  = rf.stats(unlabeled_data=testX)
+        bounds = rf.bounds(unlabeled_data=testX, stats=stats)
+        res_mv2 = (mv_risk, stats, bounds)
+        rhos.append(rho)
+        if(C==2):
+            print(" => rho = rho_mvu")
+            (_, rho, _, _) = rf.optimize_rho('MV2',unlabeled_data=testX)
+            _, mv_risk = rf.predict(testX,testY)
+            stats  = rf.stats(unlabeled_data=testX)
+            bounds = rf.bounds(unlabeled_data=testX, stats=stats)
+            res_mv2u = (mv_risk, stats, bounds)
+            rhos.append(rho)
+        else:
+            res_mv2u = (-1.0, dict(), dict())
+            rhos.append(-np.ones((m,)))
+
+        # opt = (bound, rho, lam, gam)
+        _write_dist_file(name+"-"+dataset, rhos, stats['risks'])
+        reslist.append((res_unf, res_lam, res_mv2, res_mv2u))
+
+        print("") 
+
 def _write_outfile(name, results):
     prec = 5
-    with open(outpath+prefix+name+'.csv', 'w') as f:
-        f.write('dataset;n_train;n_val;n_test;d;m;mv_risk;gibbs;disagreement;u_disagreement;tandem_risk;pbkl;c1;c2;mv2;mv2u;sh;lam;gam\n')
-        for (ds,m), (risk_mv, n, bounds, stats, lam, gam) in zip(DATA_SETS, results):
-            f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(m)+';'+
-                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(13)])+'\n')
-                    .format(risk_mv,
-                        stats['risk'],
-                        stats['disagreement'],
-                        stats.get('u_disagreement', -1),
-                        stats['tandem_risk'],
-                        bounds['PBkl'],
-                        bounds['C1'],
-                        bounds['C2'],
-                        bounds['MV2'],
-                        bounds.get('MV2u', -1),
-                        bounds.get('SH', -1),
-                        lam,
-                        gam)
-                    )
+    with open(outpath+name+'.csv', 'w') as f:
+        f.write('dataset;n_train;n_test;d;c;m')
+        for name in ["unf","lam","mv2","mv2u"]:
+            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk','gibbs','disagreement','u_disagreement','tandem_risk','pbkl','c1','c2','mv2','mv2u']]))
+        f.write('\n')
+        m = 100
+        for ds, restup in zip(DATA_SETS, results):
+            f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(m));
+            for (mv_risk, stats, bounds) in restup:
+                f.write(
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(10)]))
+                        .format(mv_risk,
+                            stats.get('risk', -1.0),
+                            stats.get('disagreement', -1.0),
+                            stats.get('u_disagreement', -1.0),
+                            stats.get('tandem_risk', -1.0),
+                            bounds.get('PBkl', -1.0),
+                            bounds.get('C1', -1.0),
+                            bounds.get('C2', -1.0),
+                            bounds.get('MV2', -1.0),
+                            bounds.get('MV2u',1.0)
+                            )
+                        )
+            f.write('\n')
 
-_write_outfile('bag-unf-results', bag_results[0])
-_write_outfile('bag-mv2-results', bag_results[1])
-_write_outfile('bag-umv2-results', bag_results[2])
-_write_outfile('bag-lam-results', bag_results[3])
-_write_outfile('bagval-unf-results', bagval_results[0])
-_write_outfile('bagval-mv2-results', bagval_results[1])
-_write_outfile('bagval-umv2-results', bagval_results[2])
-_write_outfile('bagval-lam-results', bagval_results[3])
+_write_outfile('rf-results', rf_results)
+_write_outfile('ef-results', ef_results)
+_write_outfile('ds-results', ds_results)
 
