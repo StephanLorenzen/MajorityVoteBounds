@@ -1,9 +1,8 @@
-from rfb import RandomForestWithBounds as RFWB
-from rfb import data as mldata
+from mvb import RandomForest as RF
+from mvb import data as mldata
 
 dataset = 'Letter:AB'
 m = 100
-lib='sklearn-rfc' # or sklearn-etc or woody (P2.7)
 
 print("Loading data set ["+dataset+"]...")
 X, Y = mldata.load(dataset)
@@ -11,7 +10,7 @@ print("Done!")
 
 print("\n######### Bagging #########")
 print("Fitting random forest...")
-rf = RFWB(n_estimators=m, lib=lib)
+rf = RF(n_estimators=m)
 oob_estimate = rf.fit(X, Y)
 print("Done! OOB estimate: "+str(oob_estimate))
 print("")
