@@ -65,36 +65,36 @@ for name, rf, reslist in [("rf", RFC(m,max_features="sqrt",random_state=RAND), r
         _, mv_risk = rf.predict(testX,testY)
         stats  = rf.stats(unlabeled_data=testX)
         bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-        res_unf = (mv_risk, stats, bounds)
+        res_unf = (mv_risk, stats, bounds, -1, -1)
         print(" => rho = rho_lambda")
-        (_, rho, _) = rf.optimize_rho('Lambda')
+        (_, rho, bl) = rf.optimize_rho('Lambda')
         _, mv_risk = rf.predict(testX,testY)
         stats  = rf.stats(unlabeled_data=testX)
         bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-        res_lam = (mv_risk, stats, bounds)
+        res_lam = (mv_risk, stats, bounds, bl, -1)
         rhos.append(rho)
         print(" => rho = rho_mv")
-        (_, rho, _) = rf.optimize_rho('MV2')
+        (_, rho, bl) = rf.optimize_rho('MV2')
         _, mv_risk = rf.predict(testX,testY)
         stats  = rf.stats(unlabeled_data=testX)
         bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-        res_mv2 = (mv_risk, stats, bounds)
+        res_mv2 = (mv_risk, stats, bounds, bl, -1)
         rhos.append(rho)
         if(C==2):
             print(" => rho = rho_mvu")
-            (_, rho, _, _) = rf.optimize_rho('MV2',unlabeled_data=testX)
+            (_, rho, bl, bg) = rf.optimize_rho('MV2',unlabeled_data=testX)
             _, mv_risk = rf.predict(testX,testY)
             stats  = rf.stats(unlabeled_data=testX)
             bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-            res_mv2u = (mv_risk, stats, bounds)
+            res_mv2u = (mv_risk, stats, bounds, bl, bg)
             rhos.append(rho)
         else:
-            res_mv2u = (-1.0, dict(), dict())
+            res_mv2u = (-1.0, dict(), dict(), -1, -1)
             rhos.append(-np.ones((m,)))
 
         # opt = (bound, rho, lam, gam)
         _write_dist_file(name+"-"+dataset, rhos, stats['risks'])
-        reslist.append((res_unf, res_lam, res_mv2, res_mv2u))
+        reslist.append((n, (res_unf, res_lam, res_mv2, res_mv2u)))
 
         print("") 
 
@@ -103,14 +103,14 @@ def _write_outfile(name, results):
     with open(outpath+name+'.csv', 'w') as f:
         f.write('dataset;n_train;n_test;d;c;m')
         for name in ["unf","lam","mv2","mv2u"]:
-            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk','gibbs','disagreement','u_disagreement','tandem_risk','pbkl','c1','c2','mv2','mv2u']]))
+            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk','gibbs','disagreement','u_disagreement','tandem_risk','pbkl','c1','c2','mv2','mv2u','lamda','gamma']]))
         f.write('\n')
         m = 100
-        for ds, restup in zip(DATA_SETS, results):
+        for ds, (n, restup) in zip(DATA_SETS, results):
             f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(m));
-            for (mv_risk, stats, bounds) in restup:
+            for (mv_risk, stats, bounds, bl, bg) in restup:
                 f.write(
-                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(10)]))
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(12)]))
                         .format(mv_risk,
                             stats.get('risk', -1.0),
                             stats.get('disagreement', -1.0),
@@ -120,7 +120,9 @@ def _write_outfile(name, results):
                             bounds.get('C1', -1.0),
                             bounds.get('C2', -1.0),
                             bounds.get('MV2', -1.0),
-                            bounds.get('MV2u',1.0)
+                            bounds.get('MV2u',1.0),
+                            bl,
+                            bg
                             )
                         )
             f.write('\n')
