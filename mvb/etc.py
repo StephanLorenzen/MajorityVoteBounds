@@ -3,7 +3,6 @@ from sklearn.tree import DecisionTreeClassifier as Tree
 from sklearn.utils import check_random_state
 
 from . import util, mvbase
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
 
 class ExtraTreesClassifier(mvbase.MVBounds):
     def __init__(

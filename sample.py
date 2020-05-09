@@ -1,4 +1,4 @@
-from mvb import RandomForest as RF
+from mvb import RandomForestClassifier as RF
 from mvb import data as mldata
 
 dataset = 'Letter:AB'

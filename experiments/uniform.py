@@ -44,7 +44,7 @@ for dataset,m in DATA_SETS:
     print("n =",X.shape[0],"d =",X.shape[1],"#classes =",C)
     print("") 
 
-    trainX,trainY,testX,testY = mldata.split(X,Y,0.5,random_state=RAND)
+    trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
     n = (trainX.shape[0], testX.shape[0], trainX.shape[1], C)
     
     print("Training RFC for ["+dataset+"] with bagging")
