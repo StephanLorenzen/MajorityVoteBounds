@@ -3,18 +3,19 @@ from sklearn.utils import check_random_state
 
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
+from math import ceil
 
 class MVBounds:
     def __init__(
             self,
             estimators,
             rho=None,
-            bootstrap=True,
+            sample_mode=None, # | 'bootstrap' | 'dim' | int | float
             random_state=None,
             ):
         self._estimators = estimators
         m                = len(estimators)  
-        self._bootstrap  = bootstrap
+        self._sample_mode= sample_mode
         self._prng       = check_random_state(random_state)
         self._rho = rho
         if rho is None:
@@ -29,8 +30,8 @@ class MVBounds:
         X, Y = np.array(X), np.array(Y)
         self._classes = np.unique(Y)
 
-        # No bootstrapping
-        if not self._bootstrap:
+        # No sampling
+        if self._sample_mode is None:
             self._OOB = None
 
             for est in self._estimators:
@@ -39,15 +40,32 @@ class MVBounds:
         
         else:
             self._OOB = { }
+            
 
             preds = []
             n = X.shape[0]
             m = len(self._estimators)
+            
+            n_sample = None
+            if self._sample_mode=='bootstrap':
+                n_sample = n
+            elif self._sample_mode=='dim':
+                n_sample = X.shape[1]+1
+            elif type(self._sample_mode) is int:
+                n_sample = self._sample_mode
+            elif type(self._sample_mode) is float:
+                n_sample = ceil(X.shape[0]*self._sample_mode)
+            else:
+                Utils.warn('Warning, fit: unknown sample_type')
+                return None
+
             for est in self._estimators:
                 oob_idx, oob_X = None, None
                 
                 # Sample points for training (w. replacement)
-                t_idx = self._prng.randint(n, size=n)
+                t_idx = self._prng.randint(n, size=n)\
+                        if self._sample_mode=='bootstrap'\
+                        else self._prng.choice(n, n_sample, replace=False)
                 t_X   = X[t_idx]
                 t_Y   = Y[t_idx]
 
@@ -62,7 +80,7 @@ class MVBounds:
 
                 # Save predictions on oob and validation set for later
                 preds.append((oob_idx, oob_P)) 
-
+            
             risks,n,disagreements,tandem_risks,n2 = util.oob_stats(preds, Y)
 
             self._OOB['n']             = n
@@ -143,7 +161,7 @@ class MVBounds:
         return bounds
 
     def stats(self, val_data=None, unlabeled_data=None, incl_oob=True):
-        incl_oob = incl_oob and self._bootstrap
+        incl_oob = incl_oob and self._sample_mode is not None
         if val_data is None and not incl_oob:
             util.warn('Warning, RandomForestWithBound.stats: Missing data!')
             return None

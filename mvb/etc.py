@@ -32,7 +32,7 @@ class ExtraTreesClassifier(mvbase.MVBounds):
                         random_state=prng)
             estimators.append(tree)
 
-        super().__init__(estimators, rho, bootstrap, prng)
+        super().__init__(estimators, rho, sample_mode='bootstrap' if bootstrap else None, random_state=prng)
 
     def fit(self, X, Y):
         estimate = super().fit(X,Y)
