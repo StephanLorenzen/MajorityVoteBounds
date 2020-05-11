@@ -63,11 +63,16 @@ class MVBounds:
                 oob_idx, oob_X = None, None
                 
                 # Sample points for training (w. replacement)
-                t_idx = self._prng.randint(n, size=n)\
-                        if self._sample_mode=='bootstrap'\
-                        else self._prng.choice(n, n_sample, replace=False)
-                t_X   = X[t_idx]
-                t_Y   = Y[t_idx]
+                while True: 
+                    # Repeat until at least one example of each class
+                    # (mostly relevant if n_sample is very small)
+                    t_idx = self._prng.randint(n, size=n)\
+                            if self._sample_mode=='bootstrap'\
+                            else self._prng.choice(n, n_sample, replace=False)
+                    t_X   = X[t_idx]
+                    t_Y   = Y[t_idx]
+                    if np.unique(t_Y).shape[0] > 1:
+                        break
 
                 # OOB sample
                 oob_idx = np.delete(np.arange(n),np.unique(t_idx))
