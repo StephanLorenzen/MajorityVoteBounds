@@ -21,7 +21,7 @@ def kl(rho,pi):
     assert(rho.shape[0]==m)
     kl = 0.0
     for h in range(m):
-        kl += rho[h]*log(rho[h]/pi[h])
+        kl += rho[h]*log(rho[h]/pi[h]) if rho[h]>10**-12 else 0
     return kl
 
 def uniform_distribution(m):

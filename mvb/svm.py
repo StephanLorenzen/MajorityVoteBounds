@@ -14,8 +14,9 @@ class SVMVotersClassifier(mvbase.MVBounds):
             rho=None,
             random_state=None
             ):
-        self._Cs = Cs if Cs is not None else [10**i for i in range(-6,7)]
-        self._gammas = gammas if gammas is not None else [10**i for i in range(-6,3)]
+        
+        self._Cs = Cs if Cs is not None else [10**i for i in range(-3,4)]
+        self._gammas = gammas if gammas is not None else [10**i for i in range(-4,5)]
 
         prng = check_random_state(random_state)
         
