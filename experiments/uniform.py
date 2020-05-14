@@ -30,9 +30,7 @@ DATA_SETS = [
         ]
 DATA_SETS.sort(key=lambda x: x[0])
     
-rf_results = []
-ef_results = []
-ds_results = []
+results = []
 
 print("Starting tests...")
 RAND = check_random_state(SEED)
@@ -53,24 +51,7 @@ for dataset,m in DATA_SETS:
     _, mv_risk = rf.predict(testX,testY)
     stats  = rf.stats(unlabeled_data=testX)
     bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-    rf_results.append((mv_risk, n, bounds, stats))
-    
-    print("Training ETC for ["+dataset+"] with bagging")
-    rf = ETC(n_estimators=m, max_features="sqrt",random_state=RAND)
-    _  = rf.fit(trainX,trainY)
-    _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats(unlabeled_data=testX)
-    bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-    ef_results.append((mv_risk, n, bounds, stats))
-    
-    print("Training DS for ["+dataset+"] with bagging")
-    rf = RFC(n_estimators=m,max_depth=1,max_features=1,random_state=RAND)
-    _  = rf.fit(trainX,trainY)
-    _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats(unlabeled_data=testX)
-    bounds = rf.bounds(unlabeled_data=testX, stats=stats)
-    ds_results.append((mv_risk, n, bounds, stats))
-    
+    results.append((mv_risk, n, bounds, stats))
     print("") 
 
 if not os.path.exists(outpath):
@@ -78,15 +59,17 @@ if not os.path.exists(outpath):
 def _write_outfile(name, results):
     prec = 5
     with open(outpath+name+'.csv', 'w') as f:
-        f.write('dataset;n_train;n_test;d;c;m;mv_risk;gibbs;disagreement;u_disagreement;tandem_risk;pbkl;c1;c2;mv2;mv2u;sh;best_tree;worst_tree\n')
+        f.write('dataset;n_train;n_test;d;c;m;mv_risk;gibbs;n_min;disagreement;u_disagreement;tandem_risk;n2_min;pbkl;c1;c2;mv2;mv2u;sh;best_tree;worst_tree\n')
         for (ds,m), (risk_mv, n, bounds, stats) in zip(DATA_SETS, results):
             f.write(ds+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(m)+';'+
-                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(13)])+'\n')
+                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(15)])+'\n')
                     .format(risk_mv,
                         stats['risk'],
+                        stats['n_min'],
                         stats['disagreement'],
                         stats.get('u_disagreement', -1.0),
                         stats['tandem_risk'],
+                        stats['n2_min'],
                         bounds['PBkl'],
                         bounds.get('C1', -1.0),
                         bounds.get('C2', -1.0),
@@ -97,7 +80,5 @@ def _write_outfile(name, results):
                         np.max(stats['risks']))
                     )
 
-_write_outfile('rf-results', rf_results)
-_write_outfile('ef-results', ef_results)
-_write_outfile('ds-results', ds_results)
+_write_outfile('rf-results', results)
 
