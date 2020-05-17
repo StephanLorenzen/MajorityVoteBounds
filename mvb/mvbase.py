@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV2, optimizeMV2, MV2u, optimizeMV2u
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV, optimizeMV, MVu, optimizeMVu
 from math import ceil
 
 class MVBounds:
@@ -104,7 +104,7 @@ class MVBounds:
         
         return np.array(P)
 
-    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True):
+    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, use_cma=True):
         if bound not in {"Lambda", "MV"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
@@ -116,22 +116,22 @@ class MVBounds:
             risks, ns = self.risks(labeled_data, incl_oob)
             (optLambda, rho, lam) = optimizeLamb(risks/ns, np.min(ns))
             self._rho = rho
-            return (optLambda, rho, lam)
+            return (optLambda,rho,lam)
         elif(bound=='MV'):
             if unlabeled_data is None:
                 tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-                (optMV2, rho, lam) = optimizeMV2(tand/n2s, np.min(n2s))
+                (optMV,rho,lam) = optimizeMV(tand/n2s, np.min(n2s), use_cma=use_cma)
                 self._rho = rho
-                return (optMV2, rho, lam)
+                return (optMV, rho, lam)
             else:
                 ulX = unlabeled_data
                 if labeled_data is not None:
                     ulX = np.concatenate((ulX,labeled_data[0]), axis=0)
                 risks, ns = self.risks(labeled_data, incl_oob)
                 dis, n2s = self.disagreements(ulX, incl_oob)
-                (optMV2, rho, lam, gam) = optimizeMV2u(risks/ns, dis/n2s, np.min(ns), np.min(n2s))
+                (optMV,rho,lam,gam) = optimizeMVu(risks/ns,dis/n2s,np.min(ns),np.min(n2s),use_cma=use_cma)
                 self._rho = rho
-                return (optMV2, rho, lam, gam)
+                return (optMV, rho, lam, gam)
 
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
         if bound not in ['SH', 'PBkl', 'C1', 'C2', 'MV', 'MVu']:
@@ -159,9 +159,9 @@ class MVBounds:
             elif bound=='C2':
                 return C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
             elif bound=='MV':
-                return MV2(stats['tandem_risk'], stats['n2_min'], KL)
+                return MV(stats['tandem_risk'], stats['n2_min'], KL)
             elif bound=='MVu':
-                return MV2u(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
+                return MVu(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             else:
                 return None
         else:
@@ -184,7 +184,7 @@ class MVBounds:
                 return C2(trisk, dis, n2_min, KL)
             elif bound=='MV':
                 tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
-                return MV2(trisk, n2_min, KL)
+                return MV(trisk, n2_min, KL)
             elif bound=='MVu':
                 grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
                 ulX = unlabeled_data
@@ -194,7 +194,7 @@ class MVBounds:
                     else:
                         ulX = np.concatenate((ulX, labeled_data[0]), axis=0)
                 dis, n2_min  = self.disagreement(ulX, incl_oob)
-                return MV2u(grisk, disagreement, n_min, n2_min, KL)
+                return MVu(grisk, disagreement, n_min, n2_min, KL)
             else:
                 return None
     
