@@ -39,9 +39,6 @@ class MVBounds:
             return None
         
         else:
-            self._OOB = { }
-            
-
             preds = []
             n = X.shape[0]
             m = len(self._estimators)
@@ -86,15 +83,8 @@ class MVBounds:
                 # Save predictions on oob and validation set for later
                 preds.append((oob_idx, oob_P)) 
             
-            risks,n,disagreements,tandem_risks,n2 = util.oob_stats(preds, Y)
-
-            self._OOB['n']             = n
-            self._OOB['n2']            = n2
-            self._OOB['risks']         = risks
-            self._OOB['disagreements'] = disagreements
-            self._OOB['tandem_risks']  = tandem_risks
-            
-            return util.oob_estimate(self._rho, preds, Y)
+            self._OOB = (preds, Y)
+            return self.risk()
 
     def predict(self, X, Y=None):
         n = X.shape[0]
@@ -114,116 +104,240 @@ class MVBounds:
         
         return np.array(P)
 
-    def optimize_rho(self, bound, val_data=None, unlabeled_data=None, incl_oob=True):
-        if bound not in {"Lambda", "MV2"}:
+    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True):
+        if bound not in {"Lambda", "MV"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
-        if val_data is None and not incl_oob:
+        if labeled_data is None and not incl_oob:
             util.warn('Warning, stats: Missing data!')
             return None
 
-        stats = self.stats(val_data, unlabeled_data, incl_oob)
         if(bound=='Lambda'):
-            (optLambda, rho, lam) = optimizeLamb(stats['risks'], stats['n_min'])
+            risks, ns = self.risks(labeled_data, incl_oob)
+            (optLambda, rho, lam) = optimizeLamb(risks/ns, np.min(ns))
             self._rho = rho
             return (optLambda, rho, lam)
-        elif(bound=='MV2'):
+        elif(bound=='MV'):
             if unlabeled_data is None:
-                (optMV2, rho, lam) = optimizeMV2(stats['tandem_risks'], stats['n2_min'])
+                tand, n2s = self.tandem_risks(labeled_data, incl_oob)
+                (optMV2, rho, lam) = optimizeMV2(tand/n2s, np.min(n2s))
                 self._rho = rho
                 return (optMV2, rho, lam)
             else:
-                (optMV2, rho, lam, gam) = optimizeMV2u(stats['risks'], stats['u_disagreements'], stats['n_min'], stats['u_n2_min'])
+                ulX = unlabeled_data
+                if labeled_data is not None:
+                    ulX = np.concatenate((ulX,labeled_data[0]), axis=0)
+                risks, ns = self.risks(labeled_data, incl_oob)
+                dis, n2s = self.disagreements(ulX, incl_oob)
+                (optMV2, rho, lam, gam) = optimizeMV2u(risks/ns, dis/n2s, np.min(ns), np.min(n2s))
                 self._rho = rho
                 return (optMV2, rho, lam, gam)
 
-    def bounds(self, val_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if stats is None:
-            incl_oob = incl_oob and self._bootstrap
-            if val_data is None and not incl_oob:
-                util.warn('Warning, stats: Missing data!')
-                return None
-        
-            stats = self.stats(val_data, unlabeled_data, incl_oob)
-        
-        C = self._classes.shape[0]
-
+    def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'MV', 'MVu']:
+            util.warn('Warning, MVBase.bound: Unknown bound!')
+            return 1.0
+        elif bound=='SH' and labeled_data==None and (stats==None or 'mv_risk' not in stats):
+            util.warn('Warning, MVBase.bound: Cannot apply SH without hold-out data!')
+            return 1.0
+        elif bound in ['C1','C2','MVu'] and self._classes.shape[0] > 2:
+            util.warn('Warning, MVBase.bound: Cannot apply '+bound+' to non-binary data!')
+            return 1.0
+        elif bound=='MVu' and unlabeled_data==None and (stats==None or 'u_disagreement' not in stats):
+            util.warn('Warning, MVBase.bound: Missing unlabeled data for MVu!')
+            return 1.0
+       
         pi = util.uniform_distribution(len(self._estimators))
         KL = util.kl(self._rho, pi)
-        bounds = dict()
-        bounds["PBkl"] = PBkl(stats['risk'], stats['n_min'], KL)
-        if C==2:
-            bounds["C1"] = C1(stats['risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
-            bounds["C2"] = C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
-        bounds["MV2"] = MV2(stats['tandem_risk'], stats['n2_min'], KL)
-        
-        if val_data is not None:
-            bounds['SH'] = SH(stats['mv_risk'], stats['n_val'])
-        
-        if unlabeled_data is not None and C==2:
-            bounds['MV2u'] = MV2u(stats['risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
-            
-        return bounds
+        if stats is not None:
+            if bound=='SH':
+                return SH(stats['mv_risk'], stats['mv_n'])
+            elif bound=='PBkl':
+                return PBkl(stats['gibbs_risk'], stats['n_min'], KL)
+            elif bound=='C1':
+                return C1(stats['gibbs_risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
+            elif bound=='C2':
+                return C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
+            elif bound=='MV':
+                return MV2(stats['tandem_risk'], stats['n2_min'], KL)
+            elif bound=='MVu':
+                return MV2u(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
+            else:
+                return None
+        else:
+            if bound=='SH':
+                mv_risk, n = self.risk(labeled_data), labeled_data[0].shape[0]
+                return SH(mv_risk, n)
+            elif bound=='PBkl':
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                return PBkl(grisk, n_min, KL)
+            elif bound=='C1':
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                ulX = None if labeled_data is None else labeled_data[0]
+                dis, n2_min  = self.disagreement(ulX, incl_oob)
+                return C1(grisk, dis, n_min, n2_min, KL)
+            elif bound=='C2':
+                tand, n2t = self.tandem_risk(labeled_data, incl_oob)
+                ulX = None if labeled_data is None else labeled_data[0]
+                dis, n2_min  = self.disagreement(ulX, incl_oob)
+                assert(n2t==n2_min)
+                return C2(trisk, dis, n2_min, KL)
+            elif bound=='MV':
+                tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
+                return MV2(trisk, n2_min, KL)
+            elif bound=='MVu':
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                ulX = unlabeled_data
+                if labeled_data != None:
+                    if ulX == None:
+                        ulX = labeled_data[0]
+                    else:
+                        ulX = np.concatenate((ulX, labeled_data[0]), axis=0)
+                dis, n2_min  = self.disagreement(ulX, incl_oob)
+                return MV2u(grisk, disagreement, n_min, n2_min, KL)
+            else:
+                return None
+    
+    def bounds(self, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
+        results = dict()
+        if stats is None:
+            stats = self.stats(labeled_data, unlabeled_data, incl_oob)
 
-    def stats(self, val_data=None, unlabeled_data=None, incl_oob=True):
+        results['PBkl'] = self.bound('PBkl', stats=stats)
+        results['MV']   = self.bound('MV', stats=stats)
+        if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
+            results['SH'] = self.bound('SH', stats=stats)
+        if self._classes.shape[0]==2:
+            results['C1'] = self.bound('C1', stats=stats)
+            results['C2'] = self.bound('C2', stats=stats)
+            if unlabeled_data is not None or (stats is not None and 'u_disagreement' in stats):
+                results['MVu'] = self.bound('MVu', stats=stats)
+        return results
+
+    def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
+        stats = dict()
+        if labeled_data is not None:
+            stats['mv_risk'] = self.risk(labeled_data)
+            stats['mv_n']    = labeled_data[0].shape[0]
+        
+        stats['risks'], stats['n'] = self.risks(labeled_data, incl_oob)
+        stats['risks'] /= stats['n']
+        stats['gibbs_risk'] = np.average(stats['risks'], weights=self._rho)
+        stats['n_min'] = np.min(stats['n'])
+
+        stats['tandem_risks'], stats['n2'] = self.tandem_risks(labeled_data, incl_oob)
+        stats['tandem_risks'] /= stats['n2']
+        stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
+        stats['n2_min'] = np.min(stats['n2'])
+
+        dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
+        stats['disagreements'] = dis/stats['n2']
+        stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        if unlabeled_data is not None:
+            udis, un2 = self.disagreements(unlabeled_data, False)
+            stats['u_n2'] = stats['n2']+un2
+            stats['u_disagreements'] = (dis+udis) / stats['u_n2']
+            stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
+            stats['u_n2_min'] = np.min(stats['u_n2'])
+        return stats
+
+    # Returns the accuracy on data = (X,Y). If data is None, returns the OOB-estimate
+    def score(self, data=None):
+        return 1.0-self.risk(data)
+    def risk(self, data=None):
+        if data is None and self._sample_mode is None:
+            util.warn('Warning, MVBase.risk: No OOB data!')
+            return 1.0
+        if data is None:
+            (preds,targs) = self._OOB
+            return util.oob_estimate(self._rho, preds, targs)
+        else:
+            (X,Y) = data
+            P = self.predict_all(X)
+            return util.mv_risk(self._rho,P,Y)
+
+    def gibbs_risk(self, data=None, incl_oob=True):
+        rs, n = self.risks(data, incl_oob)
+        return np.average(rs/n, weights=self._rho), np.min(n)
+    def risks(self, data=None, incl_oob=True):
         incl_oob = incl_oob and self._sample_mode is not None
-        if val_data is None and not incl_oob:
-            util.warn('Warning, RandomForestWithBound.stats: Missing data!')
+        if data is None and not incl_oob:
+            util.warn('Warning, MVBase.risks: Missing data!')
             return None
-
-        m             = len(self._estimators)
-        n, n2         = np.zeros((m,)), np.zeros((m,m))
-        risks         = np.zeros((m,))
-        disagreements = np.zeros((m,m))
-        tandem_risks  = np.zeros((m,m))
+        m     = len(self._estimators)
+        n     = np.zeros((m,))
+        risks = np.zeros((m,))
         
         if incl_oob:
-            n             += self._OOB['n']
-            n2            += self._OOB['n2']
-            risks         += self._OOB['risks']
-            disagreements += self._OOB['disagreements']
-            tandem_risks  += self._OOB['tandem_risks']
+            (preds,targs) = self._OOB
+            # preds = [(idx, preds)] * n_estimators
+            orisk, on = util.oob_risks(preds, targs)
+            n     += on
+            risks += orisk
 
-        mv_risk = None
-        if val_data is not None:
-            assert(len(val_data)==2)
-            valX,valY = val_data
+        if data is not None:
+            assert(len(data)==2)
+            X,Y = data
+            P = self.predict_all(X)
 
-            valP = self.predict_all(valX)
-
-            n             += valX.shape[0]
-            n2            += valX.shape[0]
-            risks         += util.gibbs(valP, valY)
-            disagreements += util.disagreements(valP)
-            tandem_risks  += util.tandem_risks(valP, valY)
+            n             += X.shape[0]
+            risks         += util.risks(P, Y)
         
-            mv_risk = util.mv_risk(self._rho, valP, valY)
+        return risks, n
 
-        stats = {
-                'risk':np.average(risks/n, weights=self._rho),
-                'risks':risks/n,
-                'n':n,
-                'n_min':np.min(n),
-                'disagreement':np.average(np.average(disagreements/n2, weights=self._rho, axis=1), weights=self._rho),
-                'disagreements':disagreements/n2,
-                'tandem_risk':np.average(np.average(tandem_risks/n2, weights=self._rho, axis=1), weights=self._rho),
-                'tandem_risks':tandem_risks/n2,
-                'n2':n2,
-                'n2_min':np.min(n2)
-                }
+    def tandem_risk(self, data=None, incl_oob=True):
+        trsk, n2 = self.tandem_risks(data, incl_oob)
+        return np.average(np.average(trsk/n2, weights=self._rho, axis=1), weights=self._rho), np.min(n2)
+    def tandem_risks(self, data=None, incl_oob=True):
+        incl_oob = incl_oob and self._sample_mode is not None
+        if data is None and not incl_oob:
+            util.warn('Warning, MVBase.tandem_risks: Missing data!')
+            return None
+        m     = len(self._estimators)
+        n2    = np.zeros((m,m))
+        tandem_risks = np.zeros((m,m))
+        
+        if incl_oob:
+            (preds,targs) = self._OOB
+            # preds = [(idx, preds)] * n_estimators
+            otand, on2 = util.oob_tandem_risks(preds,targs)
+            n2           += on2
+            tandem_risks += otand
 
-        if val_data is not None:
-            stats['mv_risk'] = mv_risk
-            stats['n_val']   = valX.shape[0]
+        if data is not None:
+            assert(len(data)==2)
+            X,Y = data
+            P = self.predict_all(X)
+            
+            n2            += X.shape[0]
+            tandem_risks  += util.tandem_risks(P, Y)
 
-        if unlabeled_data is not None:
-            ulP = self.predict_all(unlabeled_data)
-            u_disagreements  = np.copy(disagreements) + util.disagreements(ulP)
-            u_n2             = np.copy(n2) + ulP.shape[1]
+        return tandem_risks, n2 
 
-            stats['u_disagreement'] = np.average(np.average(u_disagreements/u_n2, weights=self._rho, axis=1), weights=self._rho)
-            stats['u_disagreements'] = u_disagreements/u_n2
-            stats['u_n2'] = u_n2
-            stats['u_n2_min'] = np.min(u_n2)
+    def disagreement(self, data=None, incl_oob=True):
+        dis, n2 = self.disagreements(data, incl_oob)
+        return np.average(np.average(dis/n2, weights=self._rho, axis=1), weights=self._rho), np.min(n2)
+    def disagreements(self, data=None, incl_oob=True):
+        incl_oob = incl_oob and self._sample_mode is not None
+        if data is None and not incl_oob:
+            util.warn('Warning, MVBase.disagreements: Missing data!')
+            return None
+        m     = len(self._estimators)
+        n2    = np.zeros((m,m))
+        disagreements = np.zeros((m,m))
+        
+        if incl_oob:
+            (preds,_) = self._OOB
+            # preds = [(idx, preds)] * n_estimators
+            odis, on2 = util.oob_disagreements(preds)
+            n2            += on2
+            disagreements += odis
 
-        return stats
+        if data is not None:
+            X = data
+            P = self.predict_all(X)
+            
+            n2            += X.shape[0]
+            disagreements += util.disagreements(P)
+
+        return disagreements, n2 
