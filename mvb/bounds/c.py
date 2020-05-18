@@ -54,7 +54,9 @@ def C1(empirical_gibbs_risk, empirical_disagreement, m, md, KLQP, delta=0.05):
     KLQP : Kullback-Leibler divergence between prior and posterior
     delta : confidence parameter (default=0.05)
     """
-    if not validate_inputs(empirical_gibbs_risk, empirical_disagreement, m, KLQP, delta): return 1.0
+    # Removed check, as a) no longer using empirical_gibbs_risk for input and
+    # b), the check may fail in the OOB setting (while not actually being invalid)
+    # if not validate_inputs(empirical_gibbs_risk, empirical_disagreement, m, KLQP, delta): return 1.0
 
     xi_m = xi(m)
     right_hand_side = ( KLQP + log( 2 * xi_m / delta ) ) / m
@@ -77,10 +79,9 @@ def C2(empirical_joint_error, empirical_disagreement, md, KLQP, delta=0.05):
     KLQP : Kullback-Leibler divergence between prior and posterior
     delta : confidence parameter (default=0.05)
     """
-    if not validate_inputs(0.49, empirical_disagreement, md, KLQP, delta): return 1.0
+    # Removed check, as a) no longer using empirical_gibbs_risk for input and
+    # b), the check may fail in the OOB setting (while not actually being invalid)
     #if not validate_inputs(empirical_gibbs_risk, empirical_disagreement, m, KLQP, delta): return 1.0
-
-    #empirical_joint_error = empirical_gibbs_risk - empirical_disagreement/2
 
     xi_md = xi(md)
     right_hand_side  = (2*KLQP + log( (xi_md+md)/delta ) ) / md
