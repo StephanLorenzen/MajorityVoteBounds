@@ -213,30 +213,39 @@ class MVBounds:
             if unlabeled_data is not None or (stats is not None and 'u_disagreement' in stats):
                 results['MVu'] = self.bound('MVu', stats=stats)
         return results
-
+    
     def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
         stats = dict()
         if labeled_data is not None:
-            stats['mv_risk'] = self.risk(labeled_data)
+            stats['mv_preds'] = (self.predict_all(labeled_data[0]), labeled_data[1])
             stats['mv_n']    = labeled_data[0].shape[0]
-        
+
         stats['risks'], stats['n'] = self.risks(labeled_data, incl_oob)
         stats['risks'] /= stats['n']
-        stats['gibbs_risk'] = np.average(stats['risks'], weights=self._rho)
-        stats['n_min'] = np.min(stats['n'])
 
         stats['tandem_risks'], stats['n2'] = self.tandem_risks(labeled_data, incl_oob)
         stats['tandem_risks'] /= stats['n2']
-        stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
-        stats['n2_min'] = np.min(stats['n2'])
 
         dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
         stats['disagreements'] = dis/stats['n2']
-        stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         if unlabeled_data is not None:
             udis, un2 = self.disagreements(unlabeled_data, False)
             stats['u_n2'] = stats['n2']+un2
             stats['u_disagreements'] = (dis+udis) / stats['u_n2']
+        return self.aggregate_stats(stats)
+    
+    def aggregate_stats(self, stats):
+        if 'mv_preds' in stats:
+            stats['mv_risk'] = util.mv_risk(self._rho, stats['mv_preds'][0], stats['mv_preds'][1]) #self.risk(labeled_data)
+        
+        stats['gibbs_risk'] = np.average(stats['risks'], weights=self._rho)
+        stats['n_min'] = np.min(stats['n'])
+
+        stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
+        stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        stats['n2_min'] = np.min(stats['n2'])
+        
+        if 'u_disagreements' in stats:
             stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
             stats['u_n2_min'] = np.min(stats['u_n2'])
         return stats
