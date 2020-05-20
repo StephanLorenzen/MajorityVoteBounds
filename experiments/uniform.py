@@ -13,20 +13,26 @@ outpath = 'out/uniform/'
 SEED = 1000
 
 DATA_SETS = [
-        ('Splice',      200),
-        ('Adult',       200),
-        ('GermanNumer', 200),
-        ('SVMGuide1',   200),
-        ('w1a',         200),
-        ('Phishing',    200),
-        ('Letter:AB',   200),
-        ('Letter:DO',   200),
-        ('Letter:OQ',   200),
-        ('Mushroom',    200),
-        ('Letter',      200),
-        ('Shuttle',     200),
-        ('Segment',     200),
-        ('Pendigits',   200)
+        ('Splice',      100),
+        ('Adult',       100),
+        ('SVMGuide1',   100),
+        ('w1a',         100),
+        ('Phishing',    100),
+        #('Letter:AB',   200),
+        #('Letter:DO',   200),
+        #('Letter:OQ',   200),
+        ('Mushroom',    100),
+        ('Letter',      100),
+        ('Shuttle',     100),
+        #('Segment',     200),
+        ('Pendigits',   100),
+        ('Protein',     100),
+        ('SatImage',    100),
+        ('Sensorless',  100),
+        ('USPS',        100),
+        ('Connect-4',   100),
+        ('Cod-RNA',     100),
+        ('mnist',       100)
         ]
 DATA_SETS.sort(key=lambda x: x[0])
     
