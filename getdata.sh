@@ -117,3 +117,41 @@ wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/p
 cat tmp >> pendigits/pendigits.data
 rm tmp
 
+# Get protein
+mkdir protein
+wget -O protein/protein.data.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/protein.bz2
+wget -O tmp.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/protein.t.bz2
+bzip2 -d protein/protein.data.bz2
+bzip2 -d tmp.bz2
+cat tmp >> protein/protein.data
+rm tmp
+
+# Get satimage
+mkdir satimage
+wget -O satimage/satimage.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/satimage.scale 
+wget -O tmp https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/satimage.scale.t
+cat tmp >> satimage/satimage.data
+rm tmp
+
+# Get Sensorless 
+mkdir sensorless
+wget -O sensorless/sensorless.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/Sensorless
+
+# Get usps
+mkdir usps 
+wget -O usps/usps.data.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/usps.bz2 
+wget -O tmp.bz2 https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/usps.t.bz2
+bzip2 -d usps/usps.data.bz2
+bzip2 -d tmp.bz2
+cat tmp >> usps/usps.data
+rm tmp
+
+# Get connect-4
+mkdir connect4
+wget -O connect4/connect4.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multiclass/connect-4
+
+# Get cod-rna
+mkdir cod-rna 
+wget -O cod-rna/cod-rna.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/cod-rna
+
+

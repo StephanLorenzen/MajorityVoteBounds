@@ -13,16 +13,21 @@ def _remove_missing(path, sfx='.data'):
                     oc.write(l)
     return clean
 
-def _read_idx_file(path, d):
+def _read_idx_file(path, d, sep=None):
     X = []
     Y = []
     with open(path) as f:
         for l in f:
             x = np.zeros(d)
-            l = l.strip().split()
+            l = l.strip().split() if sep is None else l.strip().split(sep)
             Y.append(int(l[0]))
             for pair in l[1:]:
+                pair = pair.strip()
+                if pair=='':
+                    continue
                 (i,v) = pair.split(":")
+                if v=='':
+                    import pdb; pdb.set_trace()
                 x[int(i)-1] = float(v)
             X.append(x)
     return np.array(X),np.array(Y)
@@ -118,6 +123,18 @@ def _segment(path):
     return _read_idx_file(path+"segment/segment.data", 19)
 def _pendigits(path):
     return _read_idx_file(path+"pendigits/pendigits.data", 16)
+def _protein(path):
+    return _read_idx_file(path+"protein/protein.data", 357, '  ')
+def _satimage(path):
+    return _read_idx_file(path+"satimage/satimage.data", 36)
+def _sensorless(path):
+    return _read_idx_file(path+"sensorless/sensorless.data", 48)
+def _usps(path):
+    return _read_idx_file(path+"usps/usps.data", 256)
+def _connect4(path):
+    return _read_idx_file(path+"connect4/connect4.data", 126)
+def _codrna(path):
+    return _read_idx_file(path+"cod-rna/cod-rna.data", 8)
 
 DATA_SETS = {
         'Letter':      lambda p: _letter(p, None, None),
@@ -144,7 +161,13 @@ DATA_SETS = {
         'mnist':       _mnist,
         'Shuttle':     _shuttle,
         'Segment':     _segment,
-        'Pendigits':   _pendigits
+        'Pendigits':   _pendigits,
+        'Protein':     _protein,
+        'SatImage':    _satimage,
+        'Sensorless':  _sensorless,
+        'USPS':        _usps,
+        'Connect-4':   _connect4,
+        'Cod-RNA':     _codrna
         }
 
 def _relabel(V):
