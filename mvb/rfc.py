@@ -13,7 +13,7 @@ class RandomForestClassifier(mvbase.MVBounds):
             max_features=None,
             min_samples_split=2,
             min_samples_leaf=1,
-            bootstrap=True,
+            sample_mode="bootstrap",
             max_depth=None,
             random_state=None
             ):
@@ -32,7 +32,7 @@ class RandomForestClassifier(mvbase.MVBounds):
                         random_state=prng)
             estimators.append(tree)
 
-        super().__init__(estimators, rho, sample_mode='bootstrap' if bootstrap else None, random_state=prng)
+        super().__init__(estimators, rho, sample_mode=sample_mode, random_state=prng)
 
     def fit(self, X, Y):
         estimate = super().fit(X,Y)
