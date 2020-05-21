@@ -29,6 +29,7 @@ class MVBounds:
     def fit(self, X, Y):
         X, Y = np.array(X), np.array(Y)
         self._classes = np.unique(Y)
+        self._rho = util.uniform_distribution(len(self._estimators))
 
         # No sampling
         if self._sample_mode is None:
@@ -80,8 +81,12 @@ class MVBounds:
                 # Predict on OOB
                 oob_P = est.predict(oob_X)
 
+                M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
+                M_est[oob_idx] = 1
+                P_est[oob_idx] = oob_P
+
                 # Save predictions on oob and validation set for later
-                preds.append((oob_idx, oob_P)) 
+                preds.append((M_est,P_est))
             
             self._OOB = (preds, Y)
             return self.risk()
@@ -104,7 +109,7 @@ class MVBounds:
         
         return np.array(P)
 
-    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, use_cma=True):
+    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, optimizer='CMA'):
         if bound not in {"Lambda", "MV"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
@@ -120,7 +125,7 @@ class MVBounds:
         elif(bound=='MV'):
             if unlabeled_data is None:
                 tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-                (optMV,rho,lam) = optimizeMV(tand/n2s, np.min(n2s), use_cma=use_cma)
+                (optMV,rho,lam) = optimizeMV(tand/n2s, np.min(n2s), optimizer=optimizer)
                 self._rho = rho
                 return (optMV, rho, lam)
             else:
@@ -129,7 +134,7 @@ class MVBounds:
                     ulX = np.concatenate((ulX,labeled_data[0]), axis=0)
                 risks, ns = self.risks(labeled_data, incl_oob)
                 dis, n2s = self.disagreements(ulX, incl_oob)
-                (optMV,rho,lam,gam) = optimizeMVu(risks/ns,dis/n2s,np.min(ns),np.min(n2s),use_cma=use_cma)
+                (optMV,rho,lam,gam) = optimizeMVu(risks/ns,dis/n2s,np.min(ns),np.min(n2s),optimizer=optimizer)
                 self._rho = rho
                 return (optMV, rho, lam, gam)
 
@@ -259,7 +264,7 @@ class MVBounds:
             return 1.0
         if data is None:
             (preds,targs) = self._OOB
-            return util.oob_estimate(self._rho, preds, targs)
+            return 1.0 #util.oob_estimate(self._rho, preds, targs)
         else:
             (X,Y) = data
             P = self.predict_all(X)
@@ -334,9 +339,9 @@ class MVBounds:
         m     = len(self._estimators)
         n2    = np.zeros((m,m))
         disagreements = np.zeros((m,m))
-        
+       
         if incl_oob:
-            (preds,_) = self._OOB
+            (preds,Y) = self._OOB
             # preds = [(idx, preds)] * n_estimators
             odis, on2 = util.oob_disagreements(preds)
             n2            += on2

@@ -27,7 +27,9 @@ def kl(rho,pi):
 def uniform_distribution(m):
     return (1.0/m) * np.ones((m,))
 
-
+def random_distribution(m):
+    dist = np.random.random(m)
+    return dist/np.sum(dist)
 
 ######################
 # Various stats
@@ -112,65 +114,45 @@ def oob_risks(preds, targs):
     m     = len(preds)
     risks = np.zeros((m,))
     ns    = np.zeros((m,))
-    for j, (idx, P) in enumerate(preds):
-        risks[j] = np.sum(P!=targs[idx])
-        ns[j] = idx.shape[0]
+    for j, (M, P) in enumerate(preds):
+        risks[j] = np.sum(P[M==1]!=targs[M==1])
+        ns[j] = np.sum(M)
     return risks, ns
 
 def oob_disagreements(preds):
     m = len(preds)
-
     disagreements = np.zeros((m,m))
     n2            = np.zeros((m,m))
 
     for i in range(m):
-        (i_idx, i_preds) = preds[i]
+        (M_i, P_i) = preds[i]
         for j in range(i, m):
-            (j_idx, j_preds) = preds[j]
-            i_mp = dict(zip(i_idx,i_preds))
-            j_mp = dict(zip(j_idx,j_preds))
-
-            dis, c = 0, 0
-            for idx in set(i_mp.keys()) & set(j_mp.keys()): # set(...) wrapper for P2.7 compat
-                i_p = i_mp[idx]
-                j_p = j_mp[idx]
-                dis  += 1 if i_p != j_p else 0
-                c    += 1
-
-            disagreements[i,j] += dis
-            n2[i,j]            += c
+            (M_j, P_j) = preds[j]
+            M = np.multiply(M_i,M_j)
+            disagreements[i,j] = np.sum(P_i[M==1]!=P_j[M==1])
+            n2[i,j] = np.sum(M)
+            
             if i != j:
-                disagreements[j,i]  += dis
-                n2[j,i]             += c
-    
+                disagreements[j,i] = disagreements[i,j]
+                n2[j,i]            = n2[i,j]
     return disagreements, n2    
 
 def oob_tandem_risks(preds, targs):
     m = len(preds)
-
     tandem_risks  = np.zeros((m,m))
     n2            = np.zeros((m,m))
 
     for i in range(m):
-        (i_idx, i_preds) = preds[i]
+        (M_i, P_i) = preds[i]
         for j in range(i, m):
-            (j_idx, j_preds) = preds[j]
-            i_mp = dict(zip(i_idx,i_preds))
-            j_mp = dict(zip(j_idx,j_preds))
-
-            tand, c = 0, 0
-            for idx in set(i_mp.keys()) & set(j_mp.keys()): # set(...) wrapper for P2.7 compat
-                y   = targs[idx]
-                i_p = i_mp[idx]
-                j_p = j_mp[idx]
-                tand += 1 if i_p != y and j_p != y else 0
-                c    += 1
-
-            tandem_risks[i,j]  += tand
-            n2[i,j]            += c
+            (M_j, P_j) = preds[j]
+            M = np.multiply(M_i,M_j)
+            tandem_risks[i,j] = np.sum(np.logical_and(P_i[M==1]!=targs[M==1], P_j[M==1]!=targs[M==1]))
+            n2[i,j] = np.sum(M)
+            
             if i != j:
-                tandem_risks[j,i]   += tand
-                n2[j,i]             += c
+                tandem_risks[j,i] = tandem_risks[i,j]
+                n2[j,i]           = n2[i,j]
     
     return tandem_risks, n2    
 
