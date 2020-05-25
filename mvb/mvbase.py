@@ -52,21 +52,21 @@ class MVBounds:
             elif type(self._sample_mode) is int:
                 n_sample = self._sample_mode
             elif type(self._sample_mode) is float:
-                n_sample = ceil(X.shape[0]*self._sample_mode)
+                n_sample = ceil(n*self._sample_mode)
             else:
                 Utils.warn('Warning, fit: unknown sample_type')
                 return None
 
             for est in self._estimators:
                 oob_idx, oob_X = None, None
-                
                 # Sample points for training (w. replacement)
                 while True: 
                     # Repeat until at least one example of each class
                     # (mostly relevant if n_sample is very small)
-                    t_idx = self._prng.randint(n, size=n)\
-                            if self._sample_mode=='bootstrap'\
-                            else self._prng.choice(n, n_sample, replace=False)
+                    #t_idx = self._prng.randint(n, size=n)\
+                    #        if self._sample_mode=='bootstrap'\
+                    #        else self._prng.choice(n, n_sample, replace=False)
+                    t_idx = self._prng.randint(n, size=n_sample)
                     t_X   = X[t_idx]
                     t_Y   = Y[t_idx]
                     if np.unique(t_Y).shape[0] > 1:
@@ -109,7 +109,7 @@ class MVBounds:
         
         return np.array(P)
 
-    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, optimizer='CMA'):
+    def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
         if bound not in {"Lambda", "MV"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
@@ -125,7 +125,7 @@ class MVBounds:
         elif(bound=='MV'):
             if unlabeled_data is None:
                 tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-                (optMV,rho,lam) = optimizeMV(tand/n2s, np.min(n2s), optimizer=optimizer)
+                (optMV,rho,lam) = optimizeMV(tand/n2s, np.min(n2s), options=options)
                 self._rho = rho
                 return (optMV, rho, lam)
             else:
@@ -134,7 +134,7 @@ class MVBounds:
                     ulX = np.concatenate((ulX,labeled_data[0]), axis=0)
                 risks, ns = self.risks(labeled_data, incl_oob)
                 dis, n2s = self.disagreements(ulX, incl_oob)
-                (optMV,rho,lam,gam) = optimizeMVu(risks/ns,dis/n2s,np.min(ns),np.min(n2s),optimizer=optimizer)
+                (optMV,rho,lam,gam) = optimizeMVu(risks/ns,dis/n2s,np.min(ns),np.min(n2s),options=options)
                 self._rho = rho
                 return (optMV, rho, lam, gam)
 

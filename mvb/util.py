@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.linalg as la
 from math import log
 from sklearn.metrics import accuracy_score
 
@@ -30,6 +31,10 @@ def uniform_distribution(m):
 def random_distribution(m):
     dist = np.random.random(m)
     return dist/np.sum(dist)
+
+def softmax(dist):
+    dexp = np.exp(dist)
+    return dexp / np.sum(dexp, axis=0)
 
 ######################
 # Various stats
@@ -169,20 +174,121 @@ def mv_preds(rho, preds):
     assert(preds.shape[1] == m)
     n = preds.shape[0]
 
-    results = np.zeros((n,))
+    tr = np.min(preds)
+    preds -= tr
+
+    results = np.zeros(n)
     for i,pl in enumerate(preds):
-        bins = dict()
-        for r,vote in zip(rho,pl):
-            vote = int(vote)
-            if vote not in bins:
-                bins[vote] = 0.0
-            bins[vote] += r
+        results[i] = np.argmax(np.bincount(pl, weights=rho))
+    return results+tr
+
+##########################
+# Optimizers
+
+def GD(grad, func, x0, max_iterations=None, eps=10**-9, lr=0.1):
+    max_iterations=10000 if max_iterations is None else max_iterations
+
+    x  = x0
+    fv = func(x)
+    lr *= x0.shape[0]
+    for t in range(1, max_iterations):
+        x1  = x - lr*grad(x)
+        fv1 = func(x1)
+        if abs(fv-fv1) < eps or lr < eps:
+            break
+        if fv1 > fv:
+            lr *= 0.5
+            fv1 = fv
+        else:
+            x  = x1
+            fv = fv1
+    return x
+
+def RProp(grad, x0,
+        max_iterations=None,\
+        eps=10**-9,\
+        step_init=0.1,\
+        step_min=10**-9,\
+        step_max=10**5,\
+        inc_fact=1.1,\
+        dec_fact=0.5):
+    max_iterations=10000 if max_iterations is None else max_iterations
+    
+    dim  = x0.shape[0]
+    dw   = np.zeros((max_iterations, dim))
+    w    = np.zeros((max_iterations, dim))
+    w[0] = x0
+    s_size = np.ones(dim) * step_init
+    t = 1
+    while t < max_iterations:
+        dw[t] = grad(w[t-1])
+        if la.norm(dw[t]) < eps:
+            break
+    
+        # Update set size
+        det = np.multiply(dw[t], dw[t-1])
+        # Increase where det>0
+        s_size[det>0] = s_size[det>0]*inc_fact
+        # Decrease where det<0
+        s_size[det<0] = s_size[det<0]*dec_fact
+        # Upper/lower bound by min/max
+        s_size        = s_size.clip(step_min, step_max)
+
+        # Update w
+        w[t] = w[t-1] - np.multiply(np.sign(dw[t]), s_size)
+        t += 1
+    return w[t-1]
+
+def iRProp(grad, func, x0,
+        max_iterations=None,\
+        eps=10**-9,\
+        step_init=0.1,\
+        step_min=10**-5,\
+        step_max=10**5,\
+        inc_fact=1.1,\
+        dec_fact=0.5):
+    max_iterations=1000 if max_iterations is None else max_iterations
+    
+    n    = x0.shape[0]
+    dx   = np.zeros((max_iterations, n))
+    x    = np.zeros((max_iterations, n))
+    x[0] = x0
+    step = np.ones(n)*step_init
+    
+    fx   = np.ones(max_iterations)
+    fx[0]= func(x[0])
+    tb   = 0
+
+    t = 1
+    while t < max_iterations:
+        delta = fx[t-1]-fx[t-2] if t>1 else -1.0
+        if t-tb > 10:
+            break
+        dx[t] = grad(x[t-1])
         
-        res   = -1
-        mvote = 0
-        for b, vote in bins.items():
-            if vote > mvote:
-                mvote = vote
-                res = b
-        results[i] = res
-    return results
+        # Update set size
+        det = np.multiply(dx[t], dx[t-1])
+        # Increase where det>0
+        step[det>0] = step[det>0]*inc_fact
+        # Decrease where det<0
+        step[det<0] = step[det<0]*dec_fact
+        # Upper/lower bound by min/max
+        step        = step.clip(step_min, step_max)
+        
+        # Update w
+        # If det >= 0, same as RProp
+        x[t][det>=0] = x[t-1][det>=0] - np.multiply(np.sign(dx[t]), step)[det>=0]
+        # If func(x[t-1])>func(x[t-2]) set x[t] to x[t-2] where det<0 (only happens if t>1, as det==0 for t=1)
+        if delta>0:
+            x[t][det<0] = x[t-2][det<0]
+        # Reset dx[t] = 0 where det<0
+        dx[t][det<0] = 0
+        
+        # Compute func value
+        fx[t] = func(x[t])
+        if fx[t] < fx[tb]:
+            tb = t
+
+        t += 1
+    return x[tb]
+
