@@ -135,6 +135,29 @@ def _connect4(path):
     return _read_idx_file(path+"connect4/connect4.data", 126)
 def _codrna(path):
     return _read_idx_file(path+"cod-rna/cod-rna.data", 8)
+def _fashionmnist(path):
+    import gzip
+    f = gzip.open(path+"fashion-mnist/fashion-mnist-train.data.gz")
+    f.read(16)
+    buf = f.read(28*28*60000)
+    X1 = np.frombuffer(buf, dtype=np.uint8).astype(np.float32).reshape(60000,28*28)    
+    f = gzip.open(path+"fashion-mnist/fashion-mnist-test.data.gz")
+    f.read(16)
+    buf = f.read(28*28*10000)
+    X2 = np.frombuffer(buf, dtype=np.uint8).astype(np.float32).reshape(10000,28*28)
+    X = np.concatenate((X1,X2),axis=0)
+    
+    f = gzip.open(path+"fashion-mnist/fashion-mnist-train.label.gz")
+    f.read(8)
+    buf = f.read(60000)
+    Y1 = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)    
+    f = gzip.open(path+"fashion-mnist/fashion-mnist-test.label.gz")
+    f.read(8)
+    buf = f.read(10000)
+    Y2 = np.frombuffer(buf, dtype=np.uint8).astype(np.float32)
+    Y = np.concatenate((Y1,Y2),axis=0)
+
+    return X,Y
 
 DATA_SETS = {
         'Letter':      lambda p: _letter(p, None, None),
@@ -167,7 +190,8 @@ DATA_SETS = {
         'Sensorless':  _sensorless,
         'USPS':        _usps,
         'Connect-4':   _connect4,
-        'Cod-RNA':     _codrna
+        'Cod-RNA':     _codrna,
+        'Fashion-mnist':_fashionmnist,
         }
 
 def _relabel(V):

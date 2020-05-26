@@ -154,4 +154,9 @@ wget -O connect4/connect4.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/da
 mkdir cod-rna 
 wget -O cod-rna/cod-rna.data https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/binary/cod-rna
 
-
+# Get fashion-mnist
+mkdir fashion-mnist
+wget -O fashion-mnist/fashion-mnist-test.data.gz https://github.com/zalandoresearch/fashion-mnist/blob/master/data/fashion/t10k-images-idx3-ubyte.gz?raw=true
+wget -O fashion-mnist/fashion-mnist-test.label.gz https://github.com/zalandoresearch/fashion-mnist/blob/master/data/fashion/t10k-labels-idx1-ubyte.gz?raw=true 
+wget -O fashion-mnist/fashion-mnist-train.data.gz https://github.com/zalandoresearch/fashion-mnist/blob/master/data/fashion/train-images-idx3-ubyte.gz?raw=true
+wget -O fashion-mnist/fashion-mnist-train.label.gz https://github.com/zalandoresearch/fashion-mnist/blob/master/data/fashion/train-labels-idx1-ubyte.gz?raw=true
