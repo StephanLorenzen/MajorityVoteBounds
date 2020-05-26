@@ -208,7 +208,7 @@ def RProp(grad, x0,
         max_iterations=None,\
         eps=10**-9,\
         step_init=0.1,\
-        step_min=10**-9,\
+        step_min=10**-20,\
         step_max=10**5,\
         inc_fact=1.1,\
         dec_fact=0.5):
@@ -243,7 +243,7 @@ def iRProp(grad, func, x0,
         max_iterations=None,\
         eps=10**-9,\
         step_init=0.1,\
-        step_min=10**-5,\
+        step_min=10^-20,\
         step_max=10**5,\
         inc_fact=1.1,\
         dec_fact=0.5):
@@ -281,6 +281,8 @@ def iRProp(grad, func, x0,
         # If func(x[t-1])>func(x[t-2]) set x[t] to x[t-2] where det<0 (only happens if t>1, as det==0 for t=1)
         if delta>0:
             x[t][det<0] = x[t-2][det<0]
+        else:
+            x[t][det<0] = x[t-1][det<0] - np.multiply(np.sign(dx[t]), step)[det<0]
         # Reset dx[t] = 0 where det<0
         dx[t][det<0] = 0
         
@@ -291,4 +293,3 @@ def iRProp(grad, func, x0,
 
         t += 1
     return x[tb]
-
