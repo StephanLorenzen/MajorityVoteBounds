@@ -57,6 +57,8 @@ def C1(empirical_gibbs_risk, empirical_disagreement, m, md, KLQP, delta=0.05):
     # Removed check, as a) no longer using empirical_gibbs_risk for input and
     # b), the check may fail in the OOB setting (while not actually being invalid)
     # if not validate_inputs(empirical_gibbs_risk, empirical_disagreement, m, KLQP, delta): return 1.0
+    if empirical_gibbs_risk > 0.5:
+        return 1.0
 
     xi_m = xi(m)
     right_hand_side = ( KLQP + log( 2 * xi_m / delta ) ) / m
@@ -87,6 +89,28 @@ def C2(empirical_joint_error, empirical_disagreement, md, KLQP, delta=0.05):
     right_hand_side  = (2*KLQP + log( (xi_md+md)/delta ) ) / md
 
     return maximize_c_bound_under_constraints(empirical_disagreement, empirical_joint_error, right_hand_side )
+
+
+def Ctnd(gibbs_risk, tandem_risk, n, n2, KLQP, delta=0.05):
+    """ C* bound of paper
+
+    Our version of the C2 bound
+    """
+    if gibbs_risk > 0.5:
+        return 1.0
+
+    rhs_tr = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
+    ub_tr  = solve_kl_sup(tandem_risk, rhs_tr)
+    lb_tr  = solve_kl_inf(tandem_risk, rhs_tr)
+    
+    rhs_g = ( KL + log(4.0*sqrt(n)/delta) ) / n
+    ub_g  = solve_kl_sup(gibbs_risk, rhs_g)
+   
+    if lb_tl-ub_g+0.25 <= 0:
+        return 1.0
+
+    return min(1.0, ub_tl/(lb_tl-ub_g+0.25))
+
 
 
 def C3(empirical_gibbs_risk, empirical_gibbs_disagreement, m, md, delta=0.05):
