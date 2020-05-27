@@ -2,7 +2,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, C3, MV, optimizeMV, MVu, optimizeMVu
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, MV, optimizeMV, MVu, optimizeMVu
 from math import ceil
 
 class MVBounds:
@@ -141,16 +141,19 @@ class MVBounds:
             return (optMV, rho, lam, gam)
 
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'MV', 'MVu']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'MV', 'MVu']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound=='SH' and labeled_data==None and (stats==None or 'mv_risk' not in stats):
             util.warn('Warning, MVBase.bound: Cannot apply SH without hold-out data!')
             return 1.0
-        elif bound in ['C1','C2','MVu'] and self._classes.shape[0] > 2:
+        elif bound in ['C1','C2','MVu','MVut'] and self._classes.shape[0] > 2:
             util.warn('Warning, MVBase.bound: Cannot apply '+bound+' to non-binary data!')
             return 1.0
-        
+        elif bound=='MVut' and (unlabeled_data is None and (stats is None or 'u_disagreement' not in stats)):
+            util.warn('Warning, MVBase.bound: Cannot apply MVut without unlabeled data')
+            return 1.0
+
         pi = util.uniform_distribution(len(self._estimators))
         KL = util.kl(self._rho, pi)
         if stats is not None:
@@ -162,9 +165,13 @@ class MVBounds:
                 return C1(stats['gibbs_risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
             elif bound=='C2':
                 return C2(stats['tandem_risk'], stats['disagreement'], stats['n2_min'], KL)
+            elif bound=='CTD':
+                return CTD(stats['gibbs_risk'], stats['tandem_risk'], stats['n_min'], stats['n2_min'], KL)
             elif bound=='MV':
                 return MV(stats['tandem_risk'], stats['n2_min'], KL)
             elif bound=='MVu':
+                return MVu(stats['gibbs_risk'], stats['disagreement'], stats['n_min'], stats['n2_min'], KL)
+            elif bound=='MVut':
                 return MVu(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             else:
                 return None
@@ -185,20 +192,23 @@ class MVBounds:
                 ulX = None if labeled_data is None else labeled_data[0]
                 dis, n2_min  = self.disagreement(ulX, incl_oob)
                 assert(n2t==n2_min)
-                return C2(trisk, dis, n2_min, KL)
+                return C2(tand, dis, n2_min, KL)
+            elif bound=='CTD':
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
+                return CTD(grisk, tand, n_min, n2_min)
             elif bound=='MV':
                 tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
-                return MV(trisk, n2_min, KL)
+                return MV(tand, n2_min, KL)
             elif bound=='MVu':
                 grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
-                ulX = unlabeled_data
-                if labeled_data != None:
-                    if ulX == None:
-                        ulX = labeled_data[0]
-                    else:
-                        ulX = np.concatenate((ulX, labeled_data[0]), axis=0)
+                ulX = labeled_data[0] if labeled_data is not None else None
                 dis, n2_min  = self.disagreement(ulX, incl_oob)
-                return MVu(grisk, disagreement, n_min, n2_min, KL)
+                return MVu(grisk, dis, n_min, n2_min, KL)
+            elif bound=='MVut':
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                u_dis, u_n2_min  = self.disagreement(unlabled_data, incl_oob)
+                return MVu(grisk, u_dis, n_min, u_n2_min, KL)
             else:
                 return None
     
@@ -209,12 +219,15 @@ class MVBounds:
 
         results['PBkl'] = self.bound('PBkl', stats=stats)
         results['MV']   = self.bound('MV', stats=stats)
+        results['CTD'] = self.bound('CTD', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
             results['C1']  = self.bound('C1', stats=stats)
             results['C2']  = self.bound('C2', stats=stats)
             results['MVu'] = self.bound('MVu', stats=stats)
+            if unlabeled_data is not None or (stats is not None and 'u_disagreement' in stats):
+                results['MVut'] = self.bound('MVut', stats=stats)
         return results
     
     def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
@@ -233,11 +246,8 @@ class MVBounds:
         stats['disagreements'] = dis/stats['n2']
         if unlabeled_data is not None:
             udis, un2 = self.disagreements(unlabeled_data, False)
-            stats['u_n2'] = stats['n2']+un2
-            stats['u_disagreements'] = (dis+udis) / stats['u_n2']
-        else:
-            stats['u_n2'] = stats['n2']
-            stats['u_disagreements'] = dis / stats['u_n2']
+            stats['u_n2'] = un2
+            stats['u_disagreements'] = udis / un2
         return self.aggregate_stats(stats)
     
     def aggregate_stats(self, stats):
@@ -250,9 +260,10 @@ class MVBounds:
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
-        
-        stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
-        stats['u_n2_min'] = np.min(stats['u_n2'])
+       
+        if 'u_disagreements' in stats:
+            stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
+            stats['u_n2_min'] = np.min(stats['u_n2'])
         return stats
 
     # Returns the accuracy on data = (X,Y). If data is None, returns the OOB-estimate
