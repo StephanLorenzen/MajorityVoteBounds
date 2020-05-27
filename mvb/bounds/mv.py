@@ -6,17 +6,20 @@ from math import log, sqrt, exp
 from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp 
 
-def MV(tandem_risk, n, KL, delta=0.05):
+def TND(tandem_risk, n, KL, delta=0.05):
     rhs   = ( 2.0*KL + log(2.0*sqrt(n)/delta) ) / n
     ub_tr = min(0.25, solve_kl_sup(tandem_risk, rhs))
     return 4*ub_tr
 
-def MVu(gibbs_risk, disagreement, n, n2u, KL, delta=0.05):
+def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05, transductive=False):
     g_rhs = ( KL + log(4.0*sqrt(n)/delta) ) / n
     g_ub  = min(1.0, solve_kl_sup(gibbs_risk, g_rhs))
     
-    d_rhs = ( 2.0*KL + log(4.0*sqrt(n2u)/delta) ) / n2u
-    d_lb  = solve_kl_inf(disagreement, d_rhs)
+    if transductive:
+        d_lb = disagreement
+    else:
+        d_rhs = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
+        d_lb  = solve_kl_inf(disagreement, d_rhs)
     return min(1.0, 4*g_ub - 2*d_lb)
 
 def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
@@ -40,7 +43,7 @@ def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
     return min(1.0, ub_tr/(lb_tr-ub_g+0.25))
 
 # Options
-def optimizeMV(tandem_risks, n2, delta=0.05, options=None):
+def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     
@@ -130,7 +133,7 @@ def optimizeMV(tandem_risks, n2, delta=0.05, options=None):
         
         return (min(1.0,4*b), softmax(rho), lam)
 
-def optimizeMVu(gibbs_risks, disagreements, n, n2u, delta=0.05, options=None):
+def optimizeDIS(gibbs_risks, disagreements, n, n2u, delta=0.05, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'RProp')
     
