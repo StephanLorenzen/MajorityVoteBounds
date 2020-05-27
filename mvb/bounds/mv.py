@@ -19,6 +19,26 @@ def MVu(gibbs_risk, disagreement, n, n2u, KL, delta=0.05):
     d_lb  = solve_kl_inf(disagreement, d_rhs)
     return min(1.0, 4*g_ub - 2*d_lb)
 
+def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
+    """ C* bound of paper
+
+    Our version of the C2 bound
+    """
+    if gibbs_risk > 0.5:
+        return 1.0
+
+    rhs_tr = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
+    ub_tr  = solve_kl_sup(tandem_risk, rhs_tr)
+    lb_tr  = solve_kl_inf(tandem_risk, rhs_tr)
+    
+    rhs_g = ( KL + log(4.0*sqrt(n)/delta) ) / n
+    ub_g  = solve_kl_sup(gibbs_risk, rhs_g)
+   
+    if lb_tr-ub_g+0.25 <= 0:
+        return 1.0
+
+    return min(1.0, ub_tr/(lb_tr-ub_g+0.25))
+
 # Options
 def optimizeMV(tandem_risks, n2, delta=0.05, options=None):
     options = dict() if options is None else options
