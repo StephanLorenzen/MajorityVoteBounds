@@ -11,15 +11,12 @@ def TND(tandem_risk, n, KL, delta=0.05):
     ub_tr = min(0.25, solve_kl_sup(tandem_risk, rhs))
     return 4*ub_tr
 
-def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05, transductive=False):
+def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05):
     g_rhs = ( KL + log(4.0*sqrt(n)/delta) ) / n
     g_ub  = min(1.0, solve_kl_sup(gibbs_risk, g_rhs))
     
-    if transductive:
-        d_lb = disagreement
-    else:
-        d_rhs = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
-        d_lb  = solve_kl_inf(disagreement, d_rhs)
+    d_rhs = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
+    d_lb  = solve_kl_inf(disagreement, d_rhs)
     return min(1.0, 4*g_ub - 2*d_lb)
 
 def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
