@@ -181,7 +181,7 @@ DATA_SETS = {
         'Adult':       _adult,
         'GermanNumer': _numer,
         'w1a':         _w1a,
-        'mnist':       _mnist,
+        'MNIST':       _mnist,
         'Shuttle':     _shuttle,
         'Segment':     _segment,
         'Pendigits':   _pendigits,
@@ -191,7 +191,7 @@ DATA_SETS = {
         'USPS':        _usps,
         'Connect-4':   _connect4,
         'Cod-RNA':     _codrna,
-        'Fashion-mnist':_fashionmnist,
+        'Fashion-MNIST':_fashionmnist,
         }
 
 def _relabel(V):
