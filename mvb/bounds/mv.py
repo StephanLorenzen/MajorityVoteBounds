@@ -20,9 +20,7 @@ def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05):
     return min(1.0, 4*g_ub - 2*d_lb)
 
 def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
-    """ C* bound of paper
-
-    Our version of the C2 bound
+    """ CTD bound (tandem risk version of the C bound)
     """
     if gibbs_risk > 0.5:
         return 1.0
@@ -33,11 +31,12 @@ def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
     
     rhs_g = ( KL + log(4.0*sqrt(n)/delta) ) / n
     ub_g  = solve_kl_sup(gibbs_risk, rhs_g)
+    lb_g  = solve_kl_inf(gibbs_risk, rhs_g)
    
     if lb_tr-ub_g+0.25 <= 0:
         return 1.0
 
-    return min(1.0, ub_tr/(lb_tr-ub_g+0.25))
+    return min(1.0, (ub_tr-lb_g**2)/(lb_tr-ub_g+0.25))
 
 # Options
 def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
@@ -166,7 +165,7 @@ def optimizeDIS(gibbs_risks, disagreements, n, n2u, delta=0.05, options=None):
         if lam is None:
             lam = 2.0 / (sqrt((2.0*n*gr)/(KL+log(4.0*sqrt(n)/delta)) + 1) + 1)
         if gam is None:
-            if n2u*dis < 10**9:
+            if n2u*dis < 10**-9:
                 gam = 2.0
             else:
                 gam = min(2.0, sqrt( (4.0*KL+log(16.0*n2u/delta**2)) / (n2u*dis) ))

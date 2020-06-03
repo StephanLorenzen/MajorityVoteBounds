@@ -232,6 +232,9 @@ class MVBounds:
             udis, un2 = self.disagreements(unlabeled_data, False)
             stats['u_n2'] = stats['n2']+un2
             stats['u_disagreements'] = (dis+udis) / stats['u_n2']
+        else:
+            stats['u_n2'] = stats['n2']
+            stats['u_disagreements'] = dis / stats['u_n2']
         return self.aggregate_stats(stats)
     
     def aggregate_stats(self, stats):
