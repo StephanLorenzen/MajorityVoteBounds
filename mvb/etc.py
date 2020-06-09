@@ -1,3 +1,6 @@
+#
+# Implements ExtraTreesClassifier in the framework
+#
 import numpy as np
 from sklearn.tree import DecisionTreeClassifier as Tree
 from sklearn.utils import check_random_state

@@ -1,3 +1,12 @@
+#
+# Implements the main framework. Majority vote classifiers should implement this
+# framework by inheriting.
+#
+# Takes care of bagging/sample modes, computing statistics and bounds, and
+# optimizing weights.
+#
+# Implemented to fit the signature of similar classifiers from sklearn
+#
 import numpy as np
 from sklearn.utils import check_random_state
 
@@ -5,7 +14,8 @@ from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS
 from math import ceil
 
-class MVBounds:
+class MVBounds:i
+    # Constructor
     def __init__(
             self,
             estimators,
@@ -26,6 +36,7 @@ class MVBounds:
         self._OOB = None
         self._classes = None
 
+    # Fitting procedure
     def fit(self, X, Y):
         X, Y = np.array(X), np.array(Y)
         self._classes = np.unique(Y)
@@ -87,6 +98,7 @@ class MVBounds:
             self._OOB = (preds, Y)
             return self.risk()
 
+    # Predict for an input list. If Y!=None, returns risk on (X,Y) as well.
     def predict(self, X, Y=None):
         n = X.shape[0]
 
@@ -95,6 +107,7 @@ class MVBounds:
         return (mvP, util.risk(mvP, Y)) if Y is not None else mvP
         
 
+    # Returns individual predictions for each tree.
     def predict_all(self, X):
         n = X.shape[0]
         m = len(self._estimators)
@@ -105,6 +118,7 @@ class MVBounds:
         
         return np.array(P)
 
+    # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
         if bound not in {"Lambda", "TND", "DIS"}:
             util.warn('Warning, optimize_rho: unknown bound!')
@@ -133,6 +147,9 @@ class MVBounds:
             self._rho = rho
             return (bound, rho, lam, gam)
 
+    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS').
+    # A stats object or the relevant data must be given as input (unless classifier trained
+    # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
         if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
@@ -198,6 +215,7 @@ class MVBounds:
             else:
                 return None
     
+    # Compute all bounds, given relevant stats object or data
     def bounds(self, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
         results = dict()
         if stats is None:
@@ -214,6 +232,7 @@ class MVBounds:
             results['DIS'] = self.bound('DIS', stats=stats)
         return results
     
+    # Compute stats object
     def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
         stats = dict()
         if labeled_data is not None:
@@ -237,6 +256,7 @@ class MVBounds:
             stats['u_disagreements'] = dis / stats['u_n2']
         return self.aggregate_stats(stats)
     
+    # (Re-)Aggregate stats object. Useful if weighting has changed.
     def aggregate_stats(self, stats):
         if 'mv_preds' in stats:
             stats['mv_risk'] = util.mv_risk(self._rho, stats['mv_preds'][0], stats['mv_preds'][1]) 
@@ -260,6 +280,7 @@ class MVBounds:
             util.warn('Warning, MVBase.risk: No OOB data!')
             return 1.0
         if data is None:
+            #### WARNING: not implemented, not used TODO.
             (preds,targs) = self._OOB
             return 1.0 #util.oob_estimate(self._rho, preds, targs)
         else:
@@ -267,6 +288,7 @@ class MVBounds:
             P = self.predict_all(X)
             return util.mv_risk(self._rho,P,Y)
 
+    # Returns the Gibbs risk
     def gibbs_risk(self, data=None, incl_oob=True):
         rs, n = self.risks(data, incl_oob)
         return np.average(rs/n, weights=self._rho), np.min(n)
@@ -296,6 +318,7 @@ class MVBounds:
         
         return risks, n
 
+    # Returns the tandem risk
     def tandem_risk(self, data=None, incl_oob=True):
         trsk, n2 = self.tandem_risks(data, incl_oob)
         return np.average(np.average(trsk/n2, weights=self._rho, axis=1), weights=self._rho), np.min(n2)
@@ -325,6 +348,7 @@ class MVBounds:
 
         return tandem_risks, n2 
 
+    # Returns the disagreement
     def disagreement(self, data=None, incl_oob=True):
         dis, n2 = self.disagreements(data, incl_oob)
         return np.average(np.average(dis/n2, weights=self._rho, axis=1), weights=self._rho), np.min(n2)

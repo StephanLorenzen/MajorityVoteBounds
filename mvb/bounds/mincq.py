@@ -1,3 +1,4 @@
+# Implementation of the MinCq algorithm of Germain et al. Unused.
 import numpy as np
 from cvxopt import matrix, solvers
 from cvxpy import ECOS
@@ -21,18 +22,6 @@ def MinCqRaw(m, M, mu):
 
     G = np.vstack([-np.eye(n),np.eye(n)])
     h = np.vstack([np.zeros((n,1)), np.repeat(1.0/float(n),n).reshape(n,1)])
-    # -1  0  0  0  0     q1         0 
-    #    -1  0  0  0     q2         0
-    #  ...              ...    <   ...
-    #  1  0  0  0  0               1/n
-    #     1  0  0  0               1/n
-    #  ...                         ...
-   
-    #print("n="+str(n)+"="+str(G.shape[1]))
-    #print("p=1")
-    #print("Rank(A) = "+str(np.linalg.matrix_rank(A)))
-    #print("Rank([P;G;A]) = "+str(np.linalg.matrix_rank(np.vstack([P,G,A]))))
-
     G = matrix(G)
     h = matrix(h)
 

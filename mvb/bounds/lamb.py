@@ -1,9 +1,16 @@
+#
+# Implementation of the lambda bound and optimization procedure.
+#
+# Based on paper:
+# [Niklas Thiemann, Christian Igel, Olivier Wintenberger, and Yevgeny Seldin.
+#  A strongly quasiconvex385PAC-Bayesian bound. InAlgorithmic Learning Theory (ALT), 2017] 
+#
 import numpy as np
 
 from math import ceil, log, sqrt, exp
 from ..util import kl, uniform_distribution
 
-# Compute Igel bound:
+# Compute PAC-Bayes-Lambda-bound:
 def lamb(emp_risk, n, KL, delta=0.05):
     n = float(n)
 
@@ -13,7 +20,7 @@ def lamb(emp_risk, n, KL, delta=0.05):
     return min(1.0,2.0*bound)
 
 
-# Optimize Lambda bound:
+# Optimize PAC-Bayes-Lambda-bound:
 def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9):
     m = len(emp_risks)
     n = float(n)

@@ -1,3 +1,6 @@
+#
+# Various utility functions
+#
 import numpy as np
 import numpy.linalg as la
 from math import log
@@ -239,6 +242,11 @@ def RProp(grad, x0,
         t += 1
     return w[t-1]
 
+# Implementation based on paper:
+#
+# [Niklas Thiemann, Christian Igel, Olivier Wintenberger, and Yevgeny Seldin. A strongly
+#  quasiconvex385PAC-Bayesian bound. InAlgorithmic Learning Theory (ALT), 2017]
+#
 def iRProp(grad, func, x0,
         max_iterations=None,\
         eps=10**-9,\

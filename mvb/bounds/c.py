@@ -6,8 +6,7 @@ Risk Bounds for the Majority Vote: From a PAC-Bayesian Analysis to a Learning Al
 by Germain, Lacasse, Laviolette, Marchand and Roy (JMLR 2015)
 
 The C1 and C2 functions below are taken from file pac_bound_1.py and pac_bound_2.py resp.
-The original documentation for each function is preserved, with small modifications as described
-in our paper (see README).
+The original documentation for each function is preserved, with small modifications:
 
 Modifications:
 - Changed name name of function (pac_bound_one -> C1)

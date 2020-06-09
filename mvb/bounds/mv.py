@@ -1,16 +1,19 @@
-""" Computes the MV bound from the new paper.
-"""
+#
+# Implements the TND and DIS bounds, as well as the CTD bound (a new version of the C-bound).
+#
 
 import numpy as np
 from math import log, sqrt, exp
 from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp 
 
+# Implementation of TND
 def TND(tandem_risk, n, KL, delta=0.05):
     rhs   = ( 2.0*KL + log(2.0*sqrt(n)/delta) ) / n
     ub_tr = min(0.25, solve_kl_sup(tandem_risk, rhs))
     return 4*ub_tr
 
+# Implementation of DIS
 def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05):
     g_rhs = ( KL + log(4.0*sqrt(n)/delta) ) / n
     g_ub  = min(1.0, solve_kl_sup(gibbs_risk, g_rhs))
@@ -19,6 +22,7 @@ def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05):
     d_lb  = solve_kl_inf(disagreement, d_rhs)
     return min(1.0, 4*g_ub - 2*d_lb)
 
+# Implementation of CTD
 def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
     """ CTD bound (tandem risk version of the C bound)
     """
@@ -38,7 +42,10 @@ def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
 
     return min(1.0, (ub_tr-lb_g**2)/(lb_tr-ub_g+0.25))
 
-# Options
+# Optimize TND
+# options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
+#
+# Default for opt is iRProp
 def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
@@ -129,12 +136,16 @@ def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
         
         return (min(1.0,4*b), softmax(rho), lam)
 
+# Optimize DIS
+# options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
+#
+# Default for opt is iRProp
 def optimizeDIS(gibbs_risks, disagreements, n, n2u, delta=0.05, options=None):
     options = dict() if options is None else options
-    optimizer = options.get('optimizer', 'RProp')
+    optimizer = options.get('optimizer', 'iRProp')
     
     if optimizer not in ['CMA', 'GD', 'RProp', 'iRProp']: # 'Alternate' removed for now
-        warn('optimizeMVu: unknown optimizer: \''+optimizer+'\', using GD')
+        warn('optimizeDIS: unknown optimizer: \''+optimizer+'\', using GD')
         optimizer = 'GD'
     
     m = gibbs_risks.shape[0]

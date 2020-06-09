@@ -1,3 +1,6 @@
+#
+# Implements an SVM based majority vote in the framework
+#
 import numpy as np
 from sklearn.svm import SVC
 from sklearn.utils import check_random_state

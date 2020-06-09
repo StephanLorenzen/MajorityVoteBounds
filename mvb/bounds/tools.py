@@ -1,5 +1,5 @@
 #-*- coding:utf-8 -*-
-""" Computes the PBkl bound.
+""" Tools for bound computation.
 Implementation is taken from paper:
 
 Risk Bounds for the Majority Vote: From a PAC-Bayesian Analysis to a Learning Algorithm

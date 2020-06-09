@@ -1,3 +1,6 @@
+#
+# Helper for loading and handling data
+#
 import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.utils import check_random_state
@@ -13,6 +16,7 @@ def _remove_missing(path, sfx='.data'):
                     oc.write(l)
     return clean
 
+# Read idx file format (from LibSVM)
 def _read_idx_file(path, d, sep=None):
     X = []
     Y = []
@@ -32,6 +36,7 @@ def _read_idx_file(path, d, sep=None):
             X.append(x)
     return np.array(X),np.array(Y)
 
+## Data set functions
 def _letter(path, l1, l2):
     X = np.genfromtxt(path+"letter/letter-recognition.data",delimiter=",",dtype=str)
     y = X[:,0]
@@ -159,6 +164,7 @@ def _fashionmnist(path):
 
     return X,Y
 
+# Available data sets
 DATA_SETS = {
         'Letter':      lambda p: _letter(p, None, None),
         'Letter:AB':   lambda p: _letter(p, 'A', 'B'),
@@ -194,6 +200,7 @@ DATA_SETS = {
         'Fashion-MNIST':_fashionmnist,
         }
 
+# Relabel every non-numeric dimension
 def _relabel(V):
     assert(len(V.shape) == 2)
     for i in range(0, V.shape[1]):
@@ -209,18 +216,15 @@ def _relabel(V):
                 V[j,i] = mp[V[j,i]]
     return V
 
+# Shuffle and split (stratified) data set
 def split(X, Y, f, random_state=None):
-    #n = X.shape[0]
-    #s = int(float(f)*float(n))
     prng = check_random_state(random_state)
     X1,X2,Y1,Y2 = train_test_split(X, Y, test_size=1.0-f, shuffle=True, stratify=Y, random_state=prng)
-    #return X[:s],Y[:s],X[s:],Y[s:]
     return X1, Y1, X2, Y2
 
+# Load data - must be in data.DATA_SETS
 def load(dataset, path='data/'):
     assert(dataset in DATA_SETS)
-
-    #np.random.seed(seed)
 
     X,Y = DATA_SETS[dataset](path)
     X = _relabel(X)
@@ -229,7 +233,4 @@ def load(dataset, path='data/'):
     X = X.astype(float)
     Y = Y.astype(int)
 
-    #perm = np.random.permutation(X.shape[0])
-    #X,Y = X[perm], Y[perm]
-    
     return X,Y
