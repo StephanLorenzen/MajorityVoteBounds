@@ -109,3 +109,7 @@ data
 data/*
 out
 out/*
+
+# Links in subdiretories
+sample/mvb
+experiments/mvb

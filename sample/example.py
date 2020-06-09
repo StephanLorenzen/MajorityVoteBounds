@@ -1,7 +1,7 @@
 from mvb import RandomForestClassifier as RF
 from mvb import data as mldata
 
-dataset = 'Cod-RNA'
+dataset = 'Letter:OQ'
 m = 100
 
 print("Loading data set ["+dataset+"]...")
