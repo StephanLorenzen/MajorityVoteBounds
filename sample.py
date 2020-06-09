@@ -1,23 +1,24 @@
 from mvb import RandomForestClassifier as RF
 from mvb import data as mldata
 
-dataset = 'Letter:OQ'
-m = 50
-
-seed = 123
+dataset = 'Cod-RNA'
+m = 100
 
 print("Loading data set ["+dataset+"]...")
 X, Y = mldata.load(dataset)
+X, Y, testX, testY = mldata.split(X,Y,0.8)
 print("Done!")
 
 print("\n######### Bagging #########")
 print("Fitting random forest...")
-rf = RF(n_estimators=m, random_state=seed)
-oob_estimate = rf.fit(X, Y)
-print("Done! OOB estimate: "+str(oob_estimate))
+rf = RF(n_estimators=m)
+_ = rf.fit(X, Y)
+print("Predicting on test data...")
+_, risk_mv = rf.predict(testX, testY)
+print("Done! MV risk on test: "+str(risk_mv))
 print("")
 print("Computing statistics and bounds...")
-stats  = rf.stats(unlabeled_data=X)
+stats  = rf.stats()
 bounds = rf.bounds(stats=stats)
 print("Gibbs risk: "+str(stats['gibbs_risk']))
 print("Disagreement: "+str(stats['disagreement']))
@@ -29,19 +30,21 @@ print("  C2:    "+str(bounds.get('C2')))
 print("  CTD:   "+str(bounds['CTD']))
 print("  TND:   "+str(bounds['TND']))
 print("  DIS:   "+str(bounds.get('DIS')))
-print("  DIS-T: "+str(bounds.get('DIS-T')))
 
 print("\n######### Bagging+Validation #########")
-t_X, t_Y, v_X, v_Y = mldata.split(X, Y, 0.8, random_state=seed)
+t_X, t_Y, v_X, v_Y = mldata.split(X, Y, 0.5)
 print("Fitting random forest...")
-oob_estimate = rf.fit(t_X, t_Y)
-print("Done! OOB estimate: "+str(oob_estimate))
+_ = rf.fit(t_X, t_Y)
 print("Predicting on validation data...")
 _, risk_mv = rf.predict(v_X, v_Y)
 print("Done! MV risk on val: "+str(risk_mv))
 print("")
+print("Predicting on test data...")
+_, risk_mv = rf.predict(testX, testY)
+print("Done! MV risk on test: "+str(risk_mv))
+print("")
 print("Computing statistics and bounds...")
-stats  = rf.stats(labeled_data=(v_X,v_Y), unlabeled_data=X)
+stats  = rf.stats(labeled_data=(v_X,v_Y))
 bounds = rf.bounds(labeled_data=(v_X,v_Y), stats=stats)
 print("Gibbs risk: "+str(stats['gibbs_risk']))
 print("Disagreement: "+str(stats['disagreement']))
@@ -53,7 +56,5 @@ print("  C2:    "+str(bounds.get('C2')))
 print("  CTD:   "+str(bounds['CTD']))
 print("  TND:   "+str(bounds['TND']))
 print("  DIS:   "+str(bounds.get('DIS')))
-print("  DIS-T: "+str(bounds.get('DIS-T')))
 print("  SH:    "+str(bounds['SH']))
-
 
