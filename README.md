@@ -7,12 +7,12 @@ The implementation is provided as a module, `mvb`, which provides a python class
 * ExtraTreesClassifier
 * SVMVotersClassifier
 
-Each provide a majority vote classifier with an interface similar to `sklearn.ensemble.RandomForestClassifier` etc. The voters used in these implemtations are besed on `sklearn.tree.DecisionTreeClassifier` and `sklearn.svm.SVC`. 
+Each provide a majority vote classifier with an interface similar to `sklearn.ensemble.RandomForestClassifier` etc. The voters used in these implemtations are besed on `sklearn.tree.DecisionTreeClassifier` and `sklearn.svm.SVC` [4]. 
 Furthermore, the submodule `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in submodule `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` are taken from the implementation for the paper [2].
 
 In addition, two directories areincluded in the repository:
 * **sample** provides a sample usage example: A 100-tree random forest is trained on the `Letter:OQ` data set with and without using a validation set, and bounds are computed. To run the sample, simply go to the directory and run `make` followed by `make run`.
-* **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. This will download the data needed for the experiments.
+* **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. This will download the data [5,6,7] needed for the experiments.
 Experiments can now be run by using the `uniform.py`, `optimize.py` and `unlabeled.py` python scripts in the folder. See the files for how-to. Output files will be created in directory `experiments/out/`.
 The full experiments from [1] can be run as follows:
 	* Uniform weighted RF (full bagging): `make uniform`
@@ -39,7 +39,7 @@ bounds = rf.bounds()
 Here, bounds is a dictionary with keys `PBkl`, `C1`, `C2`, `CTD` and `TND`.
 
 ## References
-\[1\] Anonymous Authors: Second Order PAC-Bayesian Boundsfor the Weighted Majority Vote.
+\[1\] Anonymous Authors: Second Order PAC-Bayesian Bounds for the Weighted Majority Vote.
 
 \[2\] [Lorenzen, Igel and Seldin: On PAC-Bayesian Bounds for Random Forests (ECML 2019)](https://arxiv.org/abs/1810.09746)
 
@@ -47,6 +47,8 @@ Here, bounds is a dictionary with keys `PBkl`, `C1`, `C2`, `CTD` and `TND`.
 
 \[4\] [The sklearn.ensemble module](https://scikit-learn.org/stable/modules/ensemble.html)
 
-\[5\] Gieseke and Igel: Training big random forests with little resources (SIGKDD 2018)
+\[5\] [The UCI Repository](https://archive.ics.uci.edu/ml/index.php)
 
-\[6\] [The UCI Repository](https://archive.ics.uci.edu/ml/index.php)
+\[5\] [LibSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/)
+
+\[5\] [Zalando Research](https://research.zalando.com/welcome/mission/research-projects/fashion-mnist/)
