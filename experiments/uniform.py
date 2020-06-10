@@ -1,7 +1,7 @@
 #
 # Runs experiments using standard random forest with uniform weighting.
 #
-# Usage: python uniform.py <data_set> [M] [sample_mode] [optimizer] [repeats]
+# Usage: python uniform.py <data_set> [M] [sample_mode] [repeats]
 #        M           : number of trees
 #        sample_mode : 'bootstrap', 'dim', f in [0,1]
 #                      'bootstrap' = full bagging.
