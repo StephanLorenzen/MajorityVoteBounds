@@ -7,10 +7,10 @@ The implementation is provided as a module, `mvb`, which provides a python class
 * ExtraTreesClassifier
 * SVMVotersClassifier
 
-Each provide a majority vote classifier with an interface similar to `sklearn.ensemble.RandomForestClassifier` etc. The voters used in these implemtations are besed on `sklearn.tree.DecisionTreeClassifier` and `sklearn.svm.SVC` [4]. 
-Furthermore, the submodule `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in submodule `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` are taken from the implementation for the paper [2].
+Each provide a majority vote classifier with an interface similar to `sklearn.ensemble.RandomForestClassifier` etc. The voters used in these implementations are based on `sklearn.tree.DecisionTreeClassifier` and `sklearn.svm.SVC` [4]. 
+Furthermore, the sub-module `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in sub-module `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` are taken from the implementation for the paper [3].
 
-In addition, two directories areincluded in the repository:
+In addition, two directories are included in the repository:
 * **sample** provides a sample usage example: A 100-tree random forest is trained on the `Letter:OQ` data set with and without using a validation set, and bounds are computed. To run the sample, simply go to the directory and run `make` followed by `make run`.
 * **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. This will download the data [5,6,7] needed for the experiments.
 Experiments can now be run by using the `uniform.py`, `optimize.py` and `unlabeled.py` python scripts in the folder. See the files for how-to. Output files will be created in directory `experiments/out/`.
@@ -23,7 +23,7 @@ The full experiments from [1] can be run as follows:
 
 
 ## Basic usage
-Belows follow a simple usage example. See `sample.py` for more.
+Below follow a simple usage example. See `sample.py` for more.
 
 ```python
 from mvb import RandomForestClassifier as RF
