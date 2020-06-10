@@ -11,14 +11,15 @@ Each provide a majority vote classifier with an interface similar to `sklearn.en
 Furthermore, the submodule `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in submodule `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` are taken from the implementation for the paper [2].
 
 In addition, two directories areincluded in the repository:
-* **getdata.sh** is a shell script used to download the data sets from the UCI repository [5] and place them in the directory `data`.
 * **sample** provides a sample usage example: A 100-tree random forest is trained on the `Letter:OQ` data set with and without using a validation set, and bounds are computed. To run the sample, simply go to the directory and run `make` followed by `make run`.
-* **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. Afterwards, the experiments may be run as follows:
+* **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. This will download the data needed for the experiments.
+Afterwards, the experiments may be run as follows:
 	* Uniform weighted RF (full bagging): `make uniform`
 	* Uniform weighted RF (reduced bagging): `make uniform-reduced`
 	* Optimized weighted RF (full bagging): `make optimize`
 	* Optimized weighted RF (reduced bagging): `make optimize-reduced`
 	* RF with unlabeled data: `make unlabeled`
+
 Further experiment can be run by using the `uniform.py`, `optimize.py` and `unlabeled.py` python scripts in the folder. See the files for how-to.
 
 ## Basic usage
