@@ -1,4 +1,4 @@
-example : data link
+example : clean data link
 
 data: 
 	mkdir data

@@ -14,7 +14,7 @@ from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS
 from math import ceil
 
-class MVBounds:i
+class MVBounds:
     # Constructor
     def __init__(
             self,

@@ -1,4 +1,4 @@
-experiments : data link
+experiments : clean data link
 
 data: 
 	./helpers/get_data.sh
