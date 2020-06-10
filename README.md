@@ -13,14 +13,14 @@ Furthermore, the submodule `mvb.data` can be used for reading data, while functi
 In addition, two directories areincluded in the repository:
 * **sample** provides a sample usage example: A 100-tree random forest is trained on the `Letter:OQ` data set with and without using a validation set, and bounds are computed. To run the sample, simply go to the directory and run `make` followed by `make run`.
 * **experiments** provides the experiments of [1]. To run the experiments, go to the directory and run `make`. This will download the data needed for the experiments.
-Afterwards, the experiments may be run as follows:
+Experiments can now be run by using the `uniform.py`, `optimize.py` and `unlabeled.py` python scripts in the folder. See the files for how-to. Output files will be created in directory `experiments/out/`.
+The full experiments from [1] can be run as follows:
 	* Uniform weighted RF (full bagging): `make uniform`
 	* Uniform weighted RF (reduced bagging): `make uniform-reduced`
 	* Optimized weighted RF (full bagging): `make optimize`
 	* Optimized weighted RF (reduced bagging): `make optimize-reduced`
 	* RF with unlabeled data: `make unlabeled`
 
-Further experiment can be run by using the `uniform.py`, `optimize.py` and `unlabeled.py` python scripts in the folder. See the files for how-to.
 
 ## Basic usage
 Belows follow a simple usage example. See `sample.py` for more.
