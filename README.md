@@ -20,7 +20,8 @@ The full experiments from [1] can be run as follows:
 	* Optimized weighted RF (full bagging): `make optimize`
 	* Optimized weighted RF (reduced bagging): `make optimize-reduced`
 	* RF with unlabeled data: `make unlabeled`
-The directory also contains the sub-directory `NeurIPS_results`, which contains the numerical outputs reported in [1].
+
+	The directory also contains the sub-directory `NeurIPS_results`, which contains the numerical outputs reported in [1].
 
 ## Basic usage
 Below follow a simple usage example. See `sample.py` for more.
