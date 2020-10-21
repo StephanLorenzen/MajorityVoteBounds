@@ -1,5 +1,5 @@
 # Majority Vote Classifiers With Performance Guarantees
-This repository supplies a framework for implementing majority vote classifiers with performance guarantees. The implementation is used for experiments conducted in [1,2]. When trained using bootstrapping or validation sets, theoretical guarantees based on PAC Bayesian theory will be computed, see [1,2,3] for the theory.
+This repository supplies a framework for implementing majority vote classifiers with performance guarantees. The implementation is used for experiments presented in [1,2]. When trained using bootstrapping or validation sets, theoretical guarantees based on PAC Bayesian theory will be computed, see [1,2,3].
 
 The implementation is provided as a module, `mvb`, which provides a python class `MVBase`, which provides an interface for for implementing majority vote classifiers. `mvb` also provides three such implementations:
 
@@ -8,7 +8,7 @@ The implementation is provided as a module, `mvb`, which provides a python class
 * SVMVotersClassifier
 
 Each provide a majority vote classifier with an interface similar to `sklearn.ensemble.RandomForestClassifier` etc. The voters used in these implementations are based on `sklearn.tree.DecisionTreeClassifier` and `sklearn.svm.SVC` [4]. 
-Furthermore, the sub-module `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in sub-module `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` are taken from the implementation for the paper [3].
+Furthermore, the sub-module `mvb.data` can be used for reading data, while functions for computing bounds directly can be found in sub-module `mvb.bounds`. Note, that some of the implementation in `mvb.bounds` is taken from the implementation from [3].
 
 In addition, two directories are included in the repository:
 * **sample** provides a sample usage example: A 100-tree random forest is trained on the `Letter:OQ` data set with and without using a validation set, and bounds are computed. To run the sample, simply go to the directory and run `make` followed by `make run`.
@@ -39,7 +39,7 @@ bounds = rf.bounds()
 Here, bounds is a dictionary with keys `PBkl`, `C1`, `C2`, `CTD` and `TND`.
 
 ## References
-\[1\] Anonymous Authors: Second Order PAC-Bayesian Bounds for the Weighted Majority Vote.
+\[1\] [Masegosa, Lorenzen, Igel and Seldin: Second Order PAC-Bayesian Bounds for the Weighted Majority Vote (NeurIPS 2020)](https://arxiv.org/abs/2007.13532)
 
 \[2\] [Lorenzen, Igel and Seldin: On PAC-Bayesian Bounds for Random Forests (ECML 2019)](https://arxiv.org/abs/1810.09746)
 
@@ -49,6 +49,6 @@ Here, bounds is a dictionary with keys `PBkl`, `C1`, `C2`, `CTD` and `TND`.
 
 \[5\] [The UCI Repository](https://archive.ics.uci.edu/ml/index.php)
 
-\[5\] [LibSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/)
+\[6\] [LibSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/)
 
-\[5\] [Zalando Research](https://research.zalando.com/welcome/mission/research-projects/fashion-mnist/)
+\[7\] [Zalando Research](https://research.zalando.com/welcome/mission/research-projects/fashion-mnist/)
