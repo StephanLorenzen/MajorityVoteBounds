@@ -201,7 +201,7 @@ class MVBounds:
             elif bound=='CTD':
                 grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
                 tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
-                return CTD(grisk, tand, n_min, n2_min)
+                return CTD(grisk, tand, n_min, n2_min, KL)
             elif bound=='TND':
                 tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
                 return TND(tand, n2_min, KL)
