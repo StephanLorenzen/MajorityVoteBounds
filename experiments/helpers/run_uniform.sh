@@ -16,6 +16,6 @@ python uniform.py Sensorless    $M $1 $R
 python uniform.py USPS          $M $1 $R
 python uniform.py Connect-4     $M $1 $R
 python uniform.py Cod-RNA       $M $1 $R
-python uniform.py mnist         $M $1 $R
-python uniform.py Fashion-mnist $M $1 $R
+python uniform.py MNIST         $M $1 $R
+python uniform.py Fashion-MNIST $M $1 $R
 
