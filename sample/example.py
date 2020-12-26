@@ -30,6 +30,9 @@ print("  C2:    "+str(bounds.get('C2')))
 print("  CTD:   "+str(bounds['CTD']))
 print("  TND:   "+str(bounds['TND']))
 print("  DIS:   "+str(bounds.get('DIS')))
+print("  MU:    "+str(bounds.get('MU')))
+
+import pdb; pdb.set_trace()
 
 print("\n######### Bagging+Validation #########")
 t_X, t_Y, v_X, v_Y = mldata.split(X, Y, 0.5)
@@ -56,5 +59,6 @@ print("  C2:    "+str(bounds.get('C2')))
 print("  CTD:   "+str(bounds['CTD']))
 print("  TND:   "+str(bounds['TND']))
 print("  DIS:   "+str(bounds.get('DIS')))
+print("  MU:    "+str(bounds.get('MU')))
 print("  SH:    "+str(bounds['SH']))
 

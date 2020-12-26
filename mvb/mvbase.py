@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, MU, optimizeTND, DIS, optimizeDIS
 from math import ceil
 
 class MVBounds:
@@ -151,7 +151,7 @@ class MVBounds:
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound=='SH' and labeled_data==None and (stats==None or 'mv_risk' not in stats):
@@ -178,6 +178,8 @@ class MVBounds:
                 return TND(stats['tandem_risk'], stats['n2_min'], KL)
             elif bound=='DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
+            elif bound=='MU':
+                return MU(stats['r_tandem_risk'], stats['r_gibbs_risk'], stats['r_n_min'], stats['r_n2_min'], KL, [stats['mu']])
             else:
                 return None
         else:
@@ -212,6 +214,17 @@ class MVBounds:
                     ulX = unlabeled_data if ulX is None else np.concat((ulX,unlabeled_data), axis=0)
                 dis, n2_min  = self.disagreement(ulX, incl_oob)
                 return DIS(grisk, dis, n_min, n2_min, KL)
+            elif bound=='MU':
+                # Store full OOB
+                full_OOB = self._OOB
+                # Estimate MU and reduce OOB
+                mu, self._OOB = self.estimate_mu()
+                # Estimate randomized risk and tandem risk (with reduced OOB)
+                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
+                tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
+                # Reset OOB
+                self._OOB = full_OOB
+                return MU(tand, grisk, n_min, n2_min, KL, mu_grid=[mu])
             else:
                 return None
     
@@ -224,6 +237,8 @@ class MVBounds:
         results['PBkl'] = self.bound('PBkl', stats=stats)
         results['TND']  = self.bound('TND', stats=stats)
         results['CTD']  = self.bound('CTD', stats=stats)
+        if incl_oob:
+            results['MU'] = self.bound('MU', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
@@ -254,6 +269,25 @@ class MVBounds:
         else:
             stats['u_n2'] = stats['n2']
             stats['u_disagreements'] = dis / stats['u_n2']
+
+        if incl_oob:
+            # Estimate MU and risks and tandem risks with [r]educed OOB
+            full_OOB = self._OOB
+            stats['mu'], self._OOB = self.estimate_mu()
+            stats['r_risks'], stats['r_n'] = self.risks(labeled_data, incl_oob)
+            stats['r_risks'] /= stats['r_n']
+            
+            stats['r_tandem_risks'], stats['r_n2'] = self.tandem_risks(labeled_data, incl_oob)
+            stats['r_tandem_risks'] /= stats['r_n2']
+            # Reset OOB
+            self._OOB = full_OOB
+
+        else:
+            # Set to non-reduced stats => should just give the tandem bound.
+            stats['mu'] = 0.0
+            stats['r_risks'], stats['r_n'] = stats['risks'], stats['n']
+            stats['r_tandem_risks'], stats['r_n2'] = stats['tandem_risks'], stats['n2']
+
         return self.aggregate_stats(stats)
     
     # (Re-)Aggregate stats object. Useful if weighting has changed.
@@ -268,8 +302,15 @@ class MVBounds:
         stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
        
+        # Unlabeled
         stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['u_n2_min'] = np.min(stats['u_n2'])
+        
+        # Reduced OOB
+        stats['r_gibbs_risk'] = np.average(stats['r_risks'], weights=self._rho)
+        stats['r_n_min'] = np.min(stats['r_n'])
+        stats['r_tandem_risk'] = np.average(np.average(stats['r_tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
+        stats['r_n2_min'] = np.min(stats['r_n2'])
         return stats
 
     # Returns the accuracy on data = (X,Y). If data is None, returns the OOB-estimate
@@ -376,3 +417,30 @@ class MVBounds:
             disagreements += util.disagreements(P)
 
         return disagreements, n2 
+    
+    # Estimates mu using a single sample from each oob set
+    # Returns: estimated mu ~= E_u[L(h)] and reduced oob set
+    def estimate_mu(self):
+        if self._OOB is None:
+            util.warn('Warning, MVBase.estimate_mu: Missing data!')
+            return 0.0, None
+        (OOBs, Y)   = self._OOB
+        new_OOBs    = []
+        mu_estimate = 0
+        # Not vectorized, but should be fast enough
+        for (mask, preds) in OOBs:
+            # Do not make changes to originals
+            mask, preds = mask.copy(), preds.copy()
+            
+            # Sample a single data point from this oob set
+            # Indexes of non-zero
+            idxs = np.flatnonzero(mask)
+            # Sample one index at random
+            idx = np.random.choice(idxs)
+            # Add l(preds[idx],Y[idx]) to mu_estimate
+            mu_estimate += 1 if preds[idx]!=Y[idx] else 0
+            # Set mask and oob_pred to zero
+            mask[idx], preds[idx] = 0, 0
+            new_OOBs.append((mask,preds))
+            
+        return mu_estimate/len(OOBs), (new_OOBs, Y)
