@@ -25,5 +25,5 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     bnd = 0.0
     for mu in mu_grid:
         bnd += 4*(ub_tr - 2*mu*lb_gr + mu**2)
-    return min(1.0, ub_tr)
+    return min(1.0, bnd)
 
