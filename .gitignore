@@ -114,3 +114,8 @@ out/*
 sample/mvb
 NeurIPS/mvb
 ICML/mvb
+
+# Plots
+*.pdf
+datasets
+datasets/*

@@ -1,0 +1,90 @@
+\pgfplotsset{
+  YTwoDec/.style={
+    y tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=2,
+        /tikz/.cd
+        },
+  },
+  Plot/.style={
+    scaled y ticks=false,
+        height=3.8cm,
+        y tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=1,
+        /tikz/.cd
+        },
+        y tick label style={
+          font=\footnotesize,
+          anchor=east,
+          xshift=1mm,
+        },
+        x tick label style={
+          rotate=-90,anchor=west,
+          },
+        y label style={
+          anchor=south,yshift=-8mm,
+        },
+      x tick style={draw=none},
+      ymin=0,
+      ybar,
+      bar shift=0pt,
+      bar width=2.8mm,
+      xmin=1,
+    },
+    PlotBinary/.style={
+      xtick={1,2,3,4,5,6},
+      xticklabels={},
+      width=3.5cm,
+      enlarge x limits=0.1,
+      xmax=6,
+    },
+    PlotMulti/.style={
+      xtick={1,2,3,4},
+      xticklabels={},
+      width=2.8cm,
+      enlarge x limits=0.15,
+      xmax=4,
+    },
+    Risk/.style={
+      line legend, sharp plot,
+      color=colMVRisk,
+      thick,
+    },
+    RiskErr/.style={
+      line legend, sharp plot,
+      color=colMVRisk,
+      fill=colMVRisk!30,
+      domain=0:10,
+      ultra thin,
+    },
+    Bound/.style={
+      fill,
+      fill opacity=0.4,
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    FO/.style={
+      color=colPBkl,
+    },
+    Cone/.style={
+      color=colC1,
+    },
+    Ctwo/.style={
+      color=colC2,
+    },
+    CTD/.style={
+      color=colCTD,
+    },
+    TND/.style={
+      color=colMV,
+    },
+    MU/.style={
+      color=colMU,
+    },
+}
