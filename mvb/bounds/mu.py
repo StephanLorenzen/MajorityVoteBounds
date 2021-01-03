@@ -28,6 +28,6 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     # Compute K bounds
     bnds = []
     for mu in mu_grid:
-        bnds.append(4*(ub_tr - 2*mu*lb_gr + mu**2))
+        bnds.append((ub_tr - 2*mu*lb_gr + mu**2)/(0.5-mu)^2)
     return min(1.0, min(bnds))
 
