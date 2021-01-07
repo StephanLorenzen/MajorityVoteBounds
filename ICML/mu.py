@@ -36,7 +36,7 @@ SMODE   = SMODE if (SMODE=='bootstrap' or SMODE=='dim') else float(SMODE)
 REPS    = int(sys.argv[4]) if len(sys.argv)>=5 else 1
 
 num_vals = 100
-mu_vals  = [i/(2.0*num_vals) for i in range(num_vals)]
+mu_vals  = [(i/num_vals-0.5) for i in range(num_vals)]
 
 RAND = check_random_state(SEED)
 if not os.path.exists(outpath):
