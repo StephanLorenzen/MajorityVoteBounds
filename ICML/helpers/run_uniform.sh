@@ -1,5 +1,5 @@
 M=100
-R=50
+R=30
 
 python uniform.py SVMGuide1     $M $1 $R
 python uniform.py Phishing      $M $1 $R

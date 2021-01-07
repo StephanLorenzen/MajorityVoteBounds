@@ -9,6 +9,9 @@ link:
 uniform:
 	./helpers/run_uniform.sh bootstrap
 
+mu:
+	./helpers/run_mu.sh bootstrap
+
 clean:
 	rm -f mvb
 	rm -rf data

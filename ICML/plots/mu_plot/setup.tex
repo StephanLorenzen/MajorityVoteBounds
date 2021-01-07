@@ -1,0 +1,69 @@
+\pgfplotsset{
+  YTwoDec/.style={
+    y tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=2,
+        /tikz/.cd
+        },
+  },
+  Plot/.style={
+    scaled y ticks=false,
+        height=3.8cm,
+        y tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=1,
+        /tikz/.cd
+        },
+        y tick label style={
+          font=\footnotesize,
+          anchor=east,
+          xshift=1mm,
+        },
+    	x tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=2,
+        /tikz/.cd
+        },
+        x tick label style={
+          rotate=-90,anchor=west,
+          },
+        y label style={
+          anchor=south,yshift=-8mm,
+        },
+      %x tick style={draw=none},
+      ymin=0,
+      xmin=0,xmax=0.2,
+    },
+    Bound/.style={
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    Risk/.style={
+      color=colMVRisk,
+    },
+    FO/.style={
+      color=colPBkl,
+    },
+    Cone/.style={
+      color=colC1,
+    },
+    Ctwo/.style={
+      color=colC2,
+    },
+    CTD/.style={
+      color=colCTD,
+    },
+    TND/.style={
+      color=colMV,
+    },
+    MU/.style={
+      color=colMU,
+    },
+}

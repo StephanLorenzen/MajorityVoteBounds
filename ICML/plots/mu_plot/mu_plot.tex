@@ -1,0 +1,70 @@
+\documentclass[crop,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\input{../colors.tex}
+\usepgfplotslibrary{fillbetween,groupplots}
+\begin{document}
+\input{setup.tex}
+
+\begin{tikzpicture}
+  \pgfplotsset{
+    every axis title/.append style={yshift=-2mm},
+    legend style={
+      %font=\footnotesize,
+      anchor=west,
+      at={(1.4,0.5)},
+      legend columns=1,
+      legend cell align=left,
+    },
+  }
+\begin{groupplot}[
+group style={
+group size=3 by 2,
+x descriptions at=edge bottom,
+vertical sep=16pt,
+horizontal sep=19pt,
+},
+]
+\nextgroupplot[Plot, title=\dataset{Cod-RNA}, ymax=0.25]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Cod-RNA.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Cod-RNA.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Cod-RNA.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Cod-RNA.csv};
+
+\nextgroupplot[Plot, YTwoDec, title=\dataset{Mushroom}, ymax=0.1]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Mushroom.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Mushroom.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Mushroom.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Mushroom.csv};
+
+\nextgroupplot[Plot, title=\dataset{Phishing}, ymax=0.23]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Phishing.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Phishing.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Phishing.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Phishing.csv};
+
+\nextgroupplot[Plot, YTwoDec, title=\dataset{Sensorless}, ymax=0.07]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Sensorless.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Sensorless.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Sensorless.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Sensorless.csv};
+
+\nextgroupplot[Plot, title=\dataset{Letter}, ymax=0.6]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Letter.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Letter.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Letter.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Letter.csv};
+
+\nextgroupplot[Plot, title=\dataset{Pendigits}, ymax=0.25]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Pendigits.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Pendigits.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Pendigits.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Pendigits.csv};
+
+\addlegendentry{Test}
+\addlegendentry{$\FO$}
+\addlegendentry{$\TND$}
+\addlegendentry{$\MU$}
+\end{groupplot}
+\end{tikzpicture}
+\end{document}
