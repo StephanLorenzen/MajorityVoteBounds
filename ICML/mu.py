@@ -55,7 +55,7 @@ for rep in range(REPS):
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
     
     print("Training...")
-    rf = RFC(n_estimators=M, max_features="sqrt",random_state=RAND,sample_mode=SMODE)
+    rf = RFC(n_estimators=M, max_features="sqrt", random_state=RAND,sample_mode=SMODE)
     _  = rf.fit(trainX,trainY)
     
     print("Evaluating final classifier...")
@@ -75,7 +75,7 @@ for rep in range(REPS):
     results["c"].append(C)
     results["mv_risk"].append(mv_risk)
     for col in ["gibbs_risk","n_min","disagreement","tandem_risk","n2_min"]:
-        results[col] = stats[col]
+        results[col].append(stats[col])
 
     # Bounds
     results["pbkl"].append(rf.bound("PBkl", stats=stats))

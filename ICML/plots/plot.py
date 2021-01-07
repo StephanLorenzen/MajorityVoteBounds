@@ -69,7 +69,11 @@ def mu_plot():
     path = name+"/datasets/"
     if not os.path.isdir(path):
         os.makedirs(path)
-    
+   
+    stats = {"dataset":DATASETS,
+            "mv_risk_mean":[],"mv_risk_std":[],
+            "risk_mean":[],"risk_std":[],
+            "tandem_mean":[],"tandem_std":[]}
     for ds in DATASETS:
         df = pd.read_csv(EXP_PATH+"mu/"+ds+".csv")
         # Compute means and stds
@@ -86,7 +90,15 @@ def mu_plot():
                 for cc in ["pbkl","tnd"]:
                     output[cc+"_mean"].append(df_mean[cc])
                     output[cc+"_std"].append(df_std[cc])
-       
-        pd.DataFrame(output).to_csv(path+ds+".csv")
+        
+        stats["mv_risk_mean"].append(df_mean["mv_risk"])
+        stats["mv_risk_std"].append(df_std["mv_risk"])
+        stats["risk_mean"].append(df_mean["gibbs_risk"])
+        stats["risk_std"].append(df_std["gibbs_risk"])
+        stats["tandem_mean"].append(df_mean["tandem_risk"])
+        stats["tandem_std"].append(df_std["tandem_risk"])
+
+        pd.DataFrame(output).to_csv(path+ds+".csv", index_label="idx")
+    pd.DataFrame(stats).to_csv(path+"stats.csv", index_label="idx")
 
 mu_plot()

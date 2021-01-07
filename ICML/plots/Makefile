@@ -6,7 +6,8 @@ uniform_bounds:
 
 mu:
 	python plot.py
-	cd mu_plot; pdflatex mu_plot.tex; rm -f mu_plot.{log,aux}
+	cd mu_plot; pdflatex mu_bounds.tex; rm -f mu_bounds.{log,aux}
+	cd mu_plot; pdflatex mu_stats.tex; rm -f mu_stats.{log,aux}
 	rm -f texput.log
 
 clean:
