@@ -11,7 +11,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, MU, optimizeTND, DIS, optimizeDIS
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU
 from math import ceil
 
 class MVBounds:
@@ -120,24 +120,24 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Lambda", "TND", "DIS"}:
+        if bound not in {"Lambda", "TND", "DIS", "MU"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
             util.warn('Warning, stats: Missing data!')
             return None
 
-        if(bound=='Lambda'):
+        if bound=='Lambda':
             risks, ns = self.risks(labeled_data, incl_oob)
             (bound, rho, lam) = optimizeLamb(risks/ns, np.min(ns))
             self._rho = rho
             return (bound,rho,lam)
-        elif(bound=='TND'):
+        elif bound=='TND':
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
             (bound,rho,lam) = optimizeTND(tand/n2s, np.min(n2s), options=options)
             self._rho = rho
             return (bound, rho, lam)
-        else:
+        elif bound=='DIS':
             ulX = unlabeled_data
             if labeled_data is not None:
                 ulX = labeled_data[0] if ulX is None else np.concatenate((ulX,labeled_data[0]), axis=0)
@@ -146,6 +146,12 @@ class MVBounds:
             (bound,rho,lam,gam) = optimizeDIS(risks/ns,dis/n2s,np.min(ns),np.min(n2s),options=options)
             self._rho = rho
             return (bound, rho, lam, gam)
+        else:
+            risks, ns = self.risks(labeled_data, incl_oob)
+            tand, n2s = self.tandem_risks(labeled_data, incl_oob)
+            (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s),options=options)
+            self._rho = rho
+            return (bound, rho, lam, gam, mu)
 
     # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS').
     # A stats object or the relevant data must be given as input (unless classifier trained
