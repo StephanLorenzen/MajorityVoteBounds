@@ -17,6 +17,6 @@ python optimize.py Sensorless    $M $1 $O $R
 python optimize.py USPS          $M $1 $O $R
 python optimize.py Connect-4     $M $1 $O $R
 python optimize.py Cod-RNA       $M $1 $O $R
-python optimize.py mnist         $M $1 $O $R
-python optimize.py Fashion-mnist $M $1 $O $R
+python optimize.py MNIST         $M $1 $O $R
+python optimize.py Fashion-MNIST $M $1 $O $R
 
