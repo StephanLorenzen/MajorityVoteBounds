@@ -196,7 +196,7 @@ def optimizeDIS(gibbs_risks, disagreements, n, n2u, delta=0.05, options=None):
     else: # 1st order optimizers
         def _gradient(rho, lam, gam):
             a = 1.0/(1.0-lam/2.0)
-            b = 1-lam/2.0
+            b = 1-gam/2.0
             c = 1.0/(lam*(1.0-lam/2.0)*n) + 1.0/(gam*n2u)
             
             Srho = softmax(rho)
