@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import os
+import sys
 
 DATASETS = [
         'SVMGuide1',
@@ -21,7 +22,7 @@ DATASETS = [
         'MNIST',
         'Fashion-MNIST',
         ]
-EXP_PATH  = "../results/"
+EXP_PATH  = "../out/"
 NUM_TREES = 100
 BOUNDS_BINARY = [("pbkl","FO"),("c1","Cone"),("c2","Ctwo"),("ctd","CTD"),("tnd","TND"),("dis","DIS")]
 BOUNDS_MULTI  = BOUNDS_BINARY[:1]+BOUNDS_BINARY[3:-1]
@@ -51,7 +52,6 @@ def multi_bounds(exp="uniform"):
             f.write("\\addplot[RiskErr] fill between[of=UP and LW];\n")
             f.write("\\addplot[Risk] coordinates {(0,"+mean+") (7,"+mean+")};\n")
 
-multi_bounds()
  
 
 # Prep data for optimized MV risk comparison 
@@ -84,4 +84,16 @@ def optimized_risk_comparison():
     pd.DataFrame(data=rows_bin, columns=cols).to_csv(path+"bin.csv", sep=";", index_label="idx")
     pd.DataFrame(data=rows_mul, columns=cols).to_csv(path+"mul.csv", sep=";", index_label="idx")
 
-optimized_risk_comparison()
+
+
+
+
+
+if len(sys.argv)==1:
+    multi_bounds(exp="uniform")
+    optimized_risk_comparison()
+elif sys.argv[1]=="uniform":
+    multi_bounds(exp="uniform")
+elif sys.argv[1]=="optimize":
+    optimized_risk_comparison()
+

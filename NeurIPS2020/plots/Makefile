@@ -1,11 +1,11 @@
 uniform_bounds:
-	python plot.py
+	python plot.py uniform
 	cd bounds_uniform; pdflatex bounds_uniform_bin.tex; rm -f bounds_uniform_bin.{log,aux}
 	cd bounds_uniform; pdflatex bounds_uniform_mul.tex; rm -f bounds_uniform_mul.{log,aux}
 	rm -f texput.log
 
 optimize:
-	python plot.py
+	python plot.py optimize
 	cd risk_comparison_optimized; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
 	rm -f texput.log
 
