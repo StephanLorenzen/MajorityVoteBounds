@@ -10,5 +10,13 @@ mu:
 	cd mu_plot; pdflatex mu_stats.tex; rm -f mu_stats.{log,aux}
 	rm -f texput.log
 
+optimize:
+	python plot.py
+	cd risk_comparison_optimized; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
+	rm -f texput.log
+
+
 clean:
 	cd bounds_uniform; rm -f *.pdf; rm -rf datasets
+	cd mu_plot; rm -f *.pdf; rm -rf datasets
+	cd risk_comparison_optimized; rm -f *.pdf; rm -rf datasets

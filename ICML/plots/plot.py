@@ -54,6 +54,52 @@ def multi_bounds(exp="uniform"):
 multi_bounds()
  
 
+
+
+
+# Prep data for optimized MV risk comparison 
+def optimized_risk_comparison():
+    name = "risk_comparison_optimized"
+    path = name+"/datasets/"
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    opts = ["lam","tnd","mu","mug"]
+    cols = ["dataset"]
+    for opt in opts:
+        cols += [opt+suf for suf in ["_diff","_q25","_q75"]]
+    rows_bin = []
+    rows_mul = []
+    for ds in DATASETS:
+        df = pd.read_csv(EXP_PATH+"optimize/"+ds+"-"+str(NUM_TREES)+"-bootstrap-iRProp.csv",sep=";")
+        if (df["unf_mv_risk"]==0).sum() > 0:
+            continue
+        row = [ds]
+        for opt in opts:
+            diff   = df[opt+"_mv_risk"]/df["unf_mv_risk"]
+            med = diff.median()
+            row += [med, med-diff.quantile(0.25), diff.quantile(0.75)-med]
+        if df["c"].iloc[0]==2:
+            rows_bin.append(row)
+        else:
+            rows_mul.append(row)
+    
+    pd.DataFrame(data=rows_bin, columns=cols).to_csv(path+"bin.csv", sep=";", index_label="idx")
+    pd.DataFrame(data=rows_mul, columns=cols).to_csv(path+"mul.csv", sep=";", index_label="idx")
+
+optimized_risk_comparison()
+
+
+
+
+
+
+
+
+
+
+
+
 # Prep data files for mu_plots
 DATASETS = [
         'Phishing',
