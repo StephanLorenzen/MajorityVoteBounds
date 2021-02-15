@@ -112,8 +112,8 @@ out/*
 
 # Links in subdiretories
 sample/mvb
-NeurIPS/mvb
-ICML/mvb
+NeurIPS2020/mvb
+NeurIPS2021/mvb
 
 # Plots
 *.pdf
