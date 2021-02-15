@@ -1,0 +1,54 @@
+\documentclass[crop,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\input{../colors.tex}
+\usepgfplotslibrary{fillbetween,groupplots}
+\begin{document}
+\input{setup.tex}
+
+\begin{tikzpicture}
+  \pgfplotsset{
+    every axis title/.append style={yshift=-2mm},
+    legend style={
+      %font=\footnotesize,
+      anchor=west,
+      at={(1.4,0.5)},
+      legend columns=1,
+      legend cell align=left,
+    },
+  }
+\begin{groupplot}[
+group style={
+group size=6 by 2,
+x descriptions at=edge bottom,
+vertical sep=16pt,
+horizontal sep=24pt,
+},
+]
+\nextgroupplot[Plot, PlotMulti, title=\dataset{Connect-4}, ymax=0.99]
+\input{datasets/Connect-4.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{Letter}]
+\input{datasets/Letter.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{MNIST}]
+\input{datasets/MNIST.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{Pendigits}]
+\input{datasets/Pendigits.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{Protein}, ymax=0.99]
+\input{datasets/Protein.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{SatImage}, ymax=0.99]
+\input{datasets/SatImage.tex}
+\nextgroupplot[Plot, PlotMulti, YTwoDec, title=\dataset{Sensorless}, xshift=1.1cm, ymax=0.059]
+\input{datasets/Sensorless.tex}
+\nextgroupplot[Plot, PlotMulti, YTwoDec, title=\dataset{Shuttle}, ymax=0.01, ytick={0,0.01}, xshift=1.1cm]
+\input{datasets/Shuttle.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{USPS}, xshift=1.1cm]
+\input{datasets/USPS.tex}
+\nextgroupplot[Plot, PlotMulti, title=\dataset{Fashion-MNIST}, xshift=1.2cm]
+\input{datasets/Fashion-MNIST.tex}
+
+\addlegendentry{$\FO$}
+\addlegendentry{$\CTD$}
+\addlegendentry{$\TND$}
+\end{groupplot}
+\end{tikzpicture}
+\end{document}
