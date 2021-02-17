@@ -1,0 +1,147 @@
+\documentclass[crop,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\input{../colors.tex}
+\usetikzlibrary{patterns}
+\usepgfplotslibrary{fillbetween,groupplots}
+\begin{document}
+\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Cod-RNA.csv}\opttable
+\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Pendigits.csv}\popttable
+\pgfplotsset{
+    RhoPlot/.style={
+      scaled y ticks=false,
+      scale only axis,
+      width=0.74\linewidth,
+      height=1cm,
+      ybar interval,
+      ybar legend,
+      grid=none,
+      xtick={10,20,30,40,50,60,70,80,90},
+      xticklabels={,,},
+      ytick={0.03,0.06,0.09,0.12,0.15},
+      y tick label style={
+        font=\large,
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=2,
+        /tikz/.cd,
+      },
+      x label style={
+        yshift=5mm,
+        xshift=0cm,
+      },
+      legend style={
+          font=\large,
+          legend columns=1,
+          legend cell align=left,
+          anchor=west,
+          at={(1.02,-4.6)},
+        },
+      xmajorticks=false,
+      xmin=1,xmax=100,
+    },
+    FixedY/.style={
+      ymin=0,ymax=0.06,
+      ytick={0.03},
+    },  
+    MVrisk/.style={
+      color=colMVRisk,
+      fill=colMVRisk,
+    },
+    RhoLam/.style={
+      color=colPBkl,
+      fill=colPBkl,
+    },
+    RhoTND/.style={
+      color=colMV,
+      fill=colMV,
+    },
+    RhoMU/.style={
+      color=colMU,
+      fill=colMU,
+    },
+    RhoMUgrid/.style={
+      color=colMU,
+      fill=colMU,
+	postaction={
+        	pattern=north east lines
+    	}
+    },
+  RiskYBin/.style={
+      ymin=0,ymax=0.16,
+      ytick={0.12},
+    },  
+  RiskYMul/.style={
+     ymin=0,ymax=0.11,
+      ytick={0.08},
+     },  
+  title style={yshift=-2.5mm,font=\large},
+}
+
+\begin{tikzpicture}
+\begin{groupplot}[
+group style={
+group size=1 by 5,
+x descriptions at=edge bottom,
+y descriptions at=edge left,
+vertical sep=0pt,
+horizontal sep=0pt,
+group name=g1,
+},
+xlabel={$h$},
+]
+\nextgroupplot[RhoPlot, RiskYBin, title=\dataset{Cod-RNA}]
+\addplot[MVrisk] table[x=h,y=risk]{\opttable};
+
+\addlegendentry{$\hat{L}(h,S_h)$}
+\addlegendimage{ybar interval,color=colPBkl,fill}
+\addlegendentry{$\rho_{\FO}^*(h)$}
+\addlegendimage{ybar interval,color=colMV,fill}
+\addlegendentry{$\rho_{\TND}^*(h)$}
+\addlegendimage{ybar interval,color=colMU,fill}
+\addlegendentry{$\rho_{\MU}^*(h)$}
+
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoLam] table[x=h,y=rho_lam]{\opttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoTND] table[x=h,y=rho_tnd]{\opttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoMU] table[x=h,y=rho_mu]{\opttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\opttable};
+\end{groupplot}
+
+	\begin{groupplot}[
+group style={
+group size=1 by 5,
+x descriptions at=edge bottom,
+y descriptions at=edge left,
+vertical sep=0pt,
+horizontal sep=0pt,
+group name=g2,
+},
+xlabel={$h$},
+]
+\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north, at={($(g1 c1r5.south) + (0,-10mm)$)}]
+\addplot[MVrisk] table[x=h,y=risk]{\popttable};
+
+%\addlegendentry{$\hat{L}(h,S_h)$}
+%\addlegendimage{ybar interval,color=colPBkl,fill}
+%\addlegendentry{$\rho_{\FO}^*(h)$}
+%\addlegendimage{ybar interval,color=colMV,fill}
+%\addlegendentry{$\rho_{\TND}^*(h)$}
+%\addlegendimage{ybar interval,color=colMU,fill}
+%\addlegendentry{$\rho_{\MU}^*(h)$}
+
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoTND] table[x=h,y=rho_tnd]{\popttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoMU] table[x=h,y=rho_mu]{\popttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\popttable};
+\end{groupplot}
+\end{tikzpicture}
+\end{document}
