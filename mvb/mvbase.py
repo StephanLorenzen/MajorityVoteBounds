@@ -118,6 +118,54 @@ class MVBounds:
         
         return np.array(P)
 
+    # Remove classifiers with lowest weight (ties broken abitrarily)
+    # if n != None: remove n classifiers with lowest weight
+    # if b != None: remove classifiers with weight <= b
+    # if use_oob, removes based on accuracy on OOB sets instead of weight 
+    # Default: remove classifier with lowest weight
+    # Guarantess at least one voter remains
+    # Returns number of voters removed and score of weakest voter left
+    def sparsify(self, n=None, b=None, use_oob=False):
+        ws = self._rho
+        if use_oob:
+            ws,ns = self.risks()
+            ws /= ns
+            ws = 1.0 - ws
+        ws = list(zip(list(range(len(ws))),ws))
+        ws.sort(key=lambda x: -x[1])
+        
+        # Check params
+        if n is None:
+            if b is None:
+                n,b = 1,-1.0
+            else:
+                n = len(ws)-1
+        else:
+            n = min(n,len(ws)-1)
+            b = -1.0
+
+        nrho, nest, noobs = [], [], []
+        oob_preds, Y = self._OOB
+        mins = 0.0
+        for (i,s) in ws[:-n]:
+            if s > b:
+                nrho.append(self._rho[i])
+                nest.append(self._estimators[i])
+                noobs.append(oob_preds[i])
+                mins = s
+            else:
+                break
+
+        res = len(self._rho)-len(nrho)
+        
+        # Update and normalize rho
+        self._rho = np.array(nrho)/sum(nrho)
+        self._estimators = nest
+        self._OOB = (noobs, Y)
+
+        return res, mins
+
+
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
         if bound not in {"Lambda", "TND", "DIS", "MU"}:

@@ -114,6 +114,7 @@ out/*
 sample/mvb
 NeurIPS2020/mvb
 NeurIPS2021/mvb
+Sparsification/mvb
 
 # Plots
 *.pdf

@@ -1,0 +1,61 @@
+\begin{tikzpicture}
+  \pgfplotsset{
+      scaled y ticks=false,
+    every axis title/.append style={yshift=-2mm},
+    legend style={
+      %font=\footnotesize,
+      anchor=west,
+      at={(1.4,0.5)},
+      legend columns=1,
+      legend cell align=left,
+    },
+      y tick label style={
+        /pgf/number format/.cd,
+        fixed,
+        fixed zerofill,
+        precision=2,
+        /tikz/.cd,
+      },
+    MPlot/.style={
+	x dir=reverse,
+    	xmin=0,xmax=100,
+    },
+    sPlot/.style={
+    },
+    MVRisk/.style={
+      color=colMVRisk,
+    },
+    FO/.style={
+      color=colPBkl,
+    },
+    TND/.style={
+      color=colMV,
+    },
+  }
+\begin{groupplot}[
+group style={
+group size=2 by 2,
+%x descriptions at=edge bottom,
+vertical sep=32pt,
+horizontal sep=32pt,
+},
+]
+\nextgroupplot[MPlot,title=\dataset{Comparison over $M$}]
+\addplot[MVRisk] table[x=M,y=OOB]{\mytable};
+\addplot[FO] table[x=M,y=Lambda]{\mytable};
+\addplot[TND] table[x=M,y=TND]{\mytable};
+\addlegendentry{OOB}
+\addlegendentry{$\FO$}
+\addlegendentry{$\TND$}
+
+\nextgroupplot[sPlot,title=\dataset{OOB, risk vs. weakest voter}]
+\addplot[MVRisk, mark=*] table[x=OOB_s,y=OOB]{\mytable};
+
+\nextgroupplot[sPlot,title=\dataset{$\FO$, risk vs. smallest weight}]
+\addplot[FO, mark=*] table[x=Lambda_s,y=Lambda]{\mytable};
+
+\nextgroupplot[sPlot,title=\dataset{$\TND$, risk vs. smallest weight}]
+\addplot[TND, mark=*] table[x=TND_s,y=TND]{\mytable};
+
+\end{groupplot}
+\end{tikzpicture}
