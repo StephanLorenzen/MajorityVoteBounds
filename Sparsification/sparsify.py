@@ -31,7 +31,14 @@ if not os.path.exists(outpath):
 
 print("Starting RFC sparsification (m = "+str(M)+") for ["+DATASET+"]")
 
-results = {"M":[],"OOB":[],"OOB_s":[],"Lambda":[],"Lambda_s":[],"TND":[],"TND_s":[]}
+results = {"M":[]}
+for approach in ["OOB","Lambda","TND"]:
+    results[approach+"_mvrisk"] = []
+    results[approach+"_unf_mvrisk"] = []
+    results[approach+"_weakest"] = []
+    results[approach+"_FO"] = []
+    results[approach+"_TND"] = []
+
 X,Y = mldata.load(DATASET, path=inpath)
 C = np.unique(Y).shape[0]
 
@@ -58,8 +65,21 @@ for method in ["OOB", "Lambda", "TND"]:
             print("Removed "+str(c)+", risk = "+str(round(mv_risk,3))+", worst voter left: "+str(round(s,4)))
         if method=="OOB":
             results["M"].append(len(rf._estimators))
-        results[method].append(mv_risk)
-        results[method+"_s"].append(s)
+        results[method+"_mvrisk"].append(mv_risk)
+        results[method+"_weakest"].append(s)
+        results[method+"_FO"].append(rf.bound("PBkl"))
+        results[method+"_TND"].append(rf.bound("TND"))
+
+        if method=="OOB":
+            results[method+"_unf_mvrisk"].append(mv_risk)
+        else:
+            # Small hack to get uniform risk
+            m = len(rf._rho)
+            old_rho = rf._rho
+            rf._rho = np.ones(m)/m
+            _, unf_mv_risk = rf.predict(testX,testY)
+            results[method+"_unf_mvrisk"].append(unf_mv_risk)
+            rf._rho = old_rho
         
         # Sparsify
         r, s = rf.sparsify(n=1, use_oob=use_oob)

@@ -41,21 +41,31 @@ horizontal sep=32pt,
 },
 ]
 \nextgroupplot[MPlot,title=\dataset{Comparison over $M$}]
-\addplot[MVRisk] table[x=M,y=OOB]{\mytable};
-\addplot[FO] table[x=M,y=Lambda]{\mytable};
-\addplot[TND] table[x=M,y=TND]{\mytable};
+\addplot[MVRisk] table[x=M,y=OOB_mvrisk]{\mytable};
+\addplot[FO] table[x=M,y=Lambda_mvrisk]{\mytable};
+\addplot[FO,dotted] table[x=M,y=Lambda_unf_mvrisk]{\mytable};
+\addplot[TND] table[x=M,y=TND_mvrisk]{\mytable};
+\addplot[TND,dotted] table[x=M,y=TND_unf_mvrisk]{\mytable};
 \addlegendentry{OOB}
 \addlegendentry{$\FO$}
+\addlegendentry{$\FO$ ($\rho=u$)}
 \addlegendentry{$\TND$}
+\addlegendentry{$\TND$ ($\rho=u$)}
 
-\nextgroupplot[sPlot,title=\dataset{OOB, risk vs. weakest voter}]
-\addplot[MVRisk, mark=*] table[x=OOB_s,y=OOB]{\mytable};
+\nextgroupplot[MPlot,title=\dataset{OOB, bounds}]
+\addplot[MVRisk] table[x=M,y=OOB_mvrisk]{\mytable};
+\addplot[FO, dashed] table[x=M,y=OOB_FO]{\mytable};
+\addplot[TND, dashed] table[x=M,y=OOB_TND]{\mytable};
 
-\nextgroupplot[sPlot,title=\dataset{$\FO$, risk vs. smallest weight}]
-\addplot[FO, mark=*] table[x=Lambda_s,y=Lambda]{\mytable};
+\nextgroupplot[MPlot,title=\dataset{$\FO$, risk vs. smallest weight}]
+\addplot[FO] table[x=M,y=Lambda_mvrisk]{\mytable};
+\addplot[FO, dashed] table[x=M,y=Lambda_FO]{\mytable};
+\addplot[TND, dashed] table[x=M,y=Lambda_TND]{\mytable};
 
-\nextgroupplot[sPlot,title=\dataset{$\TND$, risk vs. smallest weight}]
-\addplot[TND, mark=*] table[x=TND_s,y=TND]{\mytable};
+\nextgroupplot[MPlot,title=\dataset{$\TND$, risk vs. smallest weight}]
+\addplot[TND] table[x=M,y=TND_mvrisk]{\mytable};
+\addplot[FO, dashed] table[x=M,y=TND_FO]{\mytable};
+\addplot[TND, dashed] table[x=M,y=TND_TND]{\mytable};
 
 \end{groupplot}
 \end{tikzpicture}
