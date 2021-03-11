@@ -80,6 +80,21 @@ def tandem_risks(preds, targs):
                 tandem_risks[j,i] += tand
     return tandem_risks
 
+def mutandem_risks(preds, targs, mu):
+    m,n = preds.shape
+    mutandem_risks = np.zeros((m,m))
+    musquaretandem_risks = np.zeros((m,m))
+    for i in range(m):
+        for j in range(i, m):
+            tand = np.sum(np.multiply((preds[i]!=targs)-mu, (preds[j]!=targs)-mu))
+            squaretand = np.sum(np.square(np.multiply((preds[i] != targs) - mu, (preds[j] != targs) - mu)))
+            mutandem_risks[i,j] += tand
+            musquaretandem_risks[i,j] += squaretand
+            if i != j:
+                mutandem_risks[j,i] += tand
+                musquaretandem_risks[j, i] += squaretand
+    return mutandem_risks, musquaretandem_risks
+
 #######################
 # OOB 
 
@@ -162,7 +177,31 @@ def oob_tandem_risks(preds, targs):
                 tandem_risks[j,i] = tandem_risks[i,j]
                 n2[j,i]           = n2[i,j]
     
-    return tandem_risks, n2    
+    return tandem_risks, n2
+
+
+def oob_mutandem_risks(preds, targs, mu):
+    m = len(preds)
+    mutandem_risks = np.zeros((m, m))
+    musquaretandem_risks = np.zeros((m, m))
+    n2 = np.zeros((m, m))
+
+    for i in range(m):
+        (M_i, P_i) = preds[i]
+        for j in range(i, m):
+            (M_j, P_j) = preds[j]
+            M = np.multiply(M_i, M_j)
+            mutandem_risks[i, j] = np.sum(np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu))
+            musquaretandem_risks[i, j] = np.sum(np.square(np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu)))
+            n2[i, j] = np.sum(M)
+
+            if i != j:
+                mutandem_risks[j, i] = mutandem_risks[i, j]
+                musquaretandem_risks[j, i] = musquaretandem_risks[i, j]
+                n2[j, i] = n2[i, j]
+
+    return mutandem_risks, musquaretandem_risks, n2
+
 
 #######################
 # Majority vote risk

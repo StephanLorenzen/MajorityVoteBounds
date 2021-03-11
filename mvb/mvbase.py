@@ -10,8 +10,9 @@
 import numpy as np
 from sklearn.utils import check_random_state
 
+from mvb.bounds.muBernstein import varMUBernstein
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein
 from math import ceil
 
 class MVBounds:
@@ -205,7 +206,7 @@ class MVBounds:
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU','MUBernstein', 'MUVarBernstein']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound=='SH' and labeled_data==None and (stats==None or 'mv_risk' not in stats):
@@ -234,6 +235,13 @@ class MVBounds:
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             elif bound=='MU':
                 return MU(stats['r_tandem_risk'], stats['r_gibbs_risk'], stats['r_n_min'], stats['r_n2_min'], KL, [stats['mu']])
+            elif bound == 'MUBernstein':
+                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
+                return MUBernstein(mutandem_risk, vartandem_risk, n2, KL, stats['mu'])
+            elif bound == 'MUVarBernstein':
+                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
+                varMUBound, _ = varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
+                return varMUBound
             else:
                 return None
         else:
@@ -279,6 +287,16 @@ class MVBounds:
                 # Reset OOB
                 self._OOB = full_OOB
                 return MU(tand, grisk, n_min, n2_min, KL, mu_grid=[mu])
+            elif bound == 'MUBernstein':
+                mu = 0.0
+                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(mu, labeled_data, incl_oob)
+                return MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu)
+            elif bound == 'MUVarBernstein':
+                mu = 0.0
+                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(mu, labeled_data, incl_oob)
+                varMUBound, _ = varMUBernstein(vartandem_risk, n2, KL, mu)
+                return varMUBound
+
             else:
                 return None
     
@@ -293,6 +311,7 @@ class MVBounds:
         results['CTD']  = self.bound('CTD', stats=stats)
         if incl_oob:
             results['MU'] = self.bound('MU', stats=stats)
+            results['MUBernstein'] = self.bound('MUBernstein ', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
@@ -441,7 +460,46 @@ class MVBounds:
             n2            += X.shape[0]
             tandem_risks  += util.tandem_risks(P, Y)
 
-        return tandem_risks, n2 
+        return tandem_risks, n2
+
+    def mutandem_risk(self, mu, data=None, incl_oob=True):
+        mutrsk, musquaretandem_risks, n2 = self.mutandem_risks(mu, data, incl_oob)
+        mutandemrisk = np.average(np.average(mutrsk / n2, weights=self._rho, axis=1), weights=self._rho)
+
+        vartandemrisk = (n2/(n2-1))*(musquaretandem_risks / n2 - np.square(mutrsk / n2))
+        vartandemrisk = np.average(np.average(vartandemrisk, weights=self._rho, axis=1), weights=self._rho)
+
+        return mutandemrisk, vartandemrisk, np.min(n2)
+
+    def mutandem_risks(self, mu, data=None, incl_oob=True):
+        incl_oob = incl_oob and self._sample_mode is not None
+        if data is None and not incl_oob:
+            util.warn('Warning, MVBase.tandem_risks: Missing data!')
+            return None
+        m = len(self._estimators)
+        n2 = np.zeros((m, m))
+        mutandem_risks = np.zeros((m, m))
+        musquaretandem_risks = np.zeros((m, m))
+
+        if incl_oob:
+            (preds, targs) = self._OOB
+            # preds = [(idx, preds)] * n_estimators
+            omutand, omusquaretand, on2 = util.oob_mutandem_risks(preds, targs, mu)
+            n2 += on2
+            mutandem_risks += omutand
+            musquaretandem_risks += omusquaretand
+
+        if data is not None:
+            assert (len(data) == 2)
+            X, Y = data
+            P = self.predict_all(X)
+
+            n2 += X.shape[0]
+            mutand, musquaretand = util.mutandem_risks(P, Y, mu)
+            mutandem_risks += mutand
+            musquaretandem_risks += musquaretand
+
+        return mutandem_risks, musquaretandem_risks, n2
 
     # Returns the disagreement
     def disagreement(self, data=None, incl_oob=True):
