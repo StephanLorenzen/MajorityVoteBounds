@@ -49,6 +49,10 @@ def risk(preds, targs):
     assert(preds.shape == targs.shape)
     return 1.0-accuracy_score(preds,targs)
 
+
+# Computes the number of prediction errors for each classifier
+# preds.shape = (m, n)
+# targs.shape = (n,)
 def risks(preds, targs):
     assert(len(preds.shape)==2 and len(targs.shape)==1)
     assert(preds.shape[1] == targs.shape[0])
