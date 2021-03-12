@@ -14,6 +14,9 @@ optimize:
 
 mu:
 	./helpers/run_mu.sh bootstrap
+	
+muBernstein:
+	./helpers/run_muBernstein.sh bootstrap
 
 clean:
 	rm -f mvb
