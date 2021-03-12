@@ -202,7 +202,7 @@ class MVBounds:
             self._rho = rho
             return (bound, rho, lam, gam, mu)
 
-    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS').
+    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
@@ -402,10 +402,12 @@ class MVBounds:
             P = self.predict_all(X)
             return util.mv_risk(self._rho,P,Y)
 
-    # Returns the Gibbs risk
+    # Returns the Gibbs risk and n_min
     def gibbs_risk(self, data=None, incl_oob=True):
         rs, n = self.risks(data, incl_oob)
         return np.average(rs/n, weights=self._rho), np.min(n)
+        
+    
     def risks(self, data=None, incl_oob=True):
         incl_oob = incl_oob and self._sample_mode is not None
         if data is None and not incl_oob:
