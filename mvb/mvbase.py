@@ -476,7 +476,7 @@ class MVBounds:
     def mutandem_risks(self, mu, data=None, incl_oob=True):
         incl_oob = incl_oob and self._sample_mode is not None
         if data is None and not incl_oob:
-            util.warn('Warning, MVBase.tandem_risks: Missing data!')
+            util.warn('Warning, MVBase.mutandem_risks: Missing data!')
             return None
         m = len(self._estimators)
         n2 = np.zeros((m, m))

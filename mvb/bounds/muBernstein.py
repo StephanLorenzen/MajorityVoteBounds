@@ -1,5 +1,5 @@
 #
-# Implements the MU bound.
+# Implements the MU Bernstein bound.
 #
 import numpy as np
 from math import log, sqrt, exp, e, ceil, nan
@@ -22,24 +22,36 @@ def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu, delta=0.05):
 def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unionBound = False):
 
     if unionBound:
-        nu2 = (e-2)*n2/(4*log(1/delta2))
-        nu2 = ceil(0.5*log(nu2)/log(c2))
+        nu2 = sqrt((e-2)*n2/(4*log(1/delta2)))
+        nu2 = ceil(log(nu2)/log(c2))
     else:
         nu2 = 1
-
+    
+    # range factor
+    Kmu = max(1-mu, 1-2*mu)
+    
+    # E[varMuBound]<=Kmu^2/4
+    varMuBound = min(varMuBound, Kmu**2/4)
+    
     # From the proof of Collorary 20.
     bprime=c2*(2*KL + log(nu2) -log(delta2))/n2
     a=(e-2)*varMuBound
-    Kmu = max(1-mu, 1-2*mu)
-
-    # From the proof of Collorary 20.
     gammastar = sqrt(bprime / a)
-
-    # From the proof of Collorary 20.
-    if gammastar<= 1/Kmu:
-        return mutandem_risk + gammastar * a + bprime / gammastar, gammastar
+    
+    # The range of Gamma^*
+    gam_lb = sqrt(4*log(1/delta2)/(n2*(e-2)))/Kmu
+    gam_ub = 1/Kmu
+    
+    if gammastar > gam_ub :
+        gammastar = gam_ub
+    elif gammastar < gam_lb:
+        gammastar = gam_lb
     else:
-        return nan, nan
+        gammastar = gammastar
+    
+    bound = mutandem_risk + gammastar * a + bprime / gammastar
+    return min(bound , 1.0), gammastar
+
 
 #Corollary 17 : \label{cor:bound_variance_grid}
 def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound = False):
@@ -54,14 +66,16 @@ def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound =
     # From the proof of Collorary 17.
     a = vartandem_risk
     bprime = c1*(2*KL + log(nu1) - log(delta1))/(2*(n2-1))
-    c = max((1-mu)**2,(1-2*mu)**2)
+    
+    # range factor
+    Kmu = max(1-mu, 1-2*mu)
 
     # From the proof of Collorary 17.
-    tstar2 = sqrt(a/(c*bprime)+1)+1
+    tstar2 = sqrt(a/(Kmu**2 * bprime)+1)+1
     tstar2 = 1./tstar2
-
+    
     # From the proof of Collorary 17.
-    varMuBound = a / (1 - tstar2) + c*bprime / (tstar2 * (1 - tstar2))
+    varMuBound = a / (1 - tstar2) + Kmu**2 * bprime / (tstar2 * (1 - tstar2))
 
     lambdstar = 2*(n2-1)*tstar2/n2
 
