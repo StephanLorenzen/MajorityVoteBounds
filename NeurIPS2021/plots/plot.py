@@ -26,7 +26,7 @@ NUM_TREES = 100
 BOUNDS_BINARY = [("pbkl","FO"),("c1","Cone"),("c2","Ctwo"),("ctd","CTD"),("tnd","TND"),("mub","MU")]
 BOUNDS_MULTI  = BOUNDS_BINARY[:1]+BOUNDS_BINARY[3:]
 
-# Plot error and bounds for several data sets
+# Plot error and bounds for several data sets (one file for each dataset)
 def multi_bounds(exp="uniform"):
     name = "bounds_"+exp
     path = name+"/datasets/"
@@ -121,11 +121,11 @@ def mu_plot():
             "risk_mean":[],"risk_std":[],
             "tandem_mean":[],"tandem_std":[]}
     for ds in DATASETS:
-        df = pd.read_csv(EXP_PATH+"mu/"+ds+".csv")
+        df = pd.read_csv(EXP_PATH+"muBernstein/"+ds+".csv")
         # Compute means and stds
         df_mean = df.mean()
         df_std  = df.std()
-        output = {"mu":[],"risk_mean":[],"risk_std":[],"pbkl_mean":[],"pbkl_std":[],"tnd_mean":[],"tnd_std":[],"mu_mean":[],"mu_std":[]}
+        output = {"mu":[],"risk_mean":[],"risk_std":[],"pbkl_mean":[],"pbkl_std":[],"tnd_mean":[],"tnd_std":[],"mu_mean":[],"mu_std":[], "bern_mean":[], "bern_std":[]}
         for c in df.columns:
             if c[:4]=="mub_":
                 output["mu"].append(float(c[4:]))
@@ -136,6 +136,9 @@ def mu_plot():
                 for cc in ["pbkl","tnd"]:
                     output[cc+"_mean"].append(df_mean[cc])
                     output[cc+"_std"].append(df_std[cc])
+            if c[:12] == "muBernstein_":
+                output["bern_mean"].append(df_mean[c])
+                output["bern_std"].append(df_std[c])
         
         stats["mv_risk_mean"].append(df_mean["mv_risk"])
         stats["mv_risk_std"].append(df_std["mv_risk"])

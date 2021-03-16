@@ -30,41 +30,49 @@ horizontal sep=19pt,
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Cod-RNA.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Cod-RNA.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Cod-RNA.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Cod-RNA.csv};
 
 \nextgroupplot[Plot, YTwoDec, title=\dataset{Mushroom}, ymax=0.1]
 \addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Mushroom.csv};
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Mushroom.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Mushroom.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Mushroom.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Mushroom.csv};
 
 \nextgroupplot[Plot, title=\dataset{Phishing}, ymax=0.23]
 \addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Phishing.csv};
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Phishing.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Phishing.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Phishing.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Phishing.csv};
 
 \nextgroupplot[Plot, YTwoDec, title=\dataset{Sensorless}, ymax=0.07]
 \addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Sensorless.csv};
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Sensorless.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Sensorless.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Sensorless.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Sensorless.csv};
 
 \nextgroupplot[Plot, title=\dataset{Letter}, ymax=0.6]
 \addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Letter.csv};
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Letter.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Letter.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Letter.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Letter.csv};
 
 \nextgroupplot[Plot, title=\dataset{Pendigits}, ymax=0.25]
 \addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Pendigits.csv};
 \addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Pendigits.csv};
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Pendigits.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Pendigits.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Pendigits.csv};
 
 \addlegendentry{Test}
 \addlegendentry{$\FO$}
 \addlegendentry{$\TND$}
 \addlegendentry{$\MU$}
+\addlegendentry{$\Bern$}
+
 \end{groupplot}
 \end{tikzpicture}
 \end{document}
