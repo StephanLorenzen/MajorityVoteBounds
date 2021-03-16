@@ -49,7 +49,7 @@ def _write_outfile(results):
     prec = 5
     with open(outpath+DATASET+'-'+str(M)+'-'+str(SMODE)+'-'+str(OPT)+'.csv', 'w') as f:
         f.write('repeat;n_train;n_test;d;c')
-        for name in ["unf","lam","tnd","mu","mug"]:
+        for name in ["unf","lam","tnd","mu","mug", "muBernsteing"]:
             f.write(';'+';'.join([name+'_'+x for x in ['mv_risk','gibbs','tandem_risk','pbkl','c1','c2','ctd','tnd','mub','lamda','gamma','mu']]))
         f.write('\n')
         for (rep, n, restup) in results:
@@ -66,6 +66,7 @@ def _write_outfile(results):
                             bounds.get('CTD', -1.0),
                             bounds.get('TND', -1.0),
                             bounds.get('MU',-1.0),
+                            bounds.get('MUBernstein', -1.0),
                             bl,
                             bg,
                             bm
@@ -126,17 +127,28 @@ for rep in range(REPS):
     # Optimize MU with grid
     print("Optimizing MU (using grid)...")
     grid = [-0.2,-0.1,0.0,0.1]
-    (_, rho, bl, bg, mu) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_grid':grid})
+    (_, rho, mu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_grid':grid})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats)
     bounds = rf.bounds(stats=stats)
     res_mug = (mv_risk, stats, bounds, bl, bg, mu)
     rhos.append(rho)
     
+    # Optimize MUBernstein with grid
+    print("Optimizing MUBernstein (using grid)...")
+    grid = [-0.2,-0.1,0.0,0.1]
+    (_, rho, mu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_grid':grid})
+    _, mv_risk = rf.predict(testX,testY)
+    stats = rf.aggregate_stats(stats)
+    bounds = rf.bounds(stats=stats)
+    res_muBernsteing = (mv_risk, stats, bounds, bl, bg, mu)
+    rhos.append(rho)
+
+
     # opt = (bound, rho, lam, gam, mu)
     if rep==0:
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])
-    results.append((rep, n, (res_unf, res_lam, res_mv2, res_mu, res_mug)))
+    results.append((rep, n, (res_unf, res_lam, res_mv2, res_mu, res_mug, res_muBernsteing)))
     
 _write_outfile(results)
 
