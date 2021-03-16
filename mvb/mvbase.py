@@ -10,7 +10,7 @@
 import numpy as np
 from sklearn.utils import check_random_state
 
-from mvb.bounds.muBernstein import varMUBernstein
+from mvb.bounds import muBernstein
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein
 from math import ceil
@@ -169,7 +169,7 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Lambda", "TND", "DIS", "MU"}:
+        if bound not in {"Lambda", "TND", "DIS", "MU", "MUBernstein"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
@@ -195,12 +195,17 @@ class MVBounds:
             (bound,rho,lam,gam) = optimizeDIS(risks/ns,dis/n2s,np.min(ns),np.min(n2s),options=options)
             self._rho = rho
             return (bound, rho, lam, gam)
-        else:
+        elif bound == 'MU':
             risks, ns = self.risks(labeled_data, incl_oob)
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
             (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s),options=options)
             self._rho = rho
             return (bound, rho, lam, gam, mu)
+        else:
+            (bound,rho,mu,lam,gam) = muBernstein.optimizeMUBernstein(self, labeled_data, incl_oob,options=options)
+            self._rho = rho
+            return (bound, rho, lam, gam, mu)
+
 
     # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').
     # A stats object or the relevant data must be given as input (unless classifier trained
@@ -240,7 +245,7 @@ class MVBounds:
                 return MUBernstein(mutandem_risk, vartandem_risk, n2, KL, stats['mu'])
             elif bound == 'MUVarBernstein':
                 mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
-                varMUBound, _ = varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
+                varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
                 return varMUBound
             else:
                 return None
@@ -294,7 +299,7 @@ class MVBounds:
             elif bound == 'MUVarBernstein':
                 mu = 0.0
                 mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(mu, labeled_data, incl_oob)
-                varMUBound, _ = varMUBernstein(vartandem_risk, n2, KL, mu)
+                varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, mu)
                 return varMUBound
 
             else:
@@ -311,7 +316,7 @@ class MVBounds:
         results['CTD']  = self.bound('CTD', stats=stats)
         if incl_oob:
             results['MU'] = self.bound('MU', stats=stats)
-            results['MUBernstein'] = self.bound('MUBernstein ', stats=stats)
+            results['MUBernstein'] = self.bound('MUBernstein', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
@@ -465,11 +470,11 @@ class MVBounds:
         return tandem_risks, n2
 
     def mutandem_risk(self, mu, data=None, incl_oob=True):
-        mutrsk, musquaretandem_risks, n2 = self.mutandem_risks(mu, data, incl_oob)
-        mutandemrisk = np.average(np.average(mutrsk / n2, weights=self._rho, axis=1), weights=self._rho)
+        mutrisks, musquaretandem_risks, n2 = self.mutandem_risks(mu, data, incl_oob)
+        mutandemrisk = np.average(np.average(mutrisks / n2, weights=self._rho, axis=1), weights=self._rho)
 
-        vartandemrisk = (n2/(n2-1))*(musquaretandem_risks / n2 - np.square(mutrsk / n2))
-        vartandemrisk = np.average(np.average(vartandemrisk, weights=self._rho, axis=1), weights=self._rho)
+        vartandemrisks = (n2/(n2-1))*(musquaretandem_risks / n2 - np.square(mutrisks / n2))
+        vartandemrisk = np.average(np.average(vartandemrisks, weights=self._rho, axis=1), weights=self._rho)
 
         return mutandemrisk, vartandemrisk, np.min(n2)
 
