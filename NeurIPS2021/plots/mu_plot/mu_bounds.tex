@@ -19,7 +19,7 @@
   }
 \begin{groupplot}[
 group style={
-group size=3 by 2,
+group size=4 by 4,
 x descriptions at=edge bottom,
 vertical sep=16pt,
 horizontal sep=19pt,
@@ -66,6 +66,70 @@ horizontal sep=19pt,
 \addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Pendigits.csv};
 \addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Pendigits.csv};
 \addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Pendigits.csv};
+
+\nextgroupplot[Plot, title=\dataset{Adult}, ymax=0.8]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Adult.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Adult.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Adult.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Adult.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Adult.csv};
+
+\nextgroupplot[Plot, title=\dataset{SVMGuide1}, ymax=0.4]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/SVMGuide1.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/SVMGuide1.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/SVMGuide1.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/SVMGuide1.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/SVMGuide1.csv};
+
+\nextgroupplot[Plot, title=\dataset{Connect-4}, ymax=0.8]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Connect-4.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Connect-4.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Connect-4.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Connect-4.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Connect-4.csv};
+
+\nextgroupplot[Plot, title=\dataset{Protein}, ymax=1.0]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Protein.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Protein.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Protein.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Protein.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Protein.csv};
+
+\nextgroupplot[Plot, title=\dataset{SatImage}, ymax=0.6]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/SatImage.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/SatImage.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/SatImage.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/SatImage.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/SatImage.csv};
+
+\nextgroupplot[Plot, title=\dataset{USPS}, ymax=0.6]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/USPS.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/USPS.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/USPS.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/USPS.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/USPS.csv};
+
+\nextgroupplot[Plot, YTwoDec, title=\dataset{Shuttle}, ymax=0.05]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Shuttle.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Shuttle.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Shuttle.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Shuttle.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Shuttle.csv};
+
+\nextgroupplot[Plot, YTwoDec, title=\dataset{w1a}, ymax=0.1]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/w1a.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/w1a.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/w1a.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/w1a.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/w1a.csv};
+
+\nextgroupplot[Plot, title=\dataset{Splice}, ymax=0.6]
+\addplot[Risk] table[col sep=comma,x=mu,y=risk_mean] {datasets/Splice.csv};
+\addplot[FO,Bound] table[col sep=comma,x=mu,y=pbkl_mean] {datasets/Splice.csv};
+\addplot[TND,Bound] table[col sep=comma,x=mu,y=tnd_mean] {datasets/Splice.csv};
+\addplot[MU,Bound] table[col sep=comma,x=mu,y=mu_mean] {datasets/Splice.csv};
+\addplot[Bern,Bound] table[col sep=comma,x=mu,y=bern_mean] {datasets/Splice.csv};
+
 
 \addlegendentry{Test}
 \addlegendentry{$\FO$}

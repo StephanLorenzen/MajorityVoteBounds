@@ -443,6 +443,7 @@ class MVBounds:
     def tandem_risk(self, data=None, incl_oob=True):
         trsk, n2 = self.tandem_risks(data, incl_oob)
         return np.average(np.average(trsk/n2, weights=self._rho, axis=1), weights=self._rho), np.min(n2)
+        
     def tandem_risks(self, data=None, incl_oob=True):
         incl_oob = incl_oob and self._sample_mode is not None
         if data is None and not incl_oob:

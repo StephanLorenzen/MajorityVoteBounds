@@ -56,7 +56,7 @@ def _write_outfile(results):
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
             for (mv_risk, stats, bounds, bl, bg, bm) in restup:
                 f.write(
-                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(12)]))
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(13)]))
                         .format(mv_risk,
                             stats.get('gibbs_risk', -1.0),
                             stats.get('tandem_risk', -1.0),

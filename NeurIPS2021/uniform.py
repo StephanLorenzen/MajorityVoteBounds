@@ -42,7 +42,7 @@ def _write_outfile(results):
         f.write('repeat;n_train;n_test;d;c;mv_risk;gibbs;n_min;disagreement;disagreement_t;tandem_risk;n2_min;n2_min_t;r_gibbs;r_n_min;r_tandem_risk;r_n2_min;mu;pbkl;c1;c2;tnd;ctd;dis;dis_t;mub;sh;best_tree;worst_tree\n')
         for (rep, risk_mv, n, bounds, stats) in results:
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+
-                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(24)])+'\n')
+                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(25)])+'\n')
                     .format(risk_mv,
                         stats['gibbs_risk'],
                         stats['n_min'],
@@ -64,6 +64,7 @@ def _write_outfile(results):
                         bounds.get('DIS',-1.0),
                         bounds.get('DIS-T',-1.0),
                         bounds.get('MU',-1.0),
+                        bounds.get('MUBernstein', -1.0)
                         bounds.get('SH',-1.0),
                         np.min(stats['risks']),
                         np.max(stats['risks']))

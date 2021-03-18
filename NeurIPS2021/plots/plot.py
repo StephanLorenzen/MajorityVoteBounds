@@ -102,12 +102,23 @@ optimized_risk_comparison()
 
 # Prep data files for mu_plots
 DATASETS = [
+        'SVMGuide1',
         'Phishing',
         'Mushroom',
         'Pendigits',
+        'Splice',
+        'Adult',
+        'w1a',
         'Letter',
+        'Shuttle',
+        'Protein',
+        'SatImage',
         'Sensorless',
+        'USPS',
+        'Connect-4',
         'Cod-RNA',
+        #'MNIST',
+        #'Fashion-MNIST',
         ]
 
 def mu_plot():
