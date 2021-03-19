@@ -23,8 +23,7 @@ def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu, delta=0.05):
 def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unionBound = False):
 
     if unionBound:
-        nu2 = sqrt((e-2)*n2/(4*log(1/delta2)))
-        nu2 = ceil(log(nu2)/log(c2))
+        nu2 = ceil( log( sqrt( (e-2)*n2 / (4*log(1/delta2)) ) ) / log(c2) )
     else:
         nu2 = 1
     
@@ -40,7 +39,7 @@ def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unio
     gammastar = sqrt(bprime / a)
     
     # The range of Gamma^*
-    gam_lb = sqrt(4*log(1/delta2)/(n2*(e-2)))/Kmu
+    gam_lb = sqrt( 4*log(1/delta2)/(n2*(e-2)) ) / Kmu
     gam_ub = 1/Kmu
     
     if gammastar > gam_ub :
@@ -58,8 +57,7 @@ def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unio
 def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound = False):
 
     if unionBound:
-        nu1  = (n2-1)/log(1/delta1)
-        nu1 = 0.5*sqrt(nu1+1)+0.5
+        nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
         nu1 = ceil(log(nu1)/log(c1))
     else:
         nu1 = 1
@@ -72,13 +70,11 @@ def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound =
     Kmu = max(1-mu, 1-2*mu)
 
     # From the proof of Collorary 17.
-    tstar2 = sqrt(a/(Kmu**2 * bprime)+1)+1
-    tstar2 = 1./tstar2
+    tstar2 = 1./ (sqrt(a/(Kmu**2 * bprime)+1)+1 )
+    lambdastar = 2*(n2-1)*tstar2/n2
     
     # From the proof of Collorary 17. Equation (10)
     varMuBound = a / (1 - tstar2) + Kmu**2 * bprime / (tstar2 * (1 - tstar2))
-
-    lambdastar = 2*(n2-1)*tstar2/n2
 
     return varMuBound, lambdastar
 
@@ -127,10 +123,10 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
         mutandemrisk = np.average(np.average(mutandemrisks / n2s, weights=rho, axis=1), weights=rho)
         vartandemrisk = np.average(np.average(vartandemrisks, weights=rho, axis=1), weights=rho)
 
-        # We first compute a bound over the variance from Corollary 17
+        # Compute the bound for the true variance by Corollary 17
         varMuBound, lam = varMUBernstein(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
-        # We plug the bound over variance to compute a bound over the muTandem loss following Corollary 20.
+        # Compute the bound of the muTandem loss by Corollary 20.
         muTandemBound, gam = muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c2=c2, delta2=delta / 2.)
 
         bound =  muTandemBound / ((0.5 - mu) ** 2)
@@ -142,15 +138,15 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
         # range factor
         Kmu = max(1 - mu, 1 - 2 * mu)
 
-        a = (e-2)*gam/(1-n2*lam/(2*(n2-1)))
-        b = c2/(gam*n2) + (e-2)*gam*c1*Kmu**2/(n2*lam*(1-n2*lam/(2*(n2-1))))
+        a = (e-2)*gam / (1 - n2*lam/(2*(n2-1)))
+        b = c2/(gam*n2) + (e-2)*gam*c1*Kmu**2 / (n2*lam*(1-n2*lam/(2*(n2-1))))
 
         Srho = softmax(rho)
         # D_jS_i = S_i(1[i==j]-S_j)
         Smat = -np.outer(Srho, Srho)
         np.fill_diagonal(Smat, np.multiply(Srho, 1.0 - Srho))
 
-        return 2 * np.dot(np.dot(mutandemrisks, Srho) + a * np.dot(mutandemrisks, Srho) + b * (1 + np.log(Srho / pi)), Smat)
+        return 2 * np.dot(np.dot(mutandemrisks, Srho) + a * np.dot(vartandemrisks, Srho) + b * (1 + np.log(Srho / pi)), Smat)
 
     max_iterations = options.get('max_iterations', None)
     eps = options.get('eps', 10 ** -9)
@@ -173,7 +169,6 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
                           eps=eps, max_iterations=max_iterations)
 
     rho = uniform_distribution(m)
-    # If mu_input is None, mu will be computed, otherwise mu_input will be returned
     b, mu, lam, gam = _bound(rho, mu=mu_input)
     bp = b + 1
     while abs(b - bp) > eps:

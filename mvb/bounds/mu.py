@@ -17,11 +17,11 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     K = len(mu_grid)
     delta /= K
 
-    # UpperBound_TandemRisk
+    # UpperBound_TandemRisk by inverse kl
     rhs_tr = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
     ub_tr  = solve_kl_sup(tandem_risk, rhs_tr)
     
-    # LowerBound_GibbsRisk
+    # LowerBound_GibbsRisk by inverse kl
     rhs_gr = ( KL + log(4.0*sqrt(n)/delta) ) / n
     lb_gr  = solve_kl_inf(gibbs_risk, rhs_gr)
    

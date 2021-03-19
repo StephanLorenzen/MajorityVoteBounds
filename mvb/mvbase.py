@@ -12,7 +12,7 @@ from sklearn.utils import check_random_state
 
 from mvb.bounds import muBernstein
 from . import util
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
 from math import ceil
 
 class MVBounds:
@@ -202,7 +202,7 @@ class MVBounds:
             self._rho = rho
             return (bound, rho, lam, gam, mu)
         else:
-            (bound,rho,mu,lam,gam) = muBernstein.optimizeMUBernstein(self, labeled_data, incl_oob,options=options)
+            (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob,options=options)
             self._rho = rho
             return (bound, rho, lam, gam, mu)
 

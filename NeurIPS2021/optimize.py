@@ -116,6 +116,7 @@ for rep in range(REPS):
     rhos.append(rho)
     
     # Optimize MU
+    """
     print("Optimizing MU...")
     (_, rho, bl, bg, mu) = rf.optimize_rho('MU', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
@@ -123,10 +124,13 @@ for rep in range(REPS):
     bounds = rf.bounds(stats=stats)
     res_mu = (mv_risk, stats, bounds, bl, bg, mu)
     rhos.append(rho)
+    """
     
     # Optimize MU with grid
-    print("Optimizing MU (using grid)...")
-    grid = [-0.2,-0.1,0.0,0.1]
+    grid = [(-0.1+0.02*i) for i in range(10)]
+    
+    print("Optimizing MU (using grid) in [-0.1, 0.1] ...")
+    #grid = [-0.2,-0.1,0.0,0.1]
     (_, rho, mu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_grid':grid})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats)
@@ -135,8 +139,8 @@ for rep in range(REPS):
     rhos.append(rho)
     
     # Optimize MUBernstein with grid
-    print("Optimizing MUBernstein (using grid)...")
-    grid = [-0.2,-0.1,0.0,0.1]
+    print("Optimizing MUBernstein (using grid) in [-0.1, 0.1] ...")
+    #grid = [-0.2,-0.1,0.0,0.1]
     (_, rho, mu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_grid':grid})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats)
@@ -148,7 +152,7 @@ for rep in range(REPS):
     # opt = (bound, rho, lam, gam, mu)
     if rep==0:
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])
-    results.append((rep, n, (res_unf, res_lam, res_mv2, res_mu, res_mug, res_muBernsteing)))
+    results.append((rep, n, (res_unf, res_lam, res_mv2, res_mug, res_muBernsteing)))
     
 _write_outfile(results)
 
