@@ -45,7 +45,7 @@ if not os.path.exists(outpath):
 
 smodename = 'bagging' if SMODE=='bootstrap' else ('reduced bagging ('+str(SMODE)+');')
 print("Starting RFC experiment (m = "+str(M)+") for ["+DATASET+"] using sampling strategy: "+smodename)
-columns = ["n_train","n_test","d","c","mv_risk","gibbs_risk","n_min","disagreement","tandem_risk","n2_min","pbkl","tnd"]+["mub_"+str(mu) for mu in mu_vals]+["muBernstein_"+str(mu) for mu in mu_vals]+["muVarBernstein_"+str(mu) for mu in mu_vals]
+columns = ["n_train","n_test","d","c","mv_risk","gibbs_risk","n_min","disagreement","tandem_risk","n2_min","pbkl","tnd"]+["mub_"+str(mu) for mu in mu_vals]+["muBernstein_"+str(mu) for mu in mu_vals]#+["muVarBernstein_"+str(mu) for mu in mu_vals]
 results = dict([(c,[]) for c in columns])
 for rep in range(REPS):
     if REPS>1:
@@ -85,7 +85,7 @@ for rep in range(REPS):
         stats["mu"] = mu
         results["mub_"+str(mu)].append(rf.bound("MU", stats=stats))
         results["muBernstein_" + str(mu)].append(rf.bound("MUBernstein", stats=stats))
-        results["muVarBernstein_" + str(mu)].append(rf.bound("MUVarBernstein", stats=stats))
+        #results["muVarBernstein_" + str(mu)].append(rf.bound("MUVarBernstein", stats=stats))
 
 pd.DataFrame(results).to_csv(outpath+DATASET+".csv", index_label="repeat")
 
