@@ -86,6 +86,14 @@
       y dir=both,
       y explicit,
     },
+    Bern/.style={
+		color=colBern,
+		fill=colBern,
+		fill opacity=0.4,
+		error bars/.cd,
+		y dir=both,
+		y explicit,
+	},
 }
 
 \pgfplotstableread[col sep=semicolon]{datasets/bin.csv}\tbin
@@ -105,8 +113,9 @@ horizontal sep=0pt,
 \nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\MV_u,\testset)$}]
 \addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
-\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
+%\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
 \addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
+\addplot [Bern]   table[x expr=\coordindex,y=MUBernsteing_diff,y error minus=MUBernsteing_q25,y error plus=MUBernsteing_q75]{\tbin};
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 
 \nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
@@ -114,10 +123,12 @@ horizontal sep=0pt,
 \addlegendentry{$\rho_{\FO}^*$}
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
 \addlegendentry{$\rho_{\TND}^*$}
-\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
-\addlegendentry{$\rho_{\MU}^*$}
+%\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
+%\addlegendentry{$\rho_{\MU}^*$}
 \addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
 \addlegendentry{$\rho_{\MU-g}^*$}
+\addplot [Bern]   table[x expr=\coordindex,y=MUBernsteing_diff,y error minus=MUBernsteing_q25,y error plus=MUBernsteing_q75]{\tmul};
+\addlegendentry{$\rho_{\Bern-g}^*$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 \end{groupplot}
 \end{tikzpicture}

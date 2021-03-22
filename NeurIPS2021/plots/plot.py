@@ -12,14 +12,14 @@ DATASETS = [
         'w1a',
         'Letter',
         'Shuttle',
-        'Protein',
+        #'Protein',
         'SatImage',
         'Sensorless',
         'USPS',
         'Connect-4',
         'Cod-RNA',
         'MNIST',
-        'Fashion-MNIST',
+        #'Fashion-MNIST',
         ]
 EXP_PATH  = "../out/"
 NUM_TREES = 100
@@ -51,7 +51,7 @@ def multi_bounds(exp="uniform"):
             f.write("\\addplot[RiskErr] fill between[of=UP and LW];\n")
             f.write("\\addplot[Risk] coordinates {(0,"+mean+") (7,"+mean+")};\n")
 
-multi_bounds()
+#multi_bounds()
  
 
 
@@ -64,7 +64,7 @@ def optimized_risk_comparison():
     if not os.path.isdir(path):
         os.makedirs(path)
 
-    opts = ["lam","tnd","mu","mug"]
+    opts = ["lam","tnd","mug","MUBernsteing"]
     cols = ["dataset"]
     for opt in opts:
         cols += [opt+suf for suf in ["_diff","_q25","_q75"]]
@@ -161,4 +161,4 @@ def mu_plot():
         pd.DataFrame(output).to_csv(path+ds+".csv", index_label="idx")
     pd.DataFrame(stats).to_csv(path+"stats.csv", index_label="idx")
 
-mu_plot()
+#mu_plot()
