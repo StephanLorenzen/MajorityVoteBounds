@@ -8,19 +8,31 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 
 
 # Implementation of MUBernstein
-def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu, delta=0.05):
+#def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu=0.0, delta=0.05):
+def MUBernstein(MVBounds, data, incl_oob, KL, mu_grid=[0.0], delta=0.05):
+    best_bound = (2000.0, )
+    for mu in mu_grid:
+        # Compute the quantities depend on mu
+        mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
-    #We first compute a bound over the variance from Corollary 17
-    varMuBound, _ = varMUBernstein(vartandem_risk, n2, KL, mu, delta1= delta/2.)
+        # Compute a bound over the variance from Corollary 17
+        varUB, _ = _varMUBernstein(vartandem_risk, n2, KL, mu, delta1= delta/2.)
 
-    #We plug the bound over variance to compute a bound over the muTandem loss following Corollary 20.
-    muTandemBound, _ = muBernstein(mutandem_risk,varMuBound, n2, KL, mu, delta2= delta/2.)
-
-    return min(1.0, muTandemBound/((0.5-mu)**2))
+        # Plug the bound over variance to compute a bound over the muTandem loss following Corollary 20.
+        bernTandemUB, _ = _muBernstein(mutandem_risk, varUB, n2, KL, mu, delta2= delta/2.)
+  
+        # Compute the overall bound
+        bnd = bernTandemUB / (0.5-mu)**2
+        if bnd < best_bound[0]:
+            best_bound = (bnd, [mu], mutandem_risk, vartandem_risk, varUB, bernTandemUB)
+        elif bnd > best_bound[0]:
+            # if stop improving, break
+            break
+    return best_bound
 
 
 #Corollary 20 : \label{cor:pac-bayes-bernstein_grid}
-def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unionBound = False):
+def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.0, delta2=0.05, unionBound = False):
 
     if unionBound:
         nu2 = ceil( log( sqrt( (e-2)*n2 / (4*log(1/delta2)) ) ) / log(c2) )
@@ -54,7 +66,7 @@ def muBernstein(mutandem_risk, varMuBound, n2, KL, mu, c2=1.0, delta2=0.05, unio
 
 
 #Corollary 17 : \label{cor:bound_variance_grid}
-def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound = False):
+def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.0, delta1=0.05, unionBound = False):
 
     if unionBound:
         nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
@@ -64,7 +76,7 @@ def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound =
 
     # From the proof of Collorary 17.
     a = vartandem_risk
-    bprime = c1*(2*KL + log(nu1) - log(delta1))/(2*(n2-1))
+    bprime = c1*(2*KL + log(nu1) - log(delta1)) / (2*(n2-1))
     
     # range factor
     Kmu = max(1-mu, 1-2*mu)
@@ -85,20 +97,24 @@ def varMUBernstein(vartandem_risk, n2, KL, mu, c1=1.0, delta1=0.05, unionBound =
 # Default for opt is iRProp
 def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.0, c2=1.0, delta=0.05, options=None):
     options = dict() if options is None else options
-    if "mu_grid" not in options:
+    if 'mu_grid' not in options:
+        """ problem to be fixed : options["mu"] """
         mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(options["mu"], data, incl_oob)
         vartandemrisks = (n2/(n2-1))*(musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
         return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2,  c1=c1, c2=c2, mu=options["mu"], delta=delta, options=None)
     else:
-        mu_grid = options["mu_grid"]
+        mu_grid = options['mu_grid']
         delta /= len(mu_grid)
         best_bound = (2,)
         for mu in mu_grid:
             mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(mu, data, incl_oob)
             vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
             b = _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, options=None)
-            if b[0] < best_bound[0]:
+            if b[0] <= best_bound[0]:
                 best_bound = b
+            elif b[0] > best_bound[0]:
+                # if stop improving, break
+                break
         return best_bound
 
 
@@ -124,10 +140,10 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
         vartandemrisk = np.average(np.average(vartandemrisks, weights=rho, axis=1), weights=rho)
 
         # Compute the bound for the true variance by Corollary 17
-        varMuBound, lam = varMUBernstein(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
+        varMuBound, lam = _varMUBernstein(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
         # Compute the bound of the muTandem loss by Corollary 20.
-        muTandemBound, gam = muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c2=c2, delta2=delta / 2.)
+        muTandemBound, gam = _muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c2=c2, delta2=delta / 2.)
 
         bound =  muTandemBound / ((0.5 - mu) ** 2)
 
@@ -181,6 +197,5 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
             b = bp
             break
         rho, mu, lam, gam = nrho, nmu, nlam, ngam
-
     return (min(1.0, b), softmax(rho), mu, lam, gam)
 

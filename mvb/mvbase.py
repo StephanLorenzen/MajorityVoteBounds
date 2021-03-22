@@ -10,7 +10,7 @@
 import numpy as np
 from sklearn.utils import check_random_state
 
-from mvb.bounds import muBernstein
+#from mvb.bounds import muBernstein
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
 from math import ceil
@@ -200,18 +200,18 @@ class MVBounds:
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
             (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s),options=options)
             self._rho = rho
-            return (bound, rho, lam, gam, mu)
+            return (bound, rho, mu, lam, gam)
         else:
             (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob,options=options)
             self._rho = rho
-            return (bound, rho, lam, gam, mu)
+            return (bound, rho, mu, lam, gam)
 
 
     # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU','MUBernstein', 'MUVarBernstein']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU','MUBernstein']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound=='SH' and labeled_data==None and (stats==None or 'mv_risk' not in stats):
@@ -239,14 +239,13 @@ class MVBounds:
             elif bound=='DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             elif bound=='MU':
-                return MU(stats['r_tandem_risk'], stats['r_gibbs_risk'], stats['r_n_min'], stats['r_n2_min'], KL, [stats['mu']])
+                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_mub'])
             elif bound == 'MUBernstein':
-                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
-                return MUBernstein(mutandem_risk, vartandem_risk, n2, KL, stats['mu'])
-            elif bound == 'MUVarBernstein':
-                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
-                varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
-                return varMUBound
+                return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'])
+            #elif bound == 'MUVarBernstein':
+            #    mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
+            #    varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
+            #    return varMUBound
             else:
                 return None
         else:
@@ -308,25 +307,28 @@ class MVBounds:
     # Compute all bounds, given relevant stats object or data
     def bounds(self, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
         results = dict()
+        options = dict()
         if stats is None:
             stats = self.stats(labeled_data, unlabeled_data, incl_oob)
 
         results['PBkl'] = self.bound('PBkl', stats=stats)
-        results['TND']  = self.bound('TND', stats=stats)
+        (results['TND'], options['TandemUB'])  = self.bound('TND', stats=stats)
         results['CTD']  = self.bound('CTD', stats=stats)
         if incl_oob:
-            results['MU'] = self.bound('MU', stats=stats)
-            results['MUBernstein'] = self.bound('MUBernstein', stats=stats)
+            (results['MU'], options['mu_mub'], options['muTandemUB']) = self.bound('MU', stats=stats)
+            (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'], options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
             results['C1']  = self.bound('C1', stats=stats)
             results['C2']  = self.bound('C2', stats=stats)
             results['DIS'] = self.bound('DIS', stats=stats)
-        return results
+        
+        stats = self.aggregate_stats(stats, options)
+        return results, stats
     
     # Compute stats object
-    def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
+    def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
         stats = dict()
         if labeled_data is not None:
             stats['mv_preds'] = (self.predict_all(labeled_data[0]), labeled_data[1])
@@ -347,7 +349,9 @@ class MVBounds:
         else:
             stats['u_n2'] = stats['n2']
             stats['u_disagreements'] = dis / stats['u_n2']
-
+        
+            
+        """
         if incl_oob:
             # Estimate MU and risks and tandem risks with [r]educed OOB
             full_OOB = self._OOB
@@ -365,11 +369,12 @@ class MVBounds:
             stats['mu'] = 0.0
             stats['r_risks'], stats['r_n'] = stats['risks'], stats['n']
             stats['r_tandem_risks'], stats['r_n2'] = stats['tandem_risks'], stats['n2']
+        """
 
-        return self.aggregate_stats(stats)
+        return self.aggregate_stats(stats, options)
     
     # (Re-)Aggregate stats object. Useful if weighting has changed.
-    def aggregate_stats(self, stats):
+    def aggregate_stats(self, stats, options=None):
         if 'mv_preds' in stats:
             stats['mv_risk'] = util.mv_risk(self._rho, stats['mv_preds'][0], stats['mv_preds'][1]) 
         
@@ -384,11 +389,20 @@ class MVBounds:
         stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['u_n2_min'] = np.min(stats['u_n2'])
         
+        # for 'MU' and 'MUBernstein' bounds
+        options = dict() if options is None else options
+        for key in options:
+            stats[key] = options[key]
+        stats['mu_mub'] = options.get('mu_mub', [0.0])
+        stats['mu_bern'] = options.get('mu_bern', [0.0])
+
+        """
         # Reduced OOB
         stats['r_gibbs_risk'] = np.average(stats['r_risks'], weights=self._rho)
         stats['r_n_min'] = np.min(stats['r_n'])
         stats['r_tandem_risk'] = np.average(np.average(stats['r_tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         stats['r_n2_min'] = np.min(stats['r_n2'])
+        """
         return stats
 
     # Returns the accuracy on data = (X,Y). If data is None, returns the OOB-estimate
@@ -538,6 +552,7 @@ class MVBounds:
 
         return disagreements, n2 
     
+    """
     # Estimates mu using a single sample from each oob set
     # Returns: estimated mu ~= E_u[L(h)] and reduced oob set
     def estimate_mu(self):
@@ -564,3 +579,4 @@ class MVBounds:
             new_OOBs.append((mask,preds))
             
         return mu_estimate/len(OOBs), (new_OOBs, Y)
+        """

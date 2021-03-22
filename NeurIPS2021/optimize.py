@@ -51,6 +51,38 @@ def _write_outfile(results):
         # Header
         f.write('repeat;n_train;n_test;d;c')
         for name in ["unf","lam","tnd","mug","MUBernsteing"]:
+            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'c1', 'c2', 'ctd', 'tnd', 'TandemUB', 'mub', 'mu_mub', 'muTandemUB', 'bern', 'mu_bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
+        f.write('\n')
+        for (rep, n, restup) in results:
+            f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
+            for (mv_risk, stats, bounds, bl, bg, bm) in restup:
+                f.write(
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(21)]))
+                        .format(mv_risk,
+                            stats.get('gibbs_risk', -1.0),
+                            stats.get('tandem_risk', -1.0),
+                            bounds.get('PBkl', -1.0),
+                            bounds.get('C1', -1.0),
+                            bounds.get('C2', -1.0),
+                            bounds.get('CTD', -1.0),
+                            bounds.get('TND', -1.0),
+                            stats.get('TandemUB', -1.0), # TandemUB is the empirical bound of tandem risk; 4*TandemBound = TND
+                            bounds.get('MU',-1.0),
+                            stats['mu_mub'][0], # 'mu_mub' is the optimal \mu when using the MU bound; 
+                            stats.get('muTandemUB', -1.0), # muTandemUB is the empirical bound of mu tandem risk by Stephan; muTandemUB/(1/2-mu)**2 = MU
+                            bounds.get('MUBernstein', -1.0),
+                            stats['mu_bern'][0], # 'mu_bern' is the optimal \mu when using the MUBernstein bound; 
+                            stats.get('mutandem_risk', -1.0),
+                            stats.get('vartandem_risk', -1.0),
+                            stats.get('varUB', -1.0), # varUB is the empirical bound of the variance (Corollary 17)
+                            stats.get('bernTandemUB', -1.0), # bernTandemUB is the empirical bound of the mu tandem risk (Corollary 20); bernTandemUB/(1/2-mu)**2 = MUBernstein
+                            bl,
+                            bg,
+                            bm
+                                )
+                        )
+            f.write('\n')
+            """
             if name == "unf":
                 # TandemUB is the empirical bound of tandem risk; 4*TandemBound = tnd
                 # muTandemUB is the empirical bound of mu tandem risk by Stephan; muTandemBound/(1/2-mu)**2 = mub
@@ -58,7 +90,6 @@ def _write_outfile(results):
                 # bernTandemUB is the empirical bound of the mu tandem risk (Corollary 20); bernTandemUB/(1/2-mu)**2 = bern
                 # 'mu_mub' is the optimal \mu when using the 1st mu bound; 
                 # 'mu_bern' is the optimal \mu when using the bernstein bound; 
-                # 'mu_est' is the estimation of \mu using some samples in oobs
                 f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'c1', 'c2', 'ctd', 'tnd', 'TandemUB', 'mub', 'mu_mub', 'muTandemUB', 'bern', 'mu_bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB']]))
             elif name == "lam":
                 f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'lambda']]))
@@ -155,31 +186,8 @@ def _write_outfile(results):
                             )
                     )
             f.write('\n')
-        """
-            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk','gibbs','tandem_risk','pbkl','c1','c2','ctd','tnd','mub', 'bern','lamda','gamma','mu']]))
-        f.write('\n')
-        for (rep, n, restup) in results:
-            f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
-            for (mv_risk, stats, bounds, bl, bg, bm) in restup:
-                f.write(
-                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(13)]))
-                        .format(mv_risk,
-                            stats.get('gibbs_risk', -1.0),
-                            stats.get('tandem_risk', -1.0),
-                            bounds.get('PBkl', -1.0),
-                            bounds.get('C1', -1.0),
-                            bounds.get('C2', -1.0),
-                            bounds.get('CTD', -1.0),
-                            bounds.get('TND', -1.0),
-                            bounds.get('MU',-1.0),
-                            bounds.get('MUBernstein', -1.0),
-                            bl,
-                            bg,
-                            bm
-                            )
-                        )
-            f.write('\n')
-        """
+            """
+        
 
 
 smodename = 'bagging' if SMODE=='bootstrap' else ('reduced bagging ('+str(SMODE)+');')

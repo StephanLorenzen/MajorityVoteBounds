@@ -4,5 +4,5 @@ from .c import C1,C2,C3
 from .mv import TND, optimizeTND, DIS, optimizeDIS, CTD
 from .pbkl import PBkl
 from .mu import MU, optimizeMU
-from .muBernstein import MUBernstein
+from .muBernstein import MUBernstein, optimizeMUBernstein
 from .sh import SH

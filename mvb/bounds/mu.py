@@ -14,8 +14,7 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
         return 1.0
 
     # Union bound over K = len(mu_grid) -> delta = delta/K
-    K = len(mu_grid)
-    delta /= K
+    delta /= len(mu_grid)
 
     # UpperBound_TandemRisk by inverse kl
     rhs_tr = ( 2.0*KL + log(4.0*sqrt(n2)/delta) ) / n2
@@ -26,10 +25,17 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     lb_gr  = solve_kl_inf(gibbs_risk, rhs_gr)
    
     # Compute K bounds
-    bnds = []
+    opt_bnd, opt_muTandemUB, opt_mu = 2000.0, 2000.0, 0.0 # (bound, muTandemUB, mu)
     for mu in mu_grid:
-        bnds.append((ub_tr - 2*mu*lb_gr + mu**2)/(0.5-mu)**2)
-    return min(1.0, min(bnds))
+        muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
+        bnd = muTandemUB / (0.5-mu)**2
+        if bnd < opt_bnd:
+            opt_bnd, opt_muTandemUB, opt_mu = bnd, muTandemUB, mu
+        elif  bnd > opt_bnd:
+            # if stop improving, break
+            break
+            results['MU'], mu_mub, muTandemUB
+    return (min(1.0, opt_bnd), [opt_mu], min(1.0, opt_muTandemUB))
 
 # Optimize MU
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
@@ -40,13 +46,16 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, options=None):
     if "mu_grid" not in options:
         return _optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=delta, options=None)
     else:
-        mu_grid = options["mu_grid"]
+        mu_grid = options['mu_grid']
         delta /= len(mu_grid)
         best_bound = (2,)
         for mu in mu_grid:
             b = _optimizeMU(tandem_risks,gibbs_risks,n,n2,mu=mu,delta=delta,options=None)
             if b[0] < best_bound[0]:
                 best_bound = b
+            elif b[0] > best_bound[0]:
+                # if stop improving, break
+                break
         return best_bound
         
 
@@ -133,6 +142,5 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, options=N
             b = bp
             break
         rho, mu, lam, gam = nrho, nmu, nlam, ngam
-    
     return (min(1.0,b), softmax(rho), mu, lam, gam)
 

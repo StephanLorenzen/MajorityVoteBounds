@@ -11,7 +11,7 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 def TND(tandem_risk, n, KL, delta=0.05):
     rhs   = ( 2.0*KL + log(2.0*sqrt(n)/delta) ) / n
     ub_tr = min(0.25, solve_kl_sup(tandem_risk, rhs))
-    return 4*ub_tr
+    return (4*ub_tr, ub_tr)
 
 # Implementation of DIS
 def DIS(gibbs_risk, disagreement, n, n2, KL, delta=0.05):
