@@ -9,9 +9,9 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 # Implementation of MU
 def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     if gibbs_risk > 0.5:
-        return 1.0
+        return (1.0, mu_grid, 1.0)
     if len(mu_grid)<1:
-        return 1.0
+        return (1.0, mu_grid, 1.0)
 
     # Union bound over K = len(mu_grid) -> delta = delta/K
     delta /= len(mu_grid)
@@ -29,12 +29,13 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     for mu in mu_grid:
         muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
         bnd = muTandemUB / (0.5-mu)**2
+        print('muTandemUB', muTandemUB, 'bnd', bnd)
         if bnd < opt_bnd:
             opt_bnd, opt_muTandemUB, opt_mu = bnd, muTandemUB, mu
         elif  bnd > opt_bnd:
             # if stop improving, break
             break
-            results['MU'], mu_mub, muTandemUB
+
     return (min(1.0, opt_bnd), [opt_mu], min(1.0, opt_muTandemUB))
 
 # Optimize MU

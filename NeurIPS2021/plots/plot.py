@@ -19,7 +19,7 @@ DATASETS = [
         'Connect-4',
         'Cod-RNA',
         'MNIST',
-        #'Fashion-MNIST',
+        'Fashion-MNIST',
         ]
 EXP_PATH  = "../out/"
 NUM_TREES = 100
