@@ -37,9 +37,9 @@ SEED = 1000
 
 def _write_dist_file(name, rhos, risks):
     with open(outpath+name+'.csv', 'w') as f:
-        f.write("h;risk;rho_lam;rho_tnd;rho_mu;rho_mug\n")
-        for i,(err,r_lam,r_tnd,r_mu,r_mug) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2], rhos[3])):
-            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_mu)+";"+str(r_mug)+"\n")
+        f.write("h;risk;rho_lam;rho_tnd;rho_mug;rho_berng\n")
+        for i,(err,r_lam,r_tnd,r_mug,r_berng) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2], rhos[3])):
+            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_mug)+";"+str(r_berng)+"\n")
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
@@ -205,13 +205,14 @@ for rep in range(REPS):
     
     rhos = []
     # define a grid of mu for 'MU' and 'MUBernstein'
-    mu_grid = [(-0.1+0.01*i) for i in range(20)]
+    mu_grid = [(-0.3+0.01*i) for i in range(50)]
     
     print("Training...")
     _  = rf.fit(trainX,trainY)
     _, mv_risk = rf.predict(testX,testY)
     stats  = rf.stats(options = {'mu_mub': mu_grid, 'mu_bern': mu_grid}) # initial stats after training
     bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the grid, and record the corresponding stats
+    #print(stats['mu_mub'], stats['mu_bern'])
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
     
     # Optimize Lambda
@@ -220,6 +221,7 @@ for rep in range(REPS):
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_mub = mu_bern = [0.0]
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    #print(stats['mu_mub'], stats['mu_bern'])
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
 
@@ -230,6 +232,7 @@ for rep in range(REPS):
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_mub = mu_bern = [0.0]
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    #print(stats['mu_mub'], stats['mu_bern'])
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
     
@@ -268,6 +271,6 @@ for rep in range(REPS):
         # record the \rho distribution by all optimization methods
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])
     results.append((rep, n, (res_unf, res_lam, res_tnd, res_mug, res_MUBernsteing)))
-    
+
 _write_outfile(results)
 

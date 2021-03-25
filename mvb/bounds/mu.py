@@ -29,11 +29,10 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_grid=[0.0], delta=0.05):
     for mu in mu_grid:
         muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
         bnd = muTandemUB / (0.5-mu)**2
-        print('muTandemUB', muTandemUB, 'bnd', bnd)
         if bnd < opt_bnd:
             opt_bnd, opt_muTandemUB, opt_mu = bnd, muTandemUB, mu
         elif  bnd > opt_bnd:
-            # if stop improving, break
+        #    # if stop improving, break
             break
 
     return (min(1.0, opt_bnd), [opt_mu], min(1.0, opt_muTandemUB))
@@ -55,7 +54,7 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, options=None):
             if b[0] < best_bound[0]:
                 best_bound = b
             elif b[0] > best_bound[0]:
-                # if stop improving, break
+        #        # if stop improving, break
                 break
         return best_bound
         

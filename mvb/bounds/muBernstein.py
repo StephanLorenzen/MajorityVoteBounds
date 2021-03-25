@@ -10,7 +10,7 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 # Implementation of MUBernstein
 #def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu=0.0, delta=0.05):
 def MUBernstein(MVBounds, data, incl_oob, KL, mu_grid=[0.0], delta=0.05):
-    best_bound = (2000.0, )
+    opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = 2000.0, 0.0, 2000.0, 2000.0, 2000.0, 2000.0
     for mu in mu_grid:
         # Compute the quantities depend on mu
         mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
@@ -23,12 +23,12 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_grid=[0.0], delta=0.05):
   
         # Compute the overall bound
         bnd = bernTandemUB / (0.5-mu)**2
-        if bnd < best_bound[0]:
-            best_bound = (bnd, [mu], mutandem_risk, vartandem_risk, varUB, bernTandemUB)
-        elif bnd > best_bound[0]:
-            # if stop improving, break
+        if bnd < opt_bnd:
+            opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB
+        elif bnd > opt_bnd:
+        #    # if stop improving, break
             break
-    return best_bound
+    return (min(1.0, opt_bnd), [opt_mu], min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
 
 #Corollary 20 : \label{cor:pac-bayes-bernstein_grid}
@@ -113,7 +113,7 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.0, c2=1.0, delta=0.05, op
             if b[0] <= best_bound[0]:
                 best_bound = b
             elif b[0] > best_bound[0]:
-                # if stop improving, break
+            #    # if stop improving, break
                 break
         return best_bound
 

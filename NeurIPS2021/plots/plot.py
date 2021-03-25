@@ -12,7 +12,7 @@ DATASETS = [
         'w1a',
         'Letter',
         'Shuttle',
-        #'Protein',
+        'Protein',
         'SatImage',
         'Sensorless',
         'USPS',
@@ -26,7 +26,9 @@ NUM_TREES = 100
 BOUNDS_BINARY = [("pbkl","FO"),("c1","Cone"),("c2","Ctwo"),("ctd","CTD"),("tnd","TND"),("mub","MU")]
 BOUNDS_MULTI  = BOUNDS_BINARY[:1]+BOUNDS_BINARY[3:]
 
-# Plot error and bounds for several data sets (one file for each dataset)
+# Prepare data for plotting error and bounds when \rho=uniform.
+# One plot(csv file) for each dataset.
+# Ex. Figure 1. in the NeurIPS 2020 paper.
 def multi_bounds(exp="uniform"):
     name = "bounds_"+exp
     path = name+"/datasets/"
@@ -57,7 +59,8 @@ def multi_bounds(exp="uniform"):
 
 
 
-# Prep data for optimized MV risk comparison 
+# Prep data for comparison of MV risk bewteen \rho=\rho* and \rho=uniform
+# Ex. Figure 2 (a) in the NeurIPS 2020 paper
 def optimized_risk_comparison():
     name = "risk_comparison_optimized"
     path = name+"/datasets/"
@@ -91,36 +94,7 @@ optimized_risk_comparison()
 
 
 
-
-
-
-
-
-
-
-
-
-# Prep data files for mu_plots
-DATASETS = [
-        'SVMGuide1',
-        'Phishing',
-        'Mushroom',
-        'Pendigits',
-        'Splice',
-        'Adult',
-        'w1a',
-        'Letter',
-        'Shuttle',
-        'Protein',
-        'SatImage',
-        'Sensorless',
-        'USPS',
-        'Connect-4',
-        'Cod-RNA',
-        #'MNIST',
-        #'Fashion-MNIST',
-        ]
-
+# Prepare data for the bounds versus mu with \rho=uniform to see how tight is the bound w.r.t. the choices of mu
 def mu_plot():
     name = "mu_plot"
     path = name+"/datasets/"

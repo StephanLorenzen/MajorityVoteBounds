@@ -68,6 +68,10 @@
         	pattern=north east lines
     	}
     },
+    RhoBern/.style={
+      color=colBern,
+      fill=colBern,
+    },
   RiskYBin/.style={
       ymin=0,ymax=0.16,
       ytick={0.12},
@@ -101,15 +105,19 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\TND}^*(h)$}
 \addlegendimage{ybar interval,color=colMU,fill}
 \addlegendentry{$\rho_{\MU}^*(h)$}
+\addlegendimage{ybar interval,color=colBern,fill}
+\addlegendentry{$\rho_{\Bern}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\opttable};
-\nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMU] table[x=h,y=rho_mu]{\opttable};
+%\nextgroupplot[RhoPlot, FixedY]
+%\addplot[RhoMU] table[x=h,y=rho_mu]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoMUgrid] table[x=h,y=rho_mug]{\opttable};
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoBern] table[x=h,y=rho_berng]{\opttable};
 \end{groupplot}
 
 	\begin{groupplot}[
@@ -133,15 +141,17 @@ xlabel={$h$},
 %\addlegendentry{$\rho_{\TND}^*(h)$}
 %\addlegendimage{ybar interval,color=colMU,fill}
 %\addlegendentry{$\rho_{\MU}^*(h)$}
+%\addlegendimage{ybar interval,color=colBern,fill}
+%\addlegendentry{$\rho_{\Bern}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMU] table[x=h,y=rho_mu]{\popttable};
+\addplot[RhoMU] table[x=h,y=rho_mug]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\popttable};
+\addplot[RhoBern] table[x=h,y=rho_berng]{\popttable};
 \end{groupplot}
 \end{tikzpicture}
 \end{document}

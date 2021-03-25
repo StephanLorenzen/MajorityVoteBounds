@@ -17,8 +17,9 @@ rho:
 	rm -f texput.log
 
 optimize:
-	python plot.py
+	python plot_optimize.py
 	cd risk_comparison_optimized; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
+	cd table; pdflatex optimize.tex; rm -f optimize.{log,aux}
 	rm -f texput.log
 
 
@@ -27,3 +28,4 @@ clean:
 	cd mu_plot; rm -f *.pdf; rm -rf datasets
 	cd rho; rm -f *.pdf
 	cd risk_comparison_optimized; rm -f *.pdf; rm -rf datasets
+	cd table; rm -f *.pdf; rm -rf optimize
