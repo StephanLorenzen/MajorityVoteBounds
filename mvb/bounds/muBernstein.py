@@ -7,11 +7,11 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp
 
 
-# Implementation of MUBernstein
-#def MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu=0.0, delta=0.05):
-def MUBernstein(MVBounds, data, incl_oob, KL, mu_grid=[0.0], delta=0.05):
-    opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = 2000.0, 0.0, 2000.0, 2000.0, 2000.0, 2000.0
-    for mu in mu_grid:
+### Find mu^* by binary search
+def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-5, 0.5), delta=0.05):
+    
+    # calculate the bound for a given mu
+    def _bound(mu):
         # Compute the quantities depend on mu
         mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
@@ -23,19 +23,36 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_grid=[0.0], delta=0.05):
   
         # Compute the overall bound
         bnd = bernTandemUB / (0.5-mu)**2
-        if bnd < opt_bnd:
-            opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB
-        elif bnd > opt_bnd:
-        #    # if stop improving, break
-            break
-    return (min(1.0, opt_bnd), [opt_mu], min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
+        return (bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB)
+    
+    # optimized the bound over mu_grid by exhausting search
+    def _MUBernsteinGrid(mu_grid):
+        print("Use _MUBernsteinGrid")
+        opt_bnd = (2000.0,)
+        for mu in mu_grid:
+            grid_bound = _bound(mu)
+            if grid_bound[0] <= opt_bnd[0]:
+                opt_bnd = grid_bound      
+        return opt_bnd
+        
+    if len(mu_range)==1:
+        # nothing to be optimized.
+        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = _bound(mu_range[0])
+    else:
+        # define the number of grids
+        number = 1000
+        mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
+        delta /= number
+        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = Binary_Search(lambda x: _bound(x), lambda x: _MUBernsteinGrid(x), mu_grid)
 
+    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
 #Corollary 20 : \label{cor:pac-bayes-bernstein_grid}
 def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.0, delta2=0.05, unionBound = False):
 
     if unionBound:
-        nu2 = ceil( log( sqrt( (e-2)*n2 / (4*log(1/delta2)) ) ) / log(c2) )
+        nu2 = ceil( log( sqrt( (1/2)*n2 / (4*log(1/delta2)) ) ) / log(c2) )
+        #nu2 = ceil( log( sqrt( (e-2)*n2 / (4*log(1/delta2)) ) ) / log(c2) )
     else:
         nu2 = 1
     
@@ -47,11 +64,13 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.0, delta2=0.05,
     
     # From the proof of Collorary 20.
     bprime=c2*(2*KL + log(nu2) -log(delta2))/n2
-    a=(e-2)*varMuBound
+    #a=(e-2)*varMuBound
+    a=(1/2)*varMuBound
     gammastar = sqrt(bprime / a)
     
     # The range of Gamma^*
-    gam_lb = sqrt( 4*log(1/delta2)/(n2*(e-2)) ) / Kmu
+    gam_lb = sqrt( 4*log(1/delta2)/(n2*(1/2)) ) / Kmu
+    #gam_lb = sqrt( 4*log(1/delta2)/(n2*(e-2)) ) / Kmu
     gam_ub = 1/Kmu
     
     if gammastar > gam_ub :
@@ -62,7 +81,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.0, delta2=0.05,
         gammastar = gammastar
     
     bound = mutandem_risk + gammastar * a + bprime / gammastar
-    return min(bound , 1.0), gammastar
+    return bound, gammastar
 
 
 #Corollary 17 : \label{cor:bound_variance_grid}
@@ -97,28 +116,36 @@ def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.0, delta1=0.05, unionBo
 # Default for opt is iRProp
 def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.0, c2=1.0, delta=0.05, options=None):
     options = dict() if options is None else options
-    if 'mu_grid' not in options:
-        """ problem to be fixed : options["mu"] """
-        mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(options["mu"], data, incl_oob)
-        vartandemrisks = (n2/(n2-1))*(musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
-        return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2,  c1=c1, c2=c2, mu=options["mu"], delta=delta, options=None)
-    else:
-        mu_grid = options['mu_grid']
-        delta /= len(mu_grid)
-        best_bound = (2,)
+    mu_range = options.get('mu_bern', (-5, 0.5))
+    
+    # calculate the optimized bound (over rho) for a given mu
+    def _fix_mu_bound(mu):
+        # Compute the quantities depend on mu
+        mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(mu, data, incl_oob)
+        vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
+        
+        # Return the optimized (over rho) bound for a given mu
+        return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, options=None)
+    
+    # optimized the bound over mu_grid by exhausting search
+    def _MUBernsteinGrid(mu_grid):
+        print("Use _MUBernsteinGrid")
+        opt_bnd = (2000.0,)
         for mu in mu_grid:
-            mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(mu, data, incl_oob)
-            vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
-            b = _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, options=None)
-            if b[0] <= best_bound[0]:
-                best_bound = b
-            elif b[0] > best_bound[0]:
-            #    # if stop improving, break
-                break
-        return best_bound
+            grid_bound = _fix_mu_bound(mu)
+            if grid_bound[0] <= opt_bnd[0]:
+                opt_bnd = grid_bound      
+        return opt_bnd
+    
+    # define the number of grids
+    number = 1000
+    mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
+    delta /= number    
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _fix_mu_bound(x), lambda x: _MUBernsteinGrid(x), mu_grid)
 
+    return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
-# Same as above, but mu is now a single value. If None, mu will be optimized
+# optimize over rho for a fixed mu
 def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2=1.0, delta=0.05, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
@@ -197,5 +224,88 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.0, c2
             b = bp
             break
         rho, mu, lam, gam = nrho, nmu, nlam, ngam
-    return (min(1.0, b), softmax(rho), mu, lam, gam)
+    return (b, softmax(rho), mu, lam, gam)
 
+# Implement the Binary Search Algorithm to find the mu^* and the corresponding bound
+# func_bnd : the target function
+# grid_func : in case the binary search fails, use grid search instead
+# mu_grid : the grid of mu to search
+def Binary_Search(func_bnd, grid_func, mu_grid):
+
+    def _mean(a,b):
+        return (a+b)/2
+        
+    # initialize 4 points
+    number = len(mu_grid)
+    left, midleft, midright, right = 0, int(number/4), int(number*(3/4)), number -1
+    bnd_left, bnd_midleft, bnd_midright, bnd_right = func_bnd(mu_grid[left]), func_bnd(mu_grid[midleft]), func_bnd(mu_grid[midright]), func_bnd(mu_grid[right])
+    bnd_star = None
+
+    while (right - left > 3 and bnd_star is None):
+        #print('right-left', right-left)
+        #print('bnd_left', np.round(bnd_left[0], 4), 'bnd_midleft', np.round(bnd_midleft[0], 4), 'bnd_midright', np.round(bnd_midright[0], 4), 'bnd_right', np.round(bnd_right[0], 4))
+        # if the midleft bound is larger than the midright bound
+        if bnd_midleft[0] > bnd_midright[0]:
+            # if the left bound is even larger
+            # then the bound is decreasing for the left three points
+            if bnd_left[0] >= bnd_midleft[0]:
+                # if the right bound is larger than the midright bound
+                # then the minimum is somewhere around midright
+                # we can ignore the leftest interval
+                if bnd_right[0] >= bnd_midright[0]:
+                    left, bnd_left = midleft, bnd_midleft
+                    midleft, bnd_midleft = midright, bnd_midright
+                    midright = int(_mean(midright, right))
+                    bnd_midright = func_bnd(mu_grid[midright])
+                else:
+                    # the bnd_right is the minimum
+                    warn('The rightest mu has the minimum!')
+                    bnd_star = bnd_right
+            else:
+                # the function might be non-convex
+                warn('The function might be non-convex! bnd_midleft[0] > bnd_midright[0]')
+                bnd_star = grid_func(mu_grid[left:right+1])
+        # if the midright bound is larger than the midleft bound
+        elif bnd_midleft[0] < bnd_midright[0]:
+            if bnd_right[0] >= bnd_midright[0]:
+                if bnd_left[0] >= bnd_midleft[0]:
+                    right, bnd_right = midright, bnd_midright
+                    midright, bnd_midright = midleft, bnd_midleft
+                    midleft = int(_mean(left, midleft))
+                    bnd_midleft = func_bnd(mu_grid[midleft])
+                else:
+                    warn('The leftest mu has the minimum!')
+                    bnd_star = bnd_left
+            else:
+                warn('The function might be non-convex! bnd_midleft[0] < bnd_midright[0]')
+                bnd_star = grid_func(mu_grid[left:right+1])
+        # if the middle two points are equal
+        else:
+            # if the left and the right bounds are larger
+            if (bnd_left[0] > bnd_midleft[0] and bnd_right[0] > bnd_midright[0]):
+                # if there is no other points in between midleft and midright
+                # assign either bnd_left or bnd_right to be bnd_star
+                if midleft +1 == midright:
+                    bnd_star = bnd_left
+                else:
+                    # shift one of the middle points to keep searching
+                    midleft = int(_mean(midleft, midright))
+                    bnd_midleft = func_bnd(mu_grid[midleft])
+            # the function is flat
+            elif (bnd_left[0] == bnd_midleft[0] and bnd_right[0] == bnd_midright[0]):
+                bnd_star = bnd_left
+            # the function is not convex
+            else:
+                warn('The function might be non-convex! else')
+                bnd_star = grid_func(mu_grid[left:right+1])
+
+    if bnd_star is not None:
+        bnd_star = bnd_star
+    elif right - left <= 3:
+        if bnd_midleft[0] <= bnd_midright[0]:
+            bnd_star = bnd_midleft
+        else:
+            bnd_star = bnd_midright
+    else:
+        warn('Optimization is not completed!')
+    return bnd_star

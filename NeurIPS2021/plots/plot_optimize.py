@@ -17,7 +17,7 @@ DATASETS = [
         'w1a',
         'Letter',
         'Shuttle',
-        'Protein',
+        #'Protein',
         'SatImage',
         'Sensorless',
         'USPS',
@@ -61,7 +61,7 @@ def optimized_risk_comparison():
     if not os.path.isdir(path):
         os.makedirs(path)
 
-    opts = ["lam","tnd","mug","MUBernsteing"]
+    opts = ["pbkl","tnd","bern"]
     cols = ["dataset"]
     for opt in opts:
         cols += [opt+suf for suf in ["_diff","_q25","_q75"]]
@@ -94,7 +94,7 @@ def optimized_comparison_table():
         os.makedirs(path)
     
     prec = 5
-    opts = ["unf", "lam","tnd","mug","MUBernsteing"]
+    opts = ["unf", "pbkl","tnd","bern"]
     cols = ["dataset"]+opts
     
     rows = []
@@ -121,15 +121,13 @@ def MU_Bern_comparison_table():
         os.makedirs(path)
     
     prec = 5
-    opts = ["tnd", "mug", "MUBernsteing"]
+    opts = ["tnd", "bern"]
     cols = ["dataset"]
     for opt in opts:
         if opt == "tnd":
-            cols += [opt+suf for suf in ["_tnd", "_TandemUB"]]
-        elif opt == "mug":
-            cols += [opt+suf for suf in ["_mub", "_bmu","_muTandemUB"]]
-        elif opt == "MUBernsteing":
-            cols += [opt+suf for suf in ["_bern", "_bmu", "_varUB", "_bernTandemUB"]]
+            cols += [opt+suf for suf in ["_gibbs", "_tandem_risk", "_tnd", "_TandemUB"]]
+        elif opt == "bern":
+            cols += [opt+suf for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu"]]
     rows = []
     for ds in DATASETS:
         df = pd.read_csv(EXP_PATH+ds+"-"+str(NUM_TREES)+"-bootstrap-iRProp.csv",sep=";")
@@ -139,11 +137,9 @@ def MU_Bern_comparison_table():
         row = [ds]
         for opt in opts:
             if opt == "tnd":
-                row += [df_mean[opt+suf] for suf in ["_tnd", "_TandemUB"]]
-            elif opt == "mug":
-                row += [df_mean[opt+suf] for suf in ["_mub","_bmu","_muTandemUB"]]
-            elif opt == "MUBernsteing":
-                row += [df_mean[opt+suf] for suf in ["_bern", "_bmu", "_varUB", "_bernTandemUB"]]            
+                row += [df_mean[opt+suf] for suf in ["_gibbs", "_tandem_risk", "_tnd", "_TandemUB"]]
+            elif opt == "bern":
+                row += [df_mean[opt+suf] for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu"]]            
         rows.append(row)
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)

@@ -33,8 +33,8 @@
         anchor=south east,at={(0.1,0.83)},legend columns=-1},
       xtick=data,
       nodes near coords align={vertical},
-      ymin=0.75,ymax=1.3,
-      ytick={0.8,1,2,3,4,5,6,7},
+      ymin=0.8,ymax=1.2,
+      ytick={0.8,1,1.2},
       extra y ticks={0.9},
       extra y tick labels={},
       ybar=0pt,bar width=2mm,
@@ -111,23 +111,23 @@ horizontal sep=0pt,
 },
   ]
 \nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\MV_u,\testset)$}]
-%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
+%\addplot [Lam]   table[x expr=\coordindex,y=pbkl_diff,y error minus=pbkl_q25,y error plus=pbkl_q75]{\tbin};
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
 %\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
-\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
-\addplot [Bern]   table[x expr=\coordindex,y=MUBernsteing_diff,y error minus=MUBernsteing_q25,y error plus=MUBernsteing_q75]{\tbin};
+%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
+\addplot [Bern]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tbin};
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 
 \nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
-%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
+%\addplot [Lam]   table[x expr=\coordindex,y=pbkl_diff,y error minus=pbkl_q25,y error plus=pbkl_q75]{\tmul};
 %\addlegendentry{$\rho_{\FO}^*$}
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
 \addlegendentry{$\rho_{\TND}^*$}
 %\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
 %\addlegendentry{$\rho_{\MU}^*$}
-\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
-\addlegendentry{$\rho_{\MU-g}^*$}
-\addplot [Bern]   table[x expr=\coordindex,y=MUBernsteing_diff,y error minus=MUBernsteing_q25,y error plus=MUBernsteing_q75]{\tmul};
+%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
+%\addlegendentry{$\rho_{\MU-g}^*$}
+\addplot [Bern]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
 \addlegendentry{$\rho_{\Bern-g}^*$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 \end{groupplot}

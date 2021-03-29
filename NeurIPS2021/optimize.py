@@ -37,9 +37,9 @@ SEED = 1000
 
 def _write_dist_file(name, rhos, risks):
     with open(outpath+name+'.csv', 'w') as f:
-        f.write("h;risk;rho_lam;rho_tnd;rho_mug;rho_berng\n")
-        for i,(err,r_lam,r_tnd,r_mug,r_berng) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2], rhos[3])):
-            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_mug)+";"+str(r_berng)+"\n")
+        f.write("h;risk;rho_lam;rho_tnd;rho_berng\n")
+        for i,(err,r_lam,r_tnd,r_berng) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2])):
+            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_berng)+"\n")
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
@@ -50,14 +50,14 @@ def _write_outfile(results):
     with open(outpath+DATASET+'-'+str(M)+'-'+str(SMODE)+'-'+str(OPT)+'.csv', 'w') as f:
         # Header
         f.write('repeat;n_train;n_test;d;c')
-        for name in ["unf","lam","tnd","mug","MUBernsteing"]:
-            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'c1', 'c2', 'ctd', 'tnd', 'TandemUB', 'mub', 'mu_mub', 'muTandemUB', 'bern', 'mu_bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
+        for name in ["unf","pbkl","tnd","bern"]:
+            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'c1', 'c2', 'ctd', 'tnd', 'TandemUB', 'bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
         f.write('\n')
         for (rep, n, restup) in results:
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
             for (mv_risk, stats, bounds, bl, bg, bm) in restup:
                 f.write(
-                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(21)]))
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(17)]))
                         .format(mv_risk,
                             stats.get('gibbs_risk', -1.0),
                             stats.get('tandem_risk', -1.0),
@@ -67,11 +67,11 @@ def _write_outfile(results):
                             bounds.get('CTD', -1.0),
                             bounds.get('TND', -1.0),
                             stats.get('TandemUB', -1.0), # TandemUB is the empirical bound of tandem risk; 4*TandemBound = TND
-                            bounds.get('MU',-1.0),
-                            stats['mu_mub'][0], # 'mu_mub' is the optimal \mu when using the MU bound; 
-                            stats.get('muTandemUB', -1.0), # muTandemUB is the empirical bound of mu tandem risk by Stephan; muTandemUB/(1/2-mu)**2 = MU
+                            #bounds.get('MU',-1.0),
+                            #stats['mu_mub'][0], # 'mu_mub' is the optimal \mu when using the MU bound; 
+                            #stats.get('muTandemUB', -1.0), # muTandemUB is the empirical bound of mu tandem risk by Stephan; muTandemUB/(1/2-mu)**2 = MU
                             bounds.get('MUBernstein', -1.0),
-                            stats['mu_bern'][0], # 'mu_bern' is the optimal \mu when using the MUBernstein bound; 
+                            #stats.get('mu_bern', 0.0), # 'mu_bern' is the optimal \mu when using the MUBernstein bound; 
                             stats.get('mutandem_risk', -1.0),
                             stats.get('vartandem_risk', -1.0),
                             stats.get('varUB', -1.0), # varUB is the empirical bound of the variance (Corollary 17)
@@ -82,111 +82,6 @@ def _write_outfile(results):
                                 )
                         )
             f.write('\n')
-            """
-            if name == "unf":
-                # TandemUB is the empirical bound of tandem risk; 4*TandemBound = tnd
-                # muTandemUB is the empirical bound of mu tandem risk by Stephan; muTandemBound/(1/2-mu)**2 = mub
-                # varUB is the empirical bound of the variance (Corollary 17)
-                # bernTandemUB is the empirical bound of the mu tandem risk (Corollary 20); bernTandemUB/(1/2-mu)**2 = bern
-                # 'mu_mub' is the optimal \mu when using the 1st mu bound; 
-                # 'mu_bern' is the optimal \mu when using the bernstein bound; 
-                f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'c1', 'c2', 'ctd', 'tnd', 'TandemUB', 'mub', 'mu_mub', 'muTandemUB', 'bern', 'mu_bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB']]))
-            elif name == "lam":
-                f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'pbkl', 'lambda']]))
-            elif name == "tnd":
-                f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'tnd', 'lambda']]))
-            elif name == "mug":
-                f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'mub', 'mu_mub', 'muTandemUB', 'lambda', 'gamma']]))
-            elif name == "MUBernsteing":
-                # 'tandem_risk' here is the mutandem_risk with the optimal \mu
-                # 'vartandem_risk' is the vartandem_risk with the optimal \mu
-                # 'tandem_bound' is the bound obtained by _muBernstein
-                # 'vartandem_bound' is the bound obtained _varMUBernstein
-                f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem_risk', 'bern', 'mu_bern', 'mutandem_risk', 'vartandem_risk', 'varUB', 'bernTandemUB', 'lambda', 'gamma']]))
-        f.write('\n')
-        
-        # report the results for each repetition
-        for (rep, n, restup) in results:
-            f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
-            # restup[0] : res_unf
-            (mv_risk, stats, bounds, bl, bg, mu) = restup[0]
-            f.write(
-                    (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(18)]))
-                    .format(mv_risk,
-                        stats.get('gibbs_risk', -1.0),
-                        stats.get('tandem_risk', -1.0),
-                        bounds.get('PBkl', -1.0),
-                        bounds.get('C1', -1.0),
-                        bounds.get('C2', -1.0),
-                        bounds.get('CTD', -1.0),
-                        bounds.get('TND', -1.0),
-                        stats.get('TandemUB', -1.0),
-                        bounds.get('MU',-1.0),
-                        stats['mu_mub'][0],
-                        stats.get('muTandemUB', -1.0),
-                        bounds.get('MUBernstein', -1.0),
-                        stats['mu_bern'][0],
-                        stats.get('mutandem_risk', -1.0),
-                        stats.get('vartandem_risk', -1.0),
-                        stats.get('varUB', -1.0),
-                        stats.get('bernTandemUB', -1.0)
-                            )
-                    )
-            # restup[1] : res_lam
-            (mv_risk, stats, bounds, bl, bg, mu) = restup[1]
-            f.write(
-                    (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(5)]))
-                    .format(mv_risk,
-                        stats.get('gibbs_risk', -1.0),
-                        stats.get('tandem_risk', -1.0),
-                        bounds.get('PBkl', -1.0),
-                        bl
-                            )
-                    )
-            # restup[2] : res_tnd
-            (mv_risk, stats, bounds, bl, bg, mu) = restup[2]
-            f.write(
-                    (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(5)]))
-                    .format(mv_risk,
-                        stats.get('gibbs_risk', -1.0),
-                        stats.get('tandem_risk', -1.0),
-                        bounds.get('TND', -1.0),
-                        bl
-                            )
-                    )
-            # restup[3] : res_mub
-            (mv_risk, stats, bounds, bl, bg, mu) = restup[3]
-            f.write(
-                    (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(8)]))
-                    .format(mv_risk,
-                        stats.get('gibbs_risk', -1.0),
-                        stats.get('tandem_risk', -1.0),
-                        bounds.get('MU',-1.0),
-                        mu,
-                        stats.get('muTandemUB', -1.0),
-                        bl,
-                        bg
-                            )
-                    )
-            # restup[4] : res_muMUBersteing
-            (mv_risk, stats, bounds, bl, bg, mu) = restup[4]
-            f.write(
-                    (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(11)]))
-                    .format(mv_risk,
-                        stats.get('gibbs_risk', -1.0),
-                        stats.get('tandem_risk', -1.0),
-                        bounds.get('MUBernstein', -1.0),
-                        mu,
-                        stats.get('mutandem_risk', -1.0),
-                        stats.get('vartandem_risk', -1.0),
-                        stats.get('varUB', -1.0),
-                        stats.get('bernTandemUB', -1.0),
-                        bl,
-                        bg
-                            )
-                    )
-            f.write('\n')
-            """
         
 
 
@@ -204,24 +99,22 @@ for rep in range(REPS):
     n = (trainX.shape[0], testX.shape[0], trainX.shape[1], C)
     
     rhos = []
-    # define a grid of mu for 'MU' and 'MUBernstein'
-    mu_grid = [(-0.3+0.01*i) for i in range(50)]
+    # define the range of mu 'MUBernstein'
+    mu_range = (-20, 0.5)
     
     print("Training...")
     _  = rf.fit(trainX,trainY)
     _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats(options = {'mu_mub': mu_grid, 'mu_bern': mu_grid}) # initial stats after training
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the grid, and record the corresponding stats
-    #print(stats['mu_mub'], stats['mu_bern'])
+    stats  = rf.stats(options = {'mu_bern': mu_range}) # initial stats after training
+    bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the range, and record the corresponding stats
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
     
     # Optimize Lambda
     print("Optimizing lambda...")
     (_, rho, bl) = rf.optimize_rho('Lambda')
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_mub = mu_bern = [0.0]
+    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_bern = (0.0,)
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
-    #print(stats['mu_mub'], stats['mu_bern'])
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
 
@@ -230,9 +123,8 @@ for rep in range(REPS):
     print("Optimizing TND...")
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_mub = mu_bern = [0.0]
+    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_bern = (0.0,)
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
-    #print(stats['mu_mub'], stats['mu_bern'])
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
     
@@ -245,7 +137,7 @@ for rep in range(REPS):
     bounds = rf.bounds(stats=stats)
     res_mu = (mv_risk, stats, bounds, bl, bg, mu)
     rhos.append(rho)
-    """
+    
     
     # Optimize MU with grid
     print("Optimizing MU (using grid) in [-0.1, 0.1] ...")
@@ -255,12 +147,13 @@ for rep in range(REPS):
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_mug = (mv_risk, stats, bounds, bl, bg, mu)
     rhos.append(rho)
+    """
     
     # Optimize MUBernstein with grid
-    print("Optimizing MUBernstein (using grid) in [-0.1, 0.1] ...")
-    (_, rho, mu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_grid':mu_grid})
+    print("Optimizing MUBernstein (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
+    (_, rho, mu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_bern':mu_range})
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats, options={'mu_bern':[mu]}) # update rho-dependent stats, and let mu_mub = [0.0], mu_bern = mu
+    stats = rf.aggregate_stats(stats, options={'mu_bern':(mu,)}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_MUBernsteing = (mv_risk, stats, bounds, bl, bg, mu)
     rhos.append(rho)
@@ -270,7 +163,7 @@ for rep in range(REPS):
     if rep==0:
         # record the \rho distribution by all optimization methods
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])
-    results.append((rep, n, (res_unf, res_lam, res_tnd, res_mug, res_MUBernsteing)))
+    results.append((rep, n, (res_unf, res_lam, res_tnd, res_MUBernsteing)))
 
 _write_outfile(results)
 

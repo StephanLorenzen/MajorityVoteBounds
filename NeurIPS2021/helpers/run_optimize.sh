@@ -1,6 +1,6 @@
 M=100
 O=iRProp
-R=10
+R=5
 
 python optimize.py SVMGuide1     $M $1 $O $R
 python optimize.py Phishing      $M $1 $O $R
@@ -11,7 +11,7 @@ python optimize.py Adult         $M $1 $O $R
 python optimize.py w1a           $M $1 $O $R
 python optimize.py Letter        $M $1 $O $R
 python optimize.py Shuttle       $M $1 $O $R
-python optimize.py Protein       $M $1 $O $R
+#python optimize.py Protein       $M $1 $O $R
 python optimize.py SatImage      $M $1 $O $R
 python optimize.py Sensorless    $M $1 $O $R
 python optimize.py USPS          $M $1 $O $R

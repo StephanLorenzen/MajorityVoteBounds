@@ -86,7 +86,7 @@
 \begin{tikzpicture}
 \begin{groupplot}[
 group style={
-group size=1 by 5,
+group size=1 by 4,
 x descriptions at=edge bottom,
 y descriptions at=edge left,
 vertical sep=0pt,
@@ -103,8 +103,8 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
-\addlegendimage{ybar interval,color=colMU,fill}
-\addlegendentry{$\rho_{\MU}^*(h)$}
+%\addlegendimage{ybar interval,color=colMU,fill}
+%\addlegendentry{$\rho_{\MU}^*(h)$}
 \addlegendimage{ybar interval,color=colBern,fill}
 \addlegendentry{$\rho_{\Bern}^*(h)$}
 
@@ -114,15 +114,15 @@ xlabel={$h$},
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\opttable};
 %\nextgroupplot[RhoPlot, FixedY]
 %\addplot[RhoMU] table[x=h,y=rho_mu]{\opttable};
-\nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\opttable};
+%\nextgroupplot[RhoPlot, FixedY]
+%\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoBern] table[x=h,y=rho_berng]{\opttable};
 \end{groupplot}
 
-	\begin{groupplot}[
+\begin{groupplot}[
 group style={
-group size=1 by 5,
+group size=1 by 4,
 x descriptions at=edge bottom,
 y descriptions at=edge left,
 vertical sep=0pt,
@@ -131,7 +131,8 @@ group name=g2,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north, at={($(g1 c1r5.south) + (0,-10mm)$)}]
+%\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north, at={($(g1 c1r5.south) + (0,-10mm)$)}]
+\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north]
 \addplot[MVrisk] table[x=h,y=risk]{\popttable};
 
 %\addlegendentry{$\hat{L}(h,S_h)$}
@@ -148,8 +149,8 @@ xlabel={$h$},
 \addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\popttable};
-\nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMU] table[x=h,y=rho_mug]{\popttable};
+%\nextgroupplot[RhoPlot, FixedY]
+%\addplot[RhoMU] table[x=h,y=rho_mug]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoBern] table[x=h,y=rho_berng]{\popttable};
 \end{groupplot}
