@@ -17,7 +17,7 @@ class RandomForestClassifier(mvbase.MVBounds):
             min_samples_split=2,
             min_samples_leaf=1,
             sample_mode="bootstrap",
-            max_depth=1, # max_depth = 1 -> decision stump
+            max_depth=None, # max_depth = 1 -> decision stump
             random_state=None
             ):
         self._max_depth        = max_depth

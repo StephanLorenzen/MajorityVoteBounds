@@ -389,7 +389,7 @@ class MVBounds:
         stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['u_n2_min'] = np.min(stats['u_n2'])
         
-        # for 'MU' and 'MUBernstein' bounds
+        # for 'MUBernstein' bounds
         options = dict() if options is None else options
         for key in options:
             stats[key] = options[key]

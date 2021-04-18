@@ -128,7 +128,7 @@ horizontal sep=0pt,
 %\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
 %\addlegendentry{$\rho_{\MU-g}^*$}
 \addplot [Bern]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
-\addlegendentry{$\rho_{\Bern-g}^*$}
+\addlegendentry{$\rho_{\Bern}^*$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 \end{groupplot}
 \end{tikzpicture}
