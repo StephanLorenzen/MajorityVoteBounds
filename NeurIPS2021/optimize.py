@@ -97,7 +97,7 @@ for rep in range(REPS):
     
     rhos = []
     # define the range of mu 'MUBernstein'
-    mu_range = (-5, 0.5)
+    mu_range = (-0.5, 0.5)
     
     print("Training...")
     _  = rf.fit(trainX,trainY)
@@ -153,7 +153,7 @@ for rep in range(REPS):
     stats = rf.aggregate_stats(stats, options={'mu_bern':(bmu,)}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
-    print('Bern bound: gamma, ', bg, 'mu', bmu)
+    print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
 
 

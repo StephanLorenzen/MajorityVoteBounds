@@ -1,6 +1,6 @@
 M=100
 O=iRProp
-R=5
+R=10
 
 python optimize.py SVMGuide1     $M $1 $O $R
 python optimize.py Phishing      $M $1 $O $R

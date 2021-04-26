@@ -125,9 +125,9 @@ def TND_Bern_comparison_table():
     cols = ["dataset"]
     for opt in opts:
         if opt == "tnd":
-            cols += [opt+suf for suf in ["_gibbs", "_tandem_risk", "_disagreement", "_tnd", "_TandemUB"]]
+            cols += [opt+suf for suf in ["_gibbs", "_tandem_risk", "_disagreement", "_tnd", "_TandemUB", "_bern"]]
         elif opt == "bern":
-            cols += [opt+suf for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg"]]
+            cols += [opt+suf for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]
     rows = []
     for ds in DATASETS:
         df = pd.read_csv(EXP_PATH+ds+"-"+str(NUM_TREES)+"-bootstrap-iRProp.csv",sep=";")
@@ -137,9 +137,9 @@ def TND_Bern_comparison_table():
         row = [ds]
         for opt in opts:
             if opt == "tnd":
-                row += [df_mean[opt+suf] for suf in ["_gibbs", "_tandem_risk", "_disagreement", "_tnd", "_TandemUB"]]
+                row += [df_mean[opt+suf] for suf in ["_gibbs", "_tandem_risk", "_disagreement", "_tnd", "_TandemUB", "_bern"]]
             elif opt == "bern":
-                row += [df_mean[opt+suf] for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg"]]            
+                row += [df_mean[opt+suf] for suf in ["_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]            
         rows.append(row)
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)

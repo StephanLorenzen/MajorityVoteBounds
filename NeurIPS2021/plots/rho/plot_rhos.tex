@@ -120,20 +120,21 @@ xlabel={$h$},
 \addplot[RhoBern] table[x=h,y=rho_bern]{\opttable};
 \end{groupplot}
 
-\begin{groupplot}[
-group style={
-group size=1 by 4,
-x descriptions at=edge bottom,
-y descriptions at=edge left,
-vertical sep=0pt,
-horizontal sep=0pt,
-group name=g2,
-},
+
+%\begin{groupplot}[
+%group style={
+%group size=1 by 4,
+%x descriptions at=edge bottom,
+%y descriptions at=edge left,
+%vertical sep=0pt,
+%horizontal sep=0pt,
+%group name=g2,
+%},
 xlabel={$h$},
-]
+%]
 %\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north, at={($(g1 c1r5.south) + (0,-10mm)$)}]
-\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north]
-\addplot[MVrisk] table[x=h,y=risk]{\popttable};
+%\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Pendigits}, anchor=north]
+%\addplot[MVrisk] table[x=h,y=risk]{\popttable};
 
 %\addlegendentry{$\hat{L}(h,S_h)$}
 %\addlegendimage{ybar interval,color=colPBkl,fill}
