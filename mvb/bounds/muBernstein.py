@@ -18,7 +18,7 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), delta=0.05
         varUB, _ = _varMUBernstein(vartandem_risk, n2, KL, mu, delta1= delta/2.)
 
         # Plug the bound over variance to compute a bound over the muTandem loss following Corollary 20.
-        bernTandemUB, _ = _muBernstein(mutandem_risk, varUB, n2, KL, mu, delta2= delta/2.)
+        bernTandemUB, _ = _muBernstein(mutandem_risk, varUB, n2, KL, mu, delta1= delta/2., delta2= delta/2.)
   
         # Compute the overall bound
         bnd = bernTandemUB / (0.5-mu)**2
@@ -34,11 +34,11 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), delta=0.05
         delta /= number
         opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
     
-    print('final bound', opt_bnd)
+    #print('final bound', opt_bnd)
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
 #Corollary 20
-def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.05, delta2=0.05):
+def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
     
@@ -50,10 +50,10 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.05, delta2=0.05
     nu2 = sqrt((e-2)*n2 / (4*log(1/delta2)))
     nu2 = ceil(log(nu2)/log(c2))
 
-    b = (2*KL  + log(nu2/delta2))/n2
+    b = c2*(2*KL  + log(nu2/delta2))/n2
     
     gam_star = sqrt(c2*b / ((e-2)*a))
-    bound = mutandem_risk + (e-2)*gam_star*a + b/(gam_star/c2)
+    bound = mutandem_risk + (e-2)*gam_star*a + b/gam_star
     """
     
     """ Bernnett bound """
@@ -94,7 +94,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.05, delta2=0.05
     bound gamma = _bound(gam_star)
     """
     
-     ## method 2:
+    """ ## method 2:
         ## It's the alternative method for method 1.
         ## Find gam_star by initializing gam_init to be the solution of the fixed-gamma bound.
         ## Then adjust a bit by applying binary search for the grids around gam_init.
@@ -103,20 +103,21 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.05, delta2=0.05
     gam_init = (1+W0(c))/Kmu # initial guess
     c0 = 1/e * (4/n2*log(1/delta2) - 1) # lower bound for c
     gam_min = (1+W0(c0))/Kmu
+
+    #print('------ gam_min', gam_min, 'f_inv', log(Kmu*gam_min/(1+W0(c0))) / log(c2) + 1, 'bound', _bound(gam_min)[0])    
     
-    #print('gam_init', gam_init, 'f_inv', log(Kmu*gam_init/(1+W0(c0))) / log(c2) + 1)
+    #print('gam_init', gam_init, 'f_inv', log(Kmu*gam_init/(1+W0(c0))) / log(c2) + 1, 'bound', _bound(gam_init)[0])
+    
     gam_grid = np.linspace((gam_min+gam_init)/2, gam_init+0.5, 2000)
     bound, gam_star = Binary_Search(lambda x: _bound(x), gam_grid, 'gam')
     #print('binary', 'gam_star', gam_star, 'f_inv', log(Kmu*gam_star/(1+W0(c0))) / log(c2) + 1, 'bound', bound)
     
-    
-    # print('gam_min', gam_min, 'f_inv', log(Kmu*gam_min/(1+W0(c0))) / log(c2) + 1, 'bound', _bound(gam_min)[0])
     if _bound(gam_min)[0]< bound:
         bound, gam_star = _bound(gam_min)
         #print('gam_min_has_min', end=' ')
     #print('gam_final', gam_star, 'f_inv', log(Kmu*gam_star/(1+W0(c0))) / log(c2) + 1)
 
-    
+    """
     
     """ ## method 3:
         ## Compute gam_star directly using the fixed-gamma bound.
@@ -130,10 +131,41 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c2=1.05, delta2=0.05
     ## compute the bound by the either of the following two methods
     # method 1: computer the bound by plugging in the obtained gamma into the fixed-gamma bound, (ignore the effect of union bound)
     #bound = mutandem_risk + _VarCoeff(gam_star) * a + b / gam_star
+    #pseudo_second = c2 * (2*KL  -log(6 * delta2/(pi**2 * 10)))/n2 / gam_star # just for test
+    #bound = mutandem_risk + _VarCoeff(gam_star) * a + pseudo_second # test the effect of c2 # just for test
     
     # method 2: computer the bound by plugging in the obtained gamma into the union-gamma bound
     bound, gam_star = _bound(gam_star)
     """
+    
+     ## method 4:
+        ## Cconsider the lower bound for the empirical bound for the variance (non-zero)
+        ## such that we have \gamma_max
+    
+    # compute gamma_min
+    c_min = 1/e * (4/n2*log(1/delta2) - 1)     
+    gam_min = (1. + W(c_min, 'W0'))/Kmu
+    #print('gam_min', gam_min)
+    
+    # compute gamma_max
+    nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
+    nu1 = ceil(log(nu1)/log(c1))
+
+    alpha = 1./ (1+(n2-1)/(2*Kmu*c1*log(nu1/delta1)))
+    c_max = -alpha * e**(-alpha)
+    gam_max = - (W(c_max, 'W-1')+alpha)/Kmu
+    #print('gam_max', gam_max)
+    
+    # computer nu2
+    nu2 = ceil(log(gam_max/gam_min)/log(c2))
+    #print('nu2', nu2)
+
+    b = c2*(2*KL  + log(nu2/delta2))/n2
+    c = 1/e * (b* Kmu**2/a - 1)
+    gam_star = (1+W(c, 'W0'))/Kmu
+
+    bound = mutandem_risk +  _VarCoeff(gam_star) * a + b / gam_star  
+    
     return bound, gam_star
 
 
@@ -142,9 +174,6 @@ def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
 
     nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
     nu1 = ceil(log(nu1)/log(c1))
-    #print('nu1', nu1)
-    #c1 = 1
-    #nu1 = 1
     
     # From the proof of Collorary 17.
     a = vartandem_risk
@@ -170,7 +199,6 @@ def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
 def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, options=None):
     options = dict() if options is None else options
     mu_range = options.get('mu_bern', (-0.5, 0.5))
-    #c2 = 1
     
     # calculate the optimized bound (over rho) for a given mu
     def _bound(mu):
@@ -214,7 +242,7 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         varMuBound, lam = _varMUBernstein(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
         # Compute the bound of the muTandem loss by Corollary 20.
-        muTandemBound, gam = _muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c2=c2, delta2=delta / 2.)
+        muTandemBound, gam = _muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c2=c2, delta1=delta / 2., delta2=delta / 2.)
 
         bound =  muTandemBound / ((0.5 - mu) ** 2)
 
@@ -273,11 +301,11 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
     return (b, softmax(rho), mu, lam, gam)
 
 """ helper functions """
-# W0(c) is the principle branch of the Lambert W function
-# i.e., W0(c) is the solution of xe^x=c
+# W(c) is the Lambert W function
+# i.e., W(c) is the solution of xe^x=c
 # solve by Newton's method
-def W0(c):
-    eps = 1e-6
+def W(c, branch):
+    eps = 1e-9
     
     # fx(x, c) = xe^x-c
     def _fx(x, c):
@@ -287,8 +315,14 @@ def W0(c):
     def _fx_prime(x):
         return (x+1)*np.exp(x)
     
-    x_old = 0 # initial guess
-    diff = _fx(x_old, c)
+    if branch == 'W0':
+        x_old = 0 # initial guess for the principle branch
+    elif branch == 'W-1':
+        x_old = -5  # initial guess for the -1 branch
+    else:
+        Warning('No such branch')
+        
+    diff = abs(_fx(x_old, c))
     while(diff > eps):
         x_new = x_old - _fx(x_old, c)/_fx_prime(x_old)
         x_old = x_new

@@ -384,6 +384,9 @@ class MVBounds:
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
+        
+        pi = util.uniform_distribution(len(self._estimators))
+        stats['KL'] = util.kl(self._rho, pi)
        
         # Unlabeled
         stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
