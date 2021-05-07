@@ -13,7 +13,7 @@ from sklearn.utils import check_random_state
 #from mvb.bounds import muBernstein
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
-from math import ceil
+from math import ceil, log
 
 class MVBounds:
     # Constructor
@@ -242,10 +242,6 @@ class MVBounds:
             #    return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_mub'])
             elif bound == 'MUBernstein':
                 return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'])
-            #elif bound == 'MUVarBernstein':
-            #    mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(stats['mu'], labeled_data, incl_oob)
-            #    varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, stats['mu'])
-            #    return varMUBound
             else:
                 return None
         else:
@@ -375,6 +371,7 @@ class MVBounds:
     
     # (Re-)Aggregate stats object. Useful if weighting has changed.
     def aggregate_stats(self, stats, options=None):
+        stats = stats.copy()
         if 'mv_preds' in stats:
             stats['mv_risk'] = util.mv_risk(self._rho, stats['mv_preds'][0], stats['mv_preds'][1]) 
         
@@ -384,7 +381,7 @@ class MVBounds:
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
-        
+         
         pi = util.uniform_distribution(len(self._estimators))
         stats['KL'] = util.kl(self._rho, pi)
        

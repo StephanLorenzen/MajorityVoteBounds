@@ -103,9 +103,10 @@ for rep in range(REPS):
     print("Training...")
     _  = rf.fit(trainX,trainY)
     _, mv_risk = rf.predict(testX,testY)
-    stats  = rf.stats(options = {'mu_bern': mu_range}) # initial stats after training
+    stats = rf.stats(options = {'mu_bern': mu_range}) # initial stats after training
     bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the range, and record the corresponding stats
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
+    print('KL', res_unf[1]['KL'])
     
     # Optimize Lambda
     print("Optimizing lambda...")
@@ -115,6 +116,7 @@ for rep in range(REPS):
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
+    print('KL', res_lam[1]['KL'])
 
         
     # Optimize TND
@@ -125,6 +127,7 @@ for rep in range(REPS):
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
+    print('KL', res_tnd[1]['KL'])
 
     
     # Optimize MUBernstein with grid by Binary Search
@@ -136,6 +139,7 @@ for rep in range(REPS):
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
     print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
+    print('KL', res_Bern[1]['KL'])
 
 
     # opt = (bound, rho, lam, gam, mu)
