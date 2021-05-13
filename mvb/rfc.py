@@ -35,7 +35,7 @@ class RandomForestClassifier(mvbase.MVBounds):
                         random_state=prng)
             estimators.append(tree)
 
-        super().__init__(estimators, rho, sample_mode=sample_mode, random_state=prng)
+        super().__init__(estimators, rho=rho, sample_mode=sample_mode, random_state=prng)
 
     def fit(self, X, Y):
         estimate = super().fit(X,Y)

@@ -9,8 +9,8 @@
 #
 import numpy as np
 from sklearn.utils import check_random_state
+from sklearn.model_selection import train_test_split
 
-#from mvb.bounds import muBernstein
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
 from math import ceil, log
@@ -20,12 +20,15 @@ class MVBounds:
     def __init__(
             self,
             estimators,
+            ensembled_estimators=None, # for estimators that are trained recursively
             rho=None,
-            sample_mode=None, # | 'bootstrap' | 'dim' | int | float
+            sample_mode=None, # | 'bootstrap' | 'dim' | int | float | 'boost'
             random_state=None,
             ):
         self._estimators = estimators
-        m                = len(estimators)  
+        self._actual_n_estimators = len(estimators)
+        self._ensembled_estimators = ensembled_estimators
+        m                = len(estimators)
         self._sample_mode= sample_mode
         self._prng       = check_random_state(random_state)
         self._rho = rho
@@ -50,6 +53,51 @@ class MVBounds:
             for est in self._estimators:
                 est.fit(X, Y)
             return None
+            
+        # for estimators that are trained recursively. ex.AdaBoost
+        elif self._sample_mode == 'boost':
+            preds = []
+            n = X.shape[0]
+            n_sample = ceil(n/2.) # number of samples to train the estimators
+            
+            # sample points for training (wo. replacement)
+            # all estimators share the same training/oob samples
+            while True: 
+                # Repeat until at least one example of each class
+                t_idx = self._prng.choice(n, size=n_sample, replace=False)
+                t_X = X[t_idx]
+                t_Y = Y[t_idx]
+                if np.unique(t_Y).shape[0] > 1:
+                    break
+            
+            # fit the estimators
+            self._ensembled_estimators.fit(t_X, t_Y)
+            
+            # record the estimators as a list
+            self._estimators = self._ensembled_estimators.estimators_
+            self._actual_n_estimators = len(self._estimators)
+            # the weight given by AdaBoost
+            self._abc_rho = self._ensembled_estimators.estimator_weights_
+                        
+            # oob samples
+            oob_idx = np.delete(np.arange(n),t_idx)
+            oob_X   = X[oob_idx]
+            
+            for est in self._estimators:
+                # Predict on OOB
+                oob_P = est.predict(oob_X)
+
+                M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
+                M_est[oob_idx] = 1
+                P_est[oob_idx] = oob_P
+
+                # Save predictions on oob and validation set for later
+                preds.append((M_est,P_est))            
+            
+            self._OOB = (preds, Y)
+            
+            # The construction of the ensembled estimators might stop earlier
+            self._rho = util.uniform_distribution(self._actual_n_estimators)
         
         else:
             preds = []

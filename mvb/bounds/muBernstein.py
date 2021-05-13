@@ -262,7 +262,6 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         # D_jS_i = S_i(1[i==j]-S_j)
         Smat = -np.outer(Srho, Srho)
         np.fill_diagonal(Smat, np.multiply(Srho, 1.0 - Srho))
-
         return 2 * np.dot(np.dot(mutandemrisks, Srho) + a * np.dot(vartandemrisks, Srho) + b * (1 + np.log(Srho / pi)), Smat)
 
     max_iterations = options.get('max_iterations', None)

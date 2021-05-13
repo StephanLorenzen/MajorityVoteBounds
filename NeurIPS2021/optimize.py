@@ -18,6 +18,7 @@ import numpy as np
 from sklearn.utils import check_random_state
 
 from mvb import RandomForestClassifier as RFC
+from mvb import OurAdaBoostClassifier as ABC
 from mvb import data as mldata
 
 if len(sys.argv) < 2:
@@ -26,7 +27,7 @@ if len(sys.argv) < 2:
 DATASET = sys.argv[1]
 M       = int(sys.argv[2]) if len(sys.argv)>=3 else 100
 SMODE   = sys.argv[3] if len(sys.argv)>=4 else 'bootstrap'
-SMODE   = SMODE if (SMODE=='bootstrap' or SMODE=='dim') else float(SMODE)
+SMODE   = SMODE if (SMODE=='bootstrap' or SMODE=='dim' or SMODE=='boost') else float(SMODE)
 OPT     = sys.argv[4] if len(sys.argv)>=5 else 'iRProp'
 REPS    = int(sys.argv[5]) if len(sys.argv)>=6 else 1
 
@@ -83,7 +84,7 @@ def _write_outfile(results):
         
 
 
-smodename = 'bagging' if SMODE=='bootstrap' else ('reduced bagging ('+str(SMODE)+');')
+smodename = 'bagging' if (SMODE=='bootstrap' or SMODE=='boost') else ('reduced bagging ('+str(SMODE)+');')
 print("Starting RFC optimization (m = "+str(M)+") for ["+DATASET+"] using sampling strategy: "+smodename+", optimizer = "+str(OPT))
 results = []
 X,Y = mldata.load(DATASET, path=inpath)
@@ -92,7 +93,8 @@ for rep in range(REPS):
     if REPS>1:
         print("####### Repeat = "+str(rep+1))
     
-    rf = RFC(M,max_features="sqrt",random_state=RAND, sample_mode=SMODE)
+    #rf = RFC(M,max_features="sqrt",random_state=RAND, sample_mode=SMODE)
+    rf = ABC(M,random_state=RAND, sample_mode=SMODE)
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
     n = (trainX.shape[0], testX.shape[0], trainX.shape[1], C)
     
@@ -102,11 +104,12 @@ for rep in range(REPS):
     
     print("Training...")
     _  = rf.fit(trainX,trainY)
+    print('actual number of estimators:', rf.get_n_estimators())
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.stats(options = {'mu_bern': mu_range}) # initial stats after training
     bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the range, and record the corresponding stats
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
-    print('KL', res_unf[1]['KL'])
+    print('mv_risk', mv_risk, 'KL', res_unf[1]['KL'])
     
     # Optimize Lambda
     print("Optimizing lambda...")
@@ -116,7 +119,7 @@ for rep in range(REPS):
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
-    print('KL', res_lam[1]['KL'])
+    print('mv_risk', mv_risk, 'KL', res_lam[1]['KL'])
 
         
     # Optimize TND
@@ -127,7 +130,7 @@ for rep in range(REPS):
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
-    print('KL', res_tnd[1]['KL'])
+    print('mv_risk', mv_risk, 'KL', res_tnd[1]['KL'])
 
     
     # Optimize MUBernstein with grid by Binary Search
@@ -139,7 +142,7 @@ for rep in range(REPS):
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
     print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
-    print('KL', res_Bern[1]['KL'])
+    print('mv_risk', mv_risk, 'KL', res_Bern[1]['KL'])
 
 
     # opt = (bound, rho, lam, gam, mu)

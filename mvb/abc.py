@@ -1,0 +1,37 @@
+#
+# Implements AdaBoostClassifier in the framework
+#
+import numpy as np
+from sklearn.tree import DecisionTreeClassifier as Tree
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.utils import check_random_state
+
+from . import util, mvbase
+
+class OurAdaBoostClassifier(mvbase.MVBounds):
+    def __init__(
+            self,
+            n_estimators,
+            rho=None,
+            min_samples_leaf=1,
+            max_depth = 1, # -> decision stump
+            sample_mode="boost",
+            random_state=None
+            ):
+        self._actual_n_estimators = n_estimators
+        dt_stump = Tree(max_depth = max_depth, 
+                        min_samples_leaf = min_samples_leaf)
+                        
+        prng = check_random_state(random_state)
+        
+        estimators = [None] * n_estimators        
+        abc = AdaBoostClassifier(base_estimator=dt_stump, n_estimators=n_estimators, random_state=prng)
+        
+        super().__init__(estimators, abc, rho, sample_mode=sample_mode, random_state=prng)
+
+    def fit(self, X, Y):
+        estimate = super().fit(X,Y)
+        return estimate
+
+    def get_n_estimators(self):
+        return self._actual_n_estimators
