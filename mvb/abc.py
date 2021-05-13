@@ -35,3 +35,6 @@ class OurAdaBoostClassifier(mvbase.MVBounds):
 
     def get_n_estimators(self):
         return self._actual_n_estimators
+        
+    def adaboost_risk(self, X, Y):
+        return 1.0 - self._ensembled_estimators.score(X, Y)

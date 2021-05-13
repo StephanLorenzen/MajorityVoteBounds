@@ -104,7 +104,9 @@ for rep in range(REPS):
     
     print("Training...")
     _  = rf.fit(trainX,trainY)
-    print('actual number of estimators:', rf.get_n_estimators())
+    print('Actual number of estimators:', rf.get_n_estimators())
+    print('mv_risk with rho given by adaboost:', rf.adaboost_risk(testX, testY))
+    print('Uniform weighting...')
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.stats(options = {'mu_bern': mu_range}) # initial stats after training
     bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the range, and record the corresponding stats

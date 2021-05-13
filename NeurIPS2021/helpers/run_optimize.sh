@@ -1,12 +1,12 @@
 M=100
 O=iRProp
-R=3
+R=1
 
-#python optimize.py SVMGuide1     $M $1 $O $R
-#python optimize.py Phishing      $M $1 $O $R
-#python optimize.py Mushroom      $M $1 $O $R
-#python optimize.py Pendigits     $M $1 $O $R
-#python optimize.py Splice        $M $1 $O $R
+python optimize.py SVMGuide1     $M $1 $O $R
+python optimize.py Phishing      $M $1 $O $R
+python optimize.py Mushroom      $M $1 $O $R
+python optimize.py Pendigits     $M $1 $O $R
+python optimize.py Splice        $M $1 $O $R
 python optimize.py Adult         $M $1 $O $R
 python optimize.py w1a           $M $1 $O $R
 python optimize.py Letter        $M $1 $O $R
