@@ -35,6 +35,7 @@ class MVBounds:
         if rho is None:
             self._rho = util.uniform_distribution(m)
         assert(self._rho.shape[0]==m)
+        self._abc_pi = None # initialize the weights by AdaBoost
 
         # Some fitting stats
         self._OOB = None
@@ -61,7 +62,7 @@ class MVBounds:
             n_sample = ceil(n/2.) # number of samples to train the estimators
             
             # sample points for training (wo. replacement)
-            # all estimators share the same training/oob samples
+            # all estimators share the same training/validation samples
             while True: 
                 # Repeat until at least one example of each class
                 t_idx = self._prng.choice(n, size=n_sample, replace=False)
@@ -77,28 +78,31 @@ class MVBounds:
             self._estimators = self._ensembled_estimators.estimators_
             self._actual_n_estimators = len(self._estimators)
             # the weight given by AdaBoost
-            self._abc_rho = self._ensembled_estimators.estimator_weights_
+            _abc_pi = self._ensembled_estimators.estimator_weights_
+            self._abc_pi = _abc_pi/np.sum(_abc_pi)
                         
-            # oob samples
+            # validation samples
             oob_idx = np.delete(np.arange(n),t_idx)
             oob_X   = X[oob_idx]
+            oob_Y   = Y[oob_idx]
             
             for est in self._estimators:
-                # Predict on OOB
+                # Predict on validation
                 oob_P = est.predict(oob_X)
 
                 M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
                 M_est[oob_idx] = 1
                 P_est[oob_idx] = oob_P
 
-                # Save predictions on oob and validation set for later
+                # Save predictions on validation set for later
                 preds.append((M_est,P_est))            
             
             self._OOB = (preds, Y)
             
             # The construction of the ensembled estimators might stop earlier
-            self._rho = util.uniform_distribution(self._actual_n_estimators)
-        
+            self._rho = util.uniform_distribution(self._actual_n_estimators) # the initial weight = uniform
+            #self._rho = np.copy(self._abc_pi) # the initial weight is the weight given by AdaBoost
+            return (oob_X,oob_Y)
         else:
             preds = []
             n = X.shape[0]
@@ -217,21 +221,24 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Lambda", "TND", "DIS", "MU", "MUBernstein"}:
+        if bound not in {"Uniform", "Lambda", "TND", "DIS", "MU", "MUBernstein", "AdaBoost"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
             util.warn('Warning, stats: Missing data!')
             return None
-
-        if bound=='Lambda':
+        
+        if bound=='Uniform':
+            self._rho = util.uniform_distribution(self._actual_n_estimators)
+            return None
+        elif bound=='Lambda':
             risks, ns = self.risks(labeled_data, incl_oob)
-            (bound, rho, lam) = optimizeLamb(risks/ns, np.min(ns))
+            (bound, rho, lam) = optimizeLamb(risks/ns, np.min(ns), abc_pi=np.copy(self._abc_pi))
             self._rho = rho
             return (bound,rho,lam)
         elif bound=='TND':
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-            (bound,rho,lam) = optimizeTND(tand/n2s, np.min(n2s), options=options)
+            (bound,rho,lam) = optimizeTND(tand/n2s, np.min(n2s), abc_pi=np.copy(self._abc_pi), options=options)
             self._rho = rho
             return (bound, rho, lam)
         elif bound=='DIS':
@@ -246,13 +253,18 @@ class MVBounds:
         elif bound == 'MU':
             risks, ns = self.risks(labeled_data, incl_oob)
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-            (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s),options=options)
+            (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s), abc_pi=np.copy(self._abc_pi),options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
-        else:
-            (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob,options=options)
+        elif bound == 'MUBernstein':
+            (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob, abc_pi=np.copy(self._abc_pi),options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
+        else: # Adaboost
+            assert self._abc_pi is not None
+            rho = np.copy(self._abc_pi)
+            self._rho = rho
+            return rho
 
 
     # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').
@@ -269,7 +281,7 @@ class MVBounds:
             util.warn('Warning, MVBase.bound: Cannot apply '+bound+' to non-binary data!')
             return 1.0
 
-        pi = util.uniform_distribution(len(self._estimators))
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
         KL = util.kl(self._rho, pi)
         if stats is not None:
             if bound=='SH':
@@ -286,8 +298,8 @@ class MVBounds:
                 return TND(stats['tandem_risk'], stats['n2_min'], KL)
             elif bound=='DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
-            #elif bound=='MU':
-            #    return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_mub'])
+            elif bound=='MU':
+                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_kl'])
             elif bound == 'MUBernstein':
                 return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'])
             else:
@@ -359,14 +371,14 @@ class MVBounds:
         (results['TND'], options['TandemUB'])  = self.bound('TND', stats=stats)
         results['CTD']  = self.bound('CTD', stats=stats)
         if incl_oob:
-            #(results['MU'], options['mu_mub'], options['muTandemUB']) = self.bound('MU', stats=stats)
+            (results['MU'], options['mu_kl'], options['muTandemUB']) = self.bound('MU', stats=stats)
             (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'], options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
-        if self._classes.shape[0]==2:
-            results['C1']  = self.bound('C1', stats=stats)
-            results['C2']  = self.bound('C2', stats=stats)
-            results['DIS'] = self.bound('DIS', stats=stats)
+        #if self._classes.shape[0]==2:
+        #    results['C1']  = self.bound('C1', stats=stats)
+        #    results['C2']  = self.bound('C2', stats=stats)
+        #    results['DIS'] = self.bound('DIS', stats=stats)
         
         stats = self.aggregate_stats(stats, options)
         return results, stats
@@ -384,15 +396,15 @@ class MVBounds:
         stats['tandem_risks'], stats['n2'] = self.tandem_risks(labeled_data, incl_oob)
         stats['tandem_risks'] /= stats['n2']
 
-        dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
-        stats['disagreements'] = dis/stats['n2']
-        if unlabeled_data is not None:
-            udis, un2 = self.disagreements(unlabeled_data, False)
-            stats['u_n2'] = stats['n2']+un2
-            stats['u_disagreements'] = (dis+udis) / stats['u_n2']
-        else:
-            stats['u_n2'] = stats['n2']
-            stats['u_disagreements'] = dis / stats['u_n2']
+        #dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
+        #stats['disagreements'] = dis/stats['n2']
+        #if unlabeled_data is not None:
+        #    udis, un2 = self.disagreements(unlabeled_data, False)
+        #    stats['u_n2'] = stats['n2']+un2
+        #    stats['u_disagreements'] = (dis+udis) / stats['u_n2']
+        #else:
+        #    stats['u_n2'] = stats['n2']
+        #    stats['u_disagreements'] = dis / stats['u_n2']
         
             
         """
@@ -427,21 +439,22 @@ class MVBounds:
         stats['n_min'] = np.min(stats['n'])
 
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
-        stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        #stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
          
-        pi = util.uniform_distribution(len(self._estimators))
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
         stats['KL'] = util.kl(self._rho, pi)
        
         # Unlabeled
-        stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
-        stats['u_n2_min'] = np.min(stats['u_n2'])
+        #stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        #stats['u_n2_min'] = np.min(stats['u_n2'])
         
         # for 'MUBernstein' bounds
         options = dict() if options is None else options
         for key in options:
             stats[key] = options[key]
         stats['mu_bern'] = options.get('mu_bern', (0.0,))
+        stats['mu_kl'] = options.get('mu_kl', (0.0,))
 
         """
         # Reduced OOB

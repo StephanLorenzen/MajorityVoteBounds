@@ -96,7 +96,10 @@ print(mu_test)
 
 fig = plt.figure()
 plt.contourf(axis_gibbs_loss, axis_tandem_loss, mu_star, levels = 30, cmap='rainbow')
-plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss - 0.006, c='black', label='our data')
+#plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss - 0.006, c='black', label='our data') #rfc
+plt.plot(emp_gibbs_loss, 0.8 * emp_gibbs_loss**2 + 0.1625 * emp_gibbs_loss + 0.0133, c='black', label='our data ABC')  #abc
+plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss, 'b-', label='tnd=0.5gibbs')
+
 plt.colorbar()
 plt.title('muStar, n1='+str(n1))
 plt.xlabel('Empirical Gibbs Loss')
@@ -124,7 +127,8 @@ plt.savefig(title+'muBound.png')
 fig = plt.figure()
 #levels = np.linspace(0,1,11)
 plt.contourf(axis_gibbs_loss, axis_tandem_loss, c2Bound / secondOrderBound, levels = 30, cmap = "rainbow")
-plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss - 0.006, c='black', label='our data')
+plt.plot(emp_gibbs_loss, 0.8 * emp_gibbs_loss**2 + 0.1625 * emp_gibbs_loss + 0.0133, c='black', label='our data')
+plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss, 'b-', label='tnd=0.5gibbs')
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
 plt.colorbar()
 plt.title('mu-Bound/TNDBound, n1='+str(n1))

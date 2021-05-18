@@ -21,12 +21,12 @@ def lamb(emp_risk, n, KL, delta=0.05):
 
 
 # Optimize PAC-Bayes-Lambda-bound:
-def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9):
+def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9, abc_pi=None):
     m = len(emp_risks)
     n = float(n)
 
-    pi  = uniform_distribution(m)
-    rho = uniform_distribution(m)
+    pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
+    rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     KL = kl(rho,pi)
 
     lamb = 1.0
@@ -46,5 +46,4 @@ def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9):
         KL = kl(rho,pi)
 
         upd = emp_risk / (1.0 - lamb/2.0) + (KL + log((2.0*sqrt(n))/delta))/(lamb*(1.0-lamb/2.0)*n) 
-
     return bound, rho, lamb

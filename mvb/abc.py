@@ -16,6 +16,7 @@ class OurAdaBoostClassifier(mvbase.MVBounds):
             min_samples_leaf=1,
             max_depth = 1, # -> decision stump
             sample_mode="boost",
+            algorithm='SAMME',
             random_state=None
             ):
         self._actual_n_estimators = n_estimators
@@ -25,16 +26,19 @@ class OurAdaBoostClassifier(mvbase.MVBounds):
         prng = check_random_state(random_state)
         
         estimators = [None] * n_estimators        
-        abc = AdaBoostClassifier(base_estimator=dt_stump, n_estimators=n_estimators, random_state=prng)
+        abc = AdaBoostClassifier(base_estimator=dt_stump, n_estimators=n_estimators, algorithm=algorithm, random_state=prng)
         
         super().__init__(estimators, abc, rho, sample_mode=sample_mode, random_state=prng)
-
+    
+    # prepare the base classifiers and validation data for PAC-Bayes methods
     def fit(self, X, Y):
         estimate = super().fit(X,Y)
         return estimate
-
+    
+    # return the number of estimators
     def get_n_estimators(self):
         return self._actual_n_estimators
-        
+    
+    # risk of the typical AdaBoost method
     def adaboost_risk(self, X, Y):
         return 1.0 - self._ensembled_estimators.score(X, Y)

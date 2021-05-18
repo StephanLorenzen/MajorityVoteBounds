@@ -46,7 +46,7 @@ def CTD(gibbs_risk, tandem_risk, n, n2, KL, delta=0.05):
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
 #
 # Default for opt is iRProp
-def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
+def optimizeTND(tandem_risks, n2, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     
@@ -55,8 +55,8 @@ def optimizeTND(tandem_risks, n2, delta=0.05, options=None):
         optimizer = 'GD'
     
     m   = tandem_risks.shape[0]
-    rho = uniform_distribution(m)
-    pi  = uniform_distribution(m)
+    rho = uniform_distribution(m) if abc_pi is None else abc_pi
+    pi  = uniform_distribution(m) if abc_pi is None else abc_pi
 
     # Some helper functions
     def _tndr(rho): # Compute tandem risk from tandem risk matrix and rho

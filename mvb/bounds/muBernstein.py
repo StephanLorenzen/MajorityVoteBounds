@@ -192,11 +192,11 @@ def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
     return varMuBound, lambdastar
 
 
-# Optimize MU
+# Optimize MUBennett
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
 #
 # Default for opt is iRProp
-def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, options=None):
+def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     mu_range = options.get('mu_bern', (-0.5, 0.5))
     
@@ -207,7 +207,7 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
         vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
         
         # Return the optimized (over rho) bound for a given mu
-        return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, options=None)
+        return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
     number = 200
@@ -218,7 +218,7 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # optimize over rho for a fixed mu
-def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05, delta=0.05, options=None):
+def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     mu_input = mu
@@ -226,10 +226,6 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
     if optimizer not in ['GD', 'RProp', 'iRProp']:
         warn('optimizeMU: unknown optimizer: \'' + optimizer + '\', using iRProp')
         optimizer = 'iRProp'
-
-    m = mutandemrisks.shape[0]
-    pi = uniform_distribution(m)
-    rho = uniform_distribution(m)
 
     def _bound(rho, mu):  # Compute bound
         rho = softmax(rho)
@@ -262,6 +258,8 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         # D_jS_i = S_i(1[i==j]-S_j)
         Smat = -np.outer(Srho, Srho)
         np.fill_diagonal(Smat, np.multiply(Srho, 1.0 - Srho))
+        # avoid log(0)
+        #Srho_p = np.where(Srho > 10 ** -10, Srho, -10)
         return 2 * np.dot(np.dot(mutandemrisks, Srho) + a * np.dot(vartandemrisks, Srho) + b * (1 + np.log(Srho / pi)), Smat)
 
     max_iterations = options.get('max_iterations', None)
@@ -284,7 +282,10 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
             return iRProp(lambda x: _gradient(x, mu, lam, gam), lambda x: _bound(x, mu)[0], rho, \
                           eps=eps, max_iterations=max_iterations)
 
-    rho = uniform_distribution(m)
+
+    m = mutandemrisks.shape[0]
+    pi = uniform_distribution(m) if abc_pi is None else abc_pi
+    rho = uniform_distribution(m) if abc_pi is None else abc_pi
     b, mu, lam, gam = _bound(rho, mu=mu_input)
     bp = b + 1
     while abs(b - bp) > eps:
