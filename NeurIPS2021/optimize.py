@@ -70,7 +70,7 @@ def _write_outfile(results):
         for name in ["ada","unf","lam","tnd","mu","bern"]:
             f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem', 'sh', 'pbkl', 'tnd', 'TandemUB', 'MU', 'muTandemUB', 'bern', 'mutandem_risk', 'vartandem_risk', 'KL', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
         f.write('\n')
-        for (rep, n, abc, restup) in results:
+        for (rep, n, restup) in results:
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3]));
             for (mv_risk, stats, bounds, bl, bg, bm) in restup:
                 f.write(
