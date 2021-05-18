@@ -1,7 +1,7 @@
 \documentclass[crop,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
-\input{../colors.tex}
+\input{../../colors.tex}
 \usetikzlibrary{patterns}
 \usepgfplotslibrary{fillbetween,groupplots}
 \begin{document}
@@ -30,26 +30,26 @@
       legend style={
         %font=\LARGE,
         nodes={scale=1.8, transform shape},
-        anchor=south east,at={(0.1,0.83)},legend columns=-1},
+        anchor=south east,at={(0.1,0.9)},legend columns=-1},
       xtick=data,
       nodes near coords align={vertical},
       ymin=0.,ymax=4,
-      %ytick={0.6,0.8,1,1.2},
-      extra y ticks={0.9},
+      ytick={1,2,3,4},
+      %extra y ticks={0.9},
       extra y tick labels={},
       ybar=0pt,bar width=2mm,
       ymajorgrids,
       log ticks with fixed point,
     },
     RiskPlotBin/.style={
-      width=8cm,  
+      width=10cm,  
       enlarge x limits=0.13,
       xmin=0,xmax=5,
     },
     RiskPlotMul/.style={
-      width=10cm,  
-      enlarge x limits=0.09,
-      xmin=0,xmax=8
+      width=6cm,  
+      enlarge x limits=0.13,
+      xmin=0 ,xmax=2,
     },
     Lam/.style={
       color=colPBkl,
@@ -96,8 +96,8 @@
 	},
 }
 
-\pgfplotstableread[col sep=semicolon]{boost/datasets/bin.csv}\tbin
-\pgfplotstableread[col sep=semicolon]{boost/datasets/mul.csv}\tmul
+\pgfplotstableread[col sep=semicolon]{datasets/bin.csv}\tbin
+\pgfplotstableread[col sep=semicolon]{datasets/mul.csv}\tmul
 
 \begin{tikzpicture}
 \pgfplotsset{every axis title/.append style={yshift=-2mm,font=\Large}}

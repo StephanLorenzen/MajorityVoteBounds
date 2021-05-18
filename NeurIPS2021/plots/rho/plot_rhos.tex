@@ -6,7 +6,7 @@
 \usepgfplotslibrary{fillbetween,groupplots}
 \begin{document}
 \pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Splice.csv}\opttable
-\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Phishing.csv}\popttable
+\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-w1a.csv}\popttable
 \pgfplotsset{
     RhoPlot/.style={
       scaled y ticks=false,
@@ -16,7 +16,7 @@
       ybar interval,
       ybar legend,
       grid=none,
-      xtick={10,20,30,40,50,60,70,80,90,100,110,120,130,140},
+      xtick={10,20,30,40,50,60,70,80,90,100},
       xticklabels={,,},
       ytick={0.03,0.06,0.09,0.12,0.15},
       y tick label style={
@@ -39,7 +39,7 @@
           at={(1.02,-4.6)},
         },
       xmajorticks=false,
-      xmin=1,xmax=150,
+      xmin=1,xmax=100,
     },
     FixedY/.style={
       ymin=0,ymax=0.14,
@@ -49,6 +49,10 @@
       color=colMVRisk,
       fill=colMVRisk,
     },
+    RhoAda/.style={
+	color=colAda,
+	fill=colAda,
+	},
     RhoLam/.style={
       color=colPBkl,
       fill=colPBkl,
@@ -86,7 +90,7 @@
 \begin{tikzpicture}
 \begin{groupplot}[
 group style={
-group size=1 by 5,
+group size=1 by 6,
 x descriptions at=edge bottom,
 y descriptions at=edge left,
 vertical sep=0pt,
@@ -100,6 +104,8 @@ xlabel={$h$},
 
 \addlegendentry{$\hat{L}(h,S_h)$}
 \addlegendimage{ybar interval,color=colPBkl,fill}
+\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendimage{ybar interval,color=colAda,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
@@ -108,6 +114,8 @@ xlabel={$h$},
 \addlegendimage{ybar interval,color=colBen,fill}
 \addlegendentry{$\rho_{\Ben}^*(h)$}
 
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoAda] table[x=h,y=rho_ada]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
@@ -123,7 +131,7 @@ xlabel={$h$},
 
 \begin{groupplot}[
 group style={
-group size=1 by 5,
+group size=1 by 6,
 x descriptions at=edge bottom,
 y descriptions at=edge left,
 vertical sep=0pt,
@@ -132,12 +140,14 @@ group name=g2,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Phishing}, anchor=north, at={($(g1 c1r5.south) + (0,-10mm)$)}]
+\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Phishing}, anchor=north, at={($(g1 c1r6.south) + (0,-10mm)$)}]
 %\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Phishing}, anchor=north]
 \addplot[MVrisk] table[x=h,y=risk]{\popttable};
 
 \addlegendentry{$\hat{L}(h,S_h)$}
 \addlegendimage{ybar interval,color=colPBkl,fill}
+\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendimage{ybar interval,color=colAda,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
@@ -146,6 +156,8 @@ xlabel={$h$},
 \addlegendimage{ybar interval,color=colBen,fill}
 \addlegendentry{$\rho_{\Ben}^*(h)$}
 
+\nextgroupplot[RhoPlot, FixedY]
+\addplot[RhoAda] table[x=h,y=rho_ada]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]

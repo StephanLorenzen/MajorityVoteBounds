@@ -16,9 +16,9 @@ axis_gibbs_loss, axis_tandem_loss = np.meshgrid(emp_gibbs_loss, emp_tandem_loss)
 # Define the eps term
 KL = 1
 lg = log(1/0.05)
-n1 = 6000.
+n1 = 10000.
 eps1 = (KL+lg)/n1 # for gibbs
-n2 = n1/3.
+n2 = n1
 eps2 = (2.*KL+lg)/n2 # for tnd
 
 # helper functions for kl-1
@@ -97,7 +97,7 @@ print(mu_test)
 fig = plt.figure()
 plt.contourf(axis_gibbs_loss, axis_tandem_loss, mu_star, levels = 30, cmap='rainbow')
 #plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss - 0.006, c='black', label='our data') #rfc
-plt.plot(emp_gibbs_loss, 0.8 * emp_gibbs_loss**2 + 0.1625 * emp_gibbs_loss + 0.0133, c='black', label='our data ABC')  #abc
+plt.plot(emp_gibbs_loss, 1.2355 * emp_gibbs_loss**2 - 0.01 * emp_gibbs_loss + 0.026, c='black', label='our data')  #abc
 plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss, 'b-', label='tnd=0.5gibbs')
 
 plt.colorbar()
@@ -127,7 +127,7 @@ plt.savefig(title+'muBound.png')
 fig = plt.figure()
 #levels = np.linspace(0,1,11)
 plt.contourf(axis_gibbs_loss, axis_tandem_loss, c2Bound / secondOrderBound, levels = 30, cmap = "rainbow")
-plt.plot(emp_gibbs_loss, 0.8 * emp_gibbs_loss**2 + 0.1625 * emp_gibbs_loss + 0.0133, c='black', label='our data')
+plt.plot(emp_gibbs_loss, 1.2355 * emp_gibbs_loss**2 - 0.01 * emp_gibbs_loss + 0.026, c='black', label='our data')
 plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss, 'b-', label='tnd=0.5gibbs')
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
 plt.colorbar()

@@ -16,10 +16,16 @@ rho:
 	cd rho; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	rm -f texput.log
 
-optimize:
-	python plot_optimize.py abc 150
-	cd risk_comparison_optimized_boost; pdflatex mvrisk_optimized_comparison_boost.tex; rm -f mvrisk_optimized_comparison_boost.{log,aux}
-	cd table; pdflatex optimize.tex; rm -f optimize.{log,aux}
+optimize_boost:
+	python plot_optimize.py boost 100
+	cd risk_comparison_optimized/boost; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
+	cd table/boost; pdflatex optimize.tex; rm -f optimize.{log,aux}
+	rm -f texput.log
+
+optimize_rfc:
+	python plot_optimize.py bootstrap 100
+	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
+	cd table/bootstrap; pdflatex optimize.tex; rm -f optimize.{log,aux}
 	rm -f texput.log
 
 

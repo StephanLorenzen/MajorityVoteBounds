@@ -8,28 +8,40 @@ import numpy as np
 import pandas as pd
 import os
 
-BASE = sys.argv[1] i len(sys.argv)>=2 else 'bootstrap'
+BASE = sys.argv[1] if len(sys.argv)>=2 else 'bootstrap'
 M = int(sys.argv[2]) if len(sys.argv)>=3 else 100
 
-DATASETS = [
-        'SVMGuide1',
-        'Phishing',
-        'Mushroom',
-        'Splice',
-        'w1a',
-        'Cod-RNA',
-        'Adult',
-        #'Protein',
-        'Connect-4',
-        'Shuttle',
-        #'Pendigits',
-        #'Letter',
-        #'SatImage',
-        #'Sensorless',
-        #'USPS',
-        #'MNIST',
-        #'Fashion-MNIST',
-        ]
+if BASE == 'boost':
+    DATASETS = [
+            'SVMGuide1',
+            'Phishing',
+            'Mushroom',
+            'Splice',
+            'w1a',
+            'Cod-RNA',
+            'Adult',
+            'Connect-4',
+            'Shuttle',
+            ]
+else:
+    DATASETS = [
+            'SVMGuide1',
+            'Phishing',
+            'Mushroom',
+            'Splice',
+            'w1a',
+            'Cod-RNA',
+            'Adult',
+            'Connect-4',
+            'Shuttle',
+            'Pendigits',
+            'Letter',
+            'SatImage',
+            'Sensorless',
+            'USPS',
+            'MNIST',
+            'Fashion-MNIST',
+            ]
 EXP_PATH  = "../out/optimize/"
 
 
@@ -67,7 +79,7 @@ def optimized_risk_comparison(base='bootstrap'):
 
     if base == 'boost':
         opts = ["unf","lam","tnd","mu","bern"]
-        baseline = "abc_risk"
+        baseline = "ada_mv_risk"
     else:
         opts = ["lam","tnd","mu","bern"]
         baseline = "unf_mv_risk"
@@ -98,22 +110,26 @@ optimized_risk_comparison(base=BASE)
 
 
 # Prepare data for the table to compare the results for optimization
-def optimized_comparison_table():
-    path = "table/optimize/"
+def optimized_comparison_table(base='bootstrap'):
+    path = "table/"+base+"/optimize/"
     if not os.path.isdir(path):
         os.makedirs(path)
     
     prec = 5
-    opts = ["unf", "lam","tnd","mu","bern"]
-    cols = ["dataset", "abc"]+opts
+    if base == 'boost':
+        opts = ["ada", "unf", "lam","tnd","mu","bern"]
+    else:
+        opts = ["unf", "lam","tnd","mu","bern"]
     
+    cols = ["dataset"] + opts
+
     rows = []
     for ds in DATASETS:
         df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
         df_mean = df.mean()
         df_std  = df.std()
         
-        row = [ds, df_mean["abc_risk"]]
+        row = [ds]
         for opt in opts:
             risk = df_mean[opt+"_mv_risk"]
             row += [risk]
@@ -121,21 +137,21 @@ def optimized_comparison_table():
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"test_risk.csv", sep=",", index=False)
 
-optimized_comparison_table()
+optimized_comparison_table(base=BASE)
 
 
 # Prepare data for the table to compare tnd and Bern
-def TND_Ben_comparison_table():
-    path = "table/optimize/"
+def TND_Ben_comparison_table(base='bootstrap'):
+    path = "table/"+base+"/optimize/"
     if not os.path.isdir(path):
         os.makedirs(path)
     
     prec = 5
     opts = ["tnd", "mu", "bern"]
-    cols = ["dataset", "c", "d", "abc_risk"]
+    cols = ["dataset", "c", "d"]
     for opt in opts:
         if opt == "tnd":
-            cols += [opt+suf for suf in ["_gibbs", "_tandem", "_disagreement", "_KL", "_tnd", "_TandemUB", "_bern"]]
+            cols += [opt+suf for suf in ["_gibbs", "_tandem", "_KL", "_tnd", "_TandemUB", "_bern"]]
         elif opt == "mu":
             cols += [opt+suf for suf in ["_MU", "_muTandemUB", "_bern", "_bmu"]]
         elif opt == "bern":
@@ -146,10 +162,10 @@ def TND_Ben_comparison_table():
         df_mean = df.mean()
         df_std  = df.std()
         
-        row = [ds, df_mean["c"], df_mean["d"], df_mean["abc_risk"]]
+        row = [ds, df_mean["c"], df_mean["d"]]
         for opt in opts:
             if opt == "tnd":
-                row += [df_mean[opt+suf] for suf in ["_gibbs", "_tandem", "_disagreement", "_KL", "_tnd", "_TandemUB", "_bern"]]
+                row += [df_mean[opt+suf] for suf in ["_gibbs", "_tandem", "_KL", "_tnd", "_TandemUB", "_bern"]]
             elif opt == "mu":
                 row += [df_mean[opt+suf] for suf in ["_MU", "_muTandemUB", "_bern", "_bmu"]]
             elif opt == "bern":
@@ -158,4 +174,34 @@ def TND_Ben_comparison_table():
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)
 
-TND_Ben_comparison_table()
+TND_Ben_comparison_table(base=BASE)
+
+# Prepare data for the table to compare the bounds for the optimized rho
+def Bounds_optimized_table(base='bootstrap'):
+    path = "table/"+base+"/optimize/"
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    
+    prec = 5
+    if base == 'boost':
+        opts = {"ada":'sh', "lam":'pbkl',"tnd":'tnd',"mu":'MU',"bern":'bern'}
+    else:
+        opts = {"lam":'pbkl',"tnd":'tnd',"mu":'MU',"bern":'bern'}
+    
+    cols = ["dataset"] + list(opts.keys())
+
+    rows = []
+    for ds in DATASETS:
+        df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
+        df_mean = df.mean()
+        df_std  = df.std()
+        
+        row = [ds]
+        for key in list(opts.keys()):
+            risk = df_mean[key+"_" + opts[key]]
+            row += [risk]
+        rows.append(row)
+    
+    pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"bounds_optimized.csv", sep=",", index=False)
+
+Bounds_optimized_table(base=BASE)

@@ -54,9 +54,9 @@ max_depth = 1
 
 def _write_dist_file(name, rhos, risks):
     with open(outpath+name+'.csv', 'w') as f:
-        f.write("h;risk;rho_lam;rho_tnd;rho_mu;rho_bern\n")
-        for i,(err,r_lam,r_tnd,r_mu,r_bern) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2], rhos[3])):
-            f.write(str(i+1)+";"+str(err)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_mu)+";"+str(r_bern)+"\n")
+        f.write("h;risk;rho_ada;rho_lam;rho_tnd;rho_mu;rho_bern\n")
+        for i,(err,r_ada,r_lam,r_tnd,r_mu,r_bern) in enumerate(zip(risks, rhos[0], rhos[1], rhos[2], rhos[3], rhos[4])):
+            f.write(str(i+1)+";"+str(err)+";"+str(r_ada)+";"+str(r_lam)+";"+str(r_tnd)+";"+str(r_mu)+";"+str(r_bern)+"\n")
 
 if not os.path.exists(outpath):
     os.makedirs(outpath)
