@@ -185,7 +185,7 @@ for rep in range(REPS):
     stats = rf.aggregate_stats(stats, options={'mu_kl':(bmu,)}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_MU = (mv_risk, stats, bounds, bl, bg, bmu)
-    print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
+    print('MU bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk, 'KL', res_MU[1]['KL'])
     
