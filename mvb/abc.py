@@ -29,10 +29,18 @@ class OurAdaBoostClassifier(mvbase.MVBounds):
                         
         prng = check_random_state(random_state)
         
-        estimators = [None] * n_estimators        
-        abc = AdaBoostClassifier(base_estimator=dt_stump, n_estimators=n_estimators, algorithm=algorithm, random_state=prng)
+        estimators = [None] * n_estimators
+        if n_splits == 2:
+            abc = [AdaBoostClassifier(base_estimator=dt_stump, n_estimators=n_estimators, algorithm=algorithm, random_state=prng)]
+        else:
+            # divide m classifiers into n_splits groups, (m/n_splits , m/n_splits , remaining) 
+            m = n_estimators
+            m_group = [int(m/n_splits) for i in range(n_splits-1)]
+            m_group.append(m-sum(m_group))
+            
+            abc = [AdaBoostClassifier(base_estimator=dt_stump, n_estimators=m_group[i], algorithm=algorithm, random_state=prng) for i in range(n_splits)]
         
-        super().__init__(estimators, abc, rho, sample_mode=sample_mode, random_state=prng, n_splits=n_splits, use_ada_prior=use_ada_prior)
+        super().__init__(estimators, abc, rho, sample_mode=sample_mode, random_state=prng, use_ada_prior=use_ada_prior)
     
     # prepare the base classifiers and validation data for PAC-Bayes methods
     def fit(self, X, Y):

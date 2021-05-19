@@ -10,6 +10,7 @@
 import numpy as np
 from sklearn.utils import check_random_state
 from sklearn.model_selection import train_test_split
+import random
 
 from . import util
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
@@ -24,13 +25,11 @@ class MVBounds:
             rho=None,
             sample_mode=None, # | 'bootstrap' | 'dim' | int | float | 'boost'
             random_state=None,
-            n_splits = 2, # split the samples into n_splits splits and build an AdaBoost for each split
             use_ada_prior=False, # to choose whether to use the prior given by AdaBoost
             ):
         self._estimators = estimators
         self._actual_n_estimators = len(estimators)
         self._ensembled_estimators = ensembled_estimators
-        self.n_splits = n_splits
         self.use_ada_prior = use_ada_prior
         m                = len(estimators)
         self._sample_mode= sample_mode
@@ -63,51 +62,105 @@ class MVBounds:
         elif self._sample_mode == 'boost':
             preds = []
             n = X.shape[0]
-            # number of samples to train the estimators
-            n_sample = ceil(n/self.n_splits)
             
-            # sample points for training (wo. replacement)
-            # all estimators share the same training/validation samples
-            while True: 
-                # Repeat until at least one example of each class
-                t_idx = self._prng.choice(n, size=n_sample, replace=False)
-                t_X = X[t_idx]
-                t_Y = Y[t_idx]
-                if np.unique(t_Y).shape[0] > 1:
-                    break
+            # When only do one-way (S_train, S_validation) split.
+            if len(self._ensembled_estimators) == 1:
+                n_sample = ceil(n/2.) # number of training samples
+                
+                # sample points for training (wo. replacement)
+                # all estimators share the same training/validation samples
+                while True: 
+                    # Repeat until at least one example of each class
+                    t_idx = self._prng.choice(n, size=n_sample, replace=False)
+                    t_X = X[t_idx]
+                    t_Y = Y[t_idx]
+                    if np.unique(t_Y).shape[0] == self._classes:
+                        break
+                
+                # fit the estimators
+                self._ensembled_estimators[0].fit(t_X, t_Y)
+                
+                # record the estimators as a list
+                self._estimators = self._ensembled_estimators[0].estimators_
+                self._actual_n_estimators = len(self._estimators)
+                if self.use_ada_prior == True:
+                    # the weight given by AdaBoost
+                    _abc_pi = self._ensembled_estimators[0].estimator_weights_
+                    self._abc_pi = _abc_pi/np.sum(_abc_pi)
+                            
+                # validation samples
+                oob_idx = np.delete(np.arange(n),t_idx)
+                oob_X   = X[oob_idx]
+                oob_Y   = Y[oob_idx]
+                
+                for est in self._estimators:
+                    # Predict on validation
+                    oob_P = est.predict(oob_X)
+
+                    M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
+                    M_est[oob_idx] = 1
+                    P_est[oob_idx] = oob_P
+
+                    # Save predictions on validation set for later
+                    preds.append((M_est,P_est))            
+                
+                self._OOB = (preds, Y)
             
-            # fit the estimators
-            self._ensembled_estimators.fit(t_X, t_Y)
-            
-            # record the estimators as a list
-            self._estimators = self._ensembled_estimators.estimators_
-            self._actual_n_estimators = len(self._estimators)
-            if self.use_ada_prior == True:
-                # the weight given by AdaBoost
-                _abc_pi = self._ensembled_estimators.estimator_weights_
-                self._abc_pi = _abc_pi/np.sum(_abc_pi)
+            # If there are more than 2 splits, split S=S1+S2+...Sk
+            else:
+                # randomly divide n samples into k splits nearly equal-sized groups according to the index
+                t_idx = np.arange(n)
+                k = len(self._ensembled_estimators)
+                
+                # Repeat until at least one example of each class in each group
+                while True:
+                    random.shuffle(t_idx)
+                    t_idx = [t_idx[i::k] for i in range(k)]
+                    t_Y = [Y[t_idx[i]] for i in range(k)]
+                    if sum([(np.unique(t_Y[i]).shape[0] < self._classes.shape[0]) for i in range(k)]) == 0:
+                        break
                         
-            # validation samples
-            oob_idx = np.delete(np.arange(n),t_idx)
-            oob_X   = X[oob_idx]
-            oob_Y   = Y[oob_idx]
-            
-            for est in self._estimators:
-                # Predict on validation
-                oob_P = est.predict(oob_X)
+                pi = np.zeros(self._actual_n_estimators)
+                k_m = np.zeros(k+1).astype(int)
+                # training
+                for i in range(k):
+                    # training data
+                    t_X, t_Y = X[t_idx[i]], Y[t_idx[i]]
+                    # train AdaBoost on a split
+                    self._ensembled_estimators[i].fit(t_X, t_Y)
+                    # record the cumulated number of classifiers in each group
+                    k_m[i+1] = k_m[i] + len(self._ensembled_estimators[i].estimators_)
+                    # record each classifier
+                    self._estimators[k_m[i]:k_m[i+1]] = self._ensembled_estimators[i].estimators_
+                    # record AdaBoost weight
+                    weight = self._ensembled_estimators[i].estimator_weights_
+                    pi[k_m[i]:k_m[i+1]] = 1./3 * weight/np.sum(weight) # initialize the weight
+                    
+                    # oob data
+                    oob_idx = np.delete(np.arange(n), t_idx[i])
+                    oob_X = X[oob_idx]
 
-                M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
-                M_est[oob_idx] = 1
-                P_est[oob_idx] = oob_P
+                    
+                    for est in self._estimators[k_m[i]:k_m[i+1]]:
+                        # Predict on validation
+                        oob_P = est.predict(oob_X)
 
-                # Save predictions on validation set for later
-                preds.append((M_est,P_est))            
-            
-            self._OOB = (preds, Y)
-            
+                        M_est, P_est = np.zeros(Y.shape), np.zeros(Y.shape)
+                        M_est[oob_idx] = 1
+                        P_est[oob_idx] = oob_P
+
+                        # Save predictions on validation set for later
+                        preds.append((M_est,P_est))
+                    
+                if self.use_ada_prior == True:
+                    # the weight given by AdaBoost
+                    self._abc_pi = pi
+                
+                self._OOB = (preds, Y)
+                
             # The construction of the ensembled estimators might stop earlier
             self._rho = util.uniform_distribution(self._actual_n_estimators)
-            return (oob_X,oob_Y)
+            return None
         else:
             preds = []
             n = X.shape[0]
@@ -134,7 +187,7 @@ class MVBounds:
                     t_idx = self._prng.randint(n, size=n_sample)
                     t_X   = X[t_idx]
                     t_Y   = Y[t_idx]
-                    if np.unique(t_Y).shape[0] > 1:
+                    if np.unique(t_Y).shape[0] == self._classes:
                         break
 
                 # OOB sample

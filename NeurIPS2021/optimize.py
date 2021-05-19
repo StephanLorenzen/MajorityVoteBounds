@@ -132,7 +132,7 @@ for rep in range(REPS):
     
     # Adaboost Baseline
     print("Calculate the baseline by AdaBoost...")
-    abc = baseABC(n_estimators=M, max_depth=max_depth, random_state=RAND, n_splits = 3)
+    abc = baseABC(n_estimators=M, max_depth=max_depth, random_state=RAND, n_splits = SPLITS)
     rho = abc.fit(trainX, trainY)
     mv_risk = abc.predict(testX, testY)
     bounds, stats = abc.bound()
