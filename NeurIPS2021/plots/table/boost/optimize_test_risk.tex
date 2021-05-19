@@ -1,0 +1,36 @@
+\documentclass{article}
+\usepackage{pgfplotstable}
+\pgfplotsset{compat=1.16}
+\usepackage{changepage}
+\usepackage{booktabs}           % for table rules
+%\usepackage{siunitx}			% for precision
+\input{../../colors.tex}
+
+% Setup siunitx:
+%\sisetup{
+%	round-mode          = places, % Rounds numbers
+%	round-precision     = 3, % to 2 places
+%	per-mode        = symbol,
+%}
+
+\begin{document}
+\begin{table}[th!]
+	\hskip-4.0cm
+	\pgfplotstabletypeset[
+		col sep=comma,
+		string type,
+		columns = {dataset, ada, unf, lam, tnd, mu, bern},
+		columns/dataset/.style={string type, column name=Dataset, column type={l}},
+		columns/ada/.style={column name=$\hat L(\MV_{\rho_{\Ada}^*}\mbox{,}\testset)$, column type={c}},
+		columns/unf/.style={column name=$\hat L(\MV_{u}\mbox{,}\testset)$, column type={c}},
+		columns/lam/.style={column name=$\hat L(\MV_{\rho_{\FO}^*}\mbox{,}\testset)$, column type={c}},
+		columns/tnd/.style={column name=$L(\MV_{\rho_{\TND}^*}\mbox{,}\testset)$, column type={c}},
+		columns/mu/.style={column name=$L(\MV_{\rho_{\MU}^*}\mbox{,}\testset)$, column type={c}},
+		columns/bern/.style={column name=$L(\MV_{\rho_{\Ben}^*}\mbox{,}\testset)$, column type={c}},
+		every head row/.style={before row=\toprule,after row=\midrule},
+		every last row/.style={after row=\bottomrule},
+	]{optimize/test_risk.csv}
+\end{table}
+
+
+\end{document}

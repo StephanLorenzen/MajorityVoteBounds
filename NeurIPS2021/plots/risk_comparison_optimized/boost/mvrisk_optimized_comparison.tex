@@ -110,7 +110,7 @@ vertical sep=0pt,
 horizontal sep=0pt,
 },
   ]
-\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\MV_u,\testset)$}]
+\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\MV_{\rho_{\Ada}},\testset)$}]
 \addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
 \addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};

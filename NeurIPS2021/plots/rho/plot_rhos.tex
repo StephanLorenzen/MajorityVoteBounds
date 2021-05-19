@@ -5,8 +5,8 @@
 \usetikzlibrary{patterns}
 \usepgfplotslibrary{fillbetween,groupplots}
 \begin{document}
-\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Splice.csv}\opttable
-\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-w1a.csv}\popttable
+\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Cod-RNA.csv}\opttable
+\pgfplotstableread[col sep=semicolon]{../../out/optimize/rho-Shuttle.csv}\popttable
 \pgfplotsset{
     RhoPlot/.style={
       scaled y ticks=false,
@@ -36,7 +36,7 @@
           legend columns=1,
           legend cell align=left,
           anchor=west,
-          at={(1.02,-4.6)},
+          at={(1.02,-3.2)},
         },
       xmajorticks=false,
       xmin=1,xmax=100,
@@ -99,13 +99,13 @@ group name=g1,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYBin, title=\dataset{Splice}]
+\nextgroupplot[RhoPlot, RiskYBin, title=\dataset{Cod-RNA}]
 \addplot[MVrisk] table[x=h,y=risk]{\opttable};
 
 \addlegendentry{$\hat{L}(h,S_h)$}
-\addlegendimage{ybar interval,color=colPBkl,fill}
-\addlegendentry{$\rho_{\Ada}^*(h)$}
 \addlegendimage{ybar interval,color=colAda,fill}
+\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendimage{ybar interval,color=colPBkl,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
@@ -140,14 +140,13 @@ group name=g2,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Phishing}, anchor=north, at={($(g1 c1r6.south) + (0,-10mm)$)}]
-%\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Phishing}, anchor=north]
+\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Shuttle}, anchor=north, at={($(g1 c1r6.south) + (0,-10mm)$)}]
 \addplot[MVrisk] table[x=h,y=risk]{\popttable};
 
 \addlegendentry{$\hat{L}(h,S_h)$}
-\addlegendimage{ybar interval,color=colPBkl,fill}
-\addlegendentry{$\rho_{\Ada}^*(h)$}
 \addlegendimage{ybar interval,color=colAda,fill}
+\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendimage{ybar interval,color=colPBkl,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}

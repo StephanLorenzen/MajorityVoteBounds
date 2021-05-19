@@ -19,13 +19,15 @@ rho:
 optimize_boost:
 	python plot_optimize.py boost 100
 	cd risk_comparison_optimized/boost; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
-	cd table/boost; pdflatex optimize.tex; rm -f optimize.{log,aux}
+	cd table/boost; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
+	cd table/boost; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
 	rm -f texput.log
 
 optimize_rfc:
 	python plot_optimize.py bootstrap 100
 	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
-	cd table/bootstrap; pdflatex optimize.tex; rm -f optimize.{log,aux}
+	cd table/bootstrap; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
+	cd table/bootstrap; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
 	rm -f texput.log
 
 
