@@ -19,8 +19,7 @@ from sklearn.utils import check_random_state
 
 from mvb import RandomForestClassifier as RFC
 from mvb import OurAdaBoostClassifier as OABC
-from sklearn.tree import DecisionTreeClassifier as Tree
-from sklearn.ensemble import AdaBoostClassifier
+from mvb import BaseAdaBoostClassifier as baseABC
 from mvb import data as mldata
 
 if len(sys.argv) < 2:
@@ -32,6 +31,7 @@ SMODE   = sys.argv[3] if len(sys.argv)>=4 else 'bootstrap'
 SMODE   = SMODE if (SMODE=='bootstrap' or SMODE=='dim' or SMODE=='boost') else float(SMODE)
 OPT     = sys.argv[4] if len(sys.argv)>=5 else 'iRProp'
 REPS    = int(sys.argv[5]) if len(sys.argv)>=6 else 1
+SPLITS  = int(sys.argv[6]) if len(sys.argv)>=7 else 2 # number of splits for boosting
 
 inpath  = 'data/'
 outpath = 'out/optimize/'
@@ -40,7 +40,6 @@ SEED = 1000
 
 DIFF_DATASET = [
         'Protein',
-        'Connect-4',
         'Pendigits',
         'Letter',
         'SatImage',
@@ -49,8 +48,9 @@ DIFF_DATASET = [
         'MNIST',
         'Fashion-MNIST',
 ]
-#max_depth = 2 if DATASET in DIFF_DATASET else 1
-max_depth = 1
+
+if (SMODE == 'boost' and DATASET in DIFF_DATASET):
+    sys.exit(1)
 
 def _write_dist_file(name, rhos, risks):
     with open(outpath+name+'.csv', 'w') as f:
@@ -102,8 +102,12 @@ def _write_outfile(results):
             f.write('\n')
         
 
-
-smodename = 'bagging' if (SMODE=='bootstrap' or SMODE=='boost') else ('reduced bagging ('+str(SMODE)+');')
+if SMODE=='bootstrap':
+    smodename = 'bagging'
+elif SMODE=='boost':
+    smodename = 'boosting with ' + str(SPLITS) + ' splits'
+else:
+    smodename = 'reduced bagging ('+str(SMODE)+');'
 print("Starting RFC optimization (m = "+str(M)+") for ["+DATASET+"] using sampling strategy: "+smodename+", optimizer = "+str(OPT))
 results = []
 X,Y = mldata.load(DATASET, path=inpath)
@@ -120,39 +124,31 @@ for rep in range(REPS):
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
     n = (trainX.shape[0], testX.shape[0], trainX.shape[1], C)
 
-    """
-    # Adaboost Baseline
-    print("Calculate the baseline by AdaBoost...")
-    base_estimator = Tree(max_depth=max_depth)
-    abc = AdaBoostClassifier(base_estimator=base_estimator, n_estimators=M, algorithm='SAMME', random_state=RAND)
-    abc.fit(trainX, trainY)
-    abc_risk = 1.0 - abc.score(testX, testY)
-    print('Baseline:', abc_risk)
-    """
     # Prepare base classifiers for PAC-Bayes methods
     #rf = RFC(M,max_features="sqrt",random_state=RAND, sample_mode=SMODE)
-    rf = OABC(n_estimators=M, max_depth=max_depth, random_state=RAND, sample_mode=SMODE)
+    max_depth = 1
+    use_ada_prior = True
+    rf = OABC(n_estimators=M, max_depth=max_depth, random_state=RAND, sample_mode=SMODE, n_splits = SPLITS, use_ada_prior=use_ada_prior)
+    
+    # Adaboost Baseline
+    print("Calculate the baseline by AdaBoost...")
+    abc = baseABC(n_estimators=M, max_depth=max_depth, random_state=RAND, n_splits = 3)
+    rho = abc.fit(trainX, trainY)
+    mv_risk = abc.predict(testX, testY)
+    bounds, stats = abc.bound()
+    res_ada = (mv_risk, stats, bounds, -1, -1, -1)
+    rhos.append(rho)
+    print('Baseline:', mv_risk)
     
     # Training
     print("Training...")
-    #_  = rf.fit(trainX,trainY) # for non-boosting
-    (valX,valY) = rf.fit(trainX,trainY) # for boosting
-    
-    # Adaboost with bound
-    print("Adaboost with bound...")
-    rho = rf.optimize_rho('AdaBoost')
-    _, mv_risk = rf.predict(testX, testY)
-    stats = rf.stats(labeled_data=(valX,valY))
-    bounds, _ = rf.bounds(stats=stats)
-    res_ada = (mv_risk, stats, bounds, -1, -1, -1)
-    rhos.append(rho)
-    print('mv_risk', mv_risk, 'bound', bounds['SH'])
-    
+    _ = rf.fit(trainX,trainY) 
+
     # Uniform Weighting
     print('Uniform weighting...')
     _ = rf.optimize_rho('Uniform')
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats,options = {'mu_kl':mu_range,'mu_bern': mu_range}) # initial stats after training
+    stats = rf.stats(options = {'mu_kl':mu_range,'mu_bern': mu_range}) # initial stats after training
     bounds, stats = rf.bounds(stats=stats) # compute the bounds according to the best mu in the range, and record the corresponding stats
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
     print('mv_risk', mv_risk, 'KL', res_unf[1]['KL'])

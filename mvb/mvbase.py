@@ -24,10 +24,14 @@ class MVBounds:
             rho=None,
             sample_mode=None, # | 'bootstrap' | 'dim' | int | float | 'boost'
             random_state=None,
+            n_splits = 2, # split the samples into n_splits splits and build an AdaBoost for each split
+            use_ada_prior=False, # to choose whether to use the prior given by AdaBoost
             ):
         self._estimators = estimators
         self._actual_n_estimators = len(estimators)
         self._ensembled_estimators = ensembled_estimators
+        self.n_splits = n_splits
+        self.use_ada_prior = use_ada_prior
         m                = len(estimators)
         self._sample_mode= sample_mode
         self._prng       = check_random_state(random_state)
@@ -59,7 +63,8 @@ class MVBounds:
         elif self._sample_mode == 'boost':
             preds = []
             n = X.shape[0]
-            n_sample = ceil(n/2.) # number of samples to train the estimators
+            # number of samples to train the estimators
+            n_sample = ceil(n/self.n_splits)
             
             # sample points for training (wo. replacement)
             # all estimators share the same training/validation samples
@@ -77,9 +82,10 @@ class MVBounds:
             # record the estimators as a list
             self._estimators = self._ensembled_estimators.estimators_
             self._actual_n_estimators = len(self._estimators)
-            # the weight given by AdaBoost
-            _abc_pi = self._ensembled_estimators.estimator_weights_
-            self._abc_pi = _abc_pi/np.sum(_abc_pi)
+            if self.use_ada_prior == True:
+                # the weight given by AdaBoost
+                _abc_pi = self._ensembled_estimators.estimator_weights_
+                self._abc_pi = _abc_pi/np.sum(_abc_pi)
                         
             # validation samples
             oob_idx = np.delete(np.arange(n),t_idx)
@@ -100,8 +106,7 @@ class MVBounds:
             self._OOB = (preds, Y)
             
             # The construction of the ensembled estimators might stop earlier
-            self._rho = util.uniform_distribution(self._actual_n_estimators) # the initial weight = uniform
-            #self._rho = np.copy(self._abc_pi) # the initial weight is the weight given by AdaBoost
+            self._rho = util.uniform_distribution(self._actual_n_estimators)
             return (oob_X,oob_Y)
         else:
             preds = []

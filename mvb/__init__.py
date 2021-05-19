@@ -2,5 +2,5 @@
 from .rfc import RandomForestClassifier
 from .etc import ExtraTreesClassifier
 from .svm import SVMVotersClassifier
-from .abc import OurAdaBoostClassifier
+from .abc import OurAdaBoostClassifier, BaseAdaBoostClassifier
 
