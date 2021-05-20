@@ -129,20 +129,21 @@ for rep in range(REPS):
     max_depth = 1
     use_ada_prior = True
     rf = OABC(n_estimators=M, max_depth=max_depth, random_state=RAND, sample_mode=SMODE, n_splits = SPLITS, use_ada_prior=use_ada_prior)
+
+    # Training
+    print("Training...")
+    _ = rf.fit(trainX,trainY) 
+    rho_abc_pi = rf.optimize_rho('Adaboost')
+    rhos.append(rho_abc_pi)
     
     # Adaboost Baseline
     print("Calculate the baseline by AdaBoost...")
     abc = baseABC(n_estimators=M, max_depth=max_depth, random_state=RAND, n_splits = SPLITS)
-    rho = abc.fit(trainX, trainY)
+    _ = abc.fit(trainX, trainY)
     mv_risk = abc.predict(testX, testY)
     bounds, stats = abc.bound()
     res_ada = (mv_risk, stats, bounds, -1, -1, -1)
-    rhos.append(rho)
     print('Baseline:', mv_risk)
-    
-    # Training
-    print("Training...")
-    _ = rf.fit(trainX,trainY) 
 
     # Uniform Weighting
     print('Uniform weighting...')
