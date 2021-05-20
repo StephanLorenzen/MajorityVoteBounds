@@ -133,7 +133,7 @@ for rep in range(REPS):
     # Training
     print("Training...")
     _ = rf.fit(trainX,trainY) 
-    rho_abc_pi = rf.optimize_rho('Adaboost')
+    rho_abc_pi = rf.optimize_rho('AdaBoost')
     rhos.append(rho_abc_pi)
     
     # Adaboost Baseline
