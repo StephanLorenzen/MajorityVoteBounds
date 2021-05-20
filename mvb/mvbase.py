@@ -9,10 +9,11 @@
 #
 import numpy as np
 from sklearn.utils import check_random_state
-from sklearn.model_selection import train_test_split
+from sklearn.model_selection import StratifiedKFold
 import random
 
 from . import util
+from .data import split
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, MUBernstein, optimizeMUBernstein
 from math import ceil, log
 
@@ -65,18 +66,29 @@ class MVBounds:
             
             # When only do one-way (S_train, S_validation) split.
             if len(self._ensembled_estimators) == 1:
+                t_idx, oob_idx = [], []
+                skf = StratifiedKFold(n_splits=2, shuffle=True, random_state=self._prng)
+                for val, train in skf.split(X,Y):
+                    t_idx.append(train)
+                    oob_idx.append(val)
+                    
+                t_idx, oob_idx = t_idx[0], oob_idx[0] # only take the first fold
+                t_X, t_Y = X[t_idx], Y[t_idx]
+                oob_X, oob_Y = X[oob_idx], Y[oob_idx]
+                print('t_idx', t_idx[:10])
+                """
                 n_sample = ceil(n/2.) # number of training samples
                 
                 # sample points for training (wo. replacement)
                 # all estimators share the same training/validation samples
-                while True: 
+                while True:
                     # Repeat until at least one example of each class
                     t_idx = self._prng.choice(n, size=n_sample, replace=False)
                     t_X = X[t_idx]
                     t_Y = Y[t_idx]
-                    if np.unique(t_Y).shape[0] == self._classes:
+                    if np.unique(t_Y).shape[0] == self._classes.shape[0]:
                         break
-                
+                """
                 # fit the estimators
                 self._ensembled_estimators[0].fit(t_X, t_Y)
                 
@@ -87,12 +99,12 @@ class MVBounds:
                     # the weight given by AdaBoost
                     _abc_pi = self._ensembled_estimators[0].estimator_weights_
                     self._abc_pi = _abc_pi/np.sum(_abc_pi)
-                            
+                """
                 # validation samples
                 oob_idx = np.delete(np.arange(n),t_idx)
                 oob_X   = X[oob_idx]
                 oob_Y   = Y[oob_idx]
-                
+                """
                 for est in self._estimators:
                     # Predict on validation
                     oob_P = est.predict(oob_X)
@@ -108,18 +120,22 @@ class MVBounds:
             
             # If there are more than 2 splits, split S=S1+S2+...Sk
             else:
+                k = len(self._ensembled_estimators) # number of splits
+                t_idx, oob_idx = [], []
+                skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=self._prng)
+                
+                for val, train in skf.split(X,Y):
+                    t_idx.append(train)
+                    oob_idx.append(val)
+                """
                 # randomly divide n samples into k splits nearly equal-sized groups according to the index
                 t_idx = np.arange(n)
                 k = len(self._ensembled_estimators)
                 
-                # Repeat until at least one example of each class in each group
-                while True:
-                    random.shuffle(t_idx)
-                    t_idx = [t_idx[i::k] for i in range(k)]
-                    t_Y = [Y[t_idx[i]] for i in range(k)]
-                    if sum([(np.unique(t_Y[i]).shape[0] < self._classes.shape[0]) for i in range(k)]) == 0:
-                        break
-                        
+                random.shuffle(t_idx)
+                t_idx = [t_idx[i::k] for i in range(k)]
+                t_Y = [Y[t_idx[i]] for i in range(k)]
+                """
                 pi = np.zeros(self._actual_n_estimators)
                 k_m = np.zeros(k+1).astype(int)
                 # training

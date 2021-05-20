@@ -87,7 +87,7 @@ class BaseAdaBoostClassifier():
             t_idx = self._prng.choice(n, size=n_sample, replace=False)
             t_X = X[t_idx]
             t_Y = Y[t_idx]
-            if np.unique(t_Y).shape[0] > 1:
+            if np.unique(t_Y).shape[0] == self._classes.shape[0]:
                 break
 
         # fit
