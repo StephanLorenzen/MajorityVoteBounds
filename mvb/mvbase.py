@@ -335,10 +335,11 @@ class MVBounds:
             self._rho = rho
             return (bound, rho, mu, lam, gam)
         else: # Adaboost
-            assert self._abc_pi is not None
-            rho = np.copy(self._abc_pi)
-            self._rho = rho
-            return rho
+            if self._abc_pi is not None:
+                rho = np.copy(self._abc_pi)
+                self._rho = rho
+                return rho
+            return None
 
 
     # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').

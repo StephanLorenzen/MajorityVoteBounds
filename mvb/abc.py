@@ -5,6 +5,7 @@ import numpy as np
 from sklearn.tree import DecisionTreeClassifier as Tree
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.utils import check_random_state
+from sklearn.model_selection import train_test_split
 from math import ceil
 
 from .bounds import SH
@@ -77,9 +78,12 @@ class BaseAdaBoostClassifier():
         X, Y = np.array(X), np.array(Y)
         self._classes = np.unique(Y)
         
-        # divide the samples into n_splits splits
+        # use 1./n_splits of the data for training
+        t_X,val_X,t_Y,val_Y = train_test_split(X, Y, train_size= 1./self.n_splits, shuffle=True, stratify=Y, random_state=self._prng)
+        self.VAL = (val_X,val_Y)
+        """
         n = X.shape[0]
-        n_sample = ceil((self.n_splits-1)/self.n_splits * n)
+        n_sample = ceil(1./self.n_splits * n)
         
         # sample points for training (wo. replacement)
         while True: 
@@ -90,14 +94,14 @@ class BaseAdaBoostClassifier():
             if np.unique(t_Y).shape[0] == self._classes.shape[0]:
                 break
 
-        # fit
-        self.abc.fit(t_X, t_Y)
-
         # validation samples
         val_idx = np.delete(np.arange(n),t_idx)
         val_X   = X[val_idx]
         val_Y   = Y[val_idx]
         self.VAL = (val_X,val_Y)
+        """
+        # fit
+        self.abc.fit(t_X, t_Y)
         
         # calculate rho
         rho = self.abc.estimator_weights_

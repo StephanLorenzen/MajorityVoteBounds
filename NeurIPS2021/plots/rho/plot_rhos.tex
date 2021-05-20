@@ -104,7 +104,7 @@ xlabel={$h$},
 
 \addlegendentry{$\hat{L}(h,S_h)$}
 \addlegendimage{ybar interval,color=colAda,fill}
-\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendentry{$\rho_{\pi}(h)$}
 \addlegendimage{ybar interval,color=colPBkl,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
@@ -115,7 +115,7 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\Ben}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoAda] table[x=h,y=rho_ada]{\opttable};
+\addplot[RhoAda] table[x=h,y=rho_prior]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
@@ -145,7 +145,7 @@ xlabel={$h$},
 
 \addlegendentry{$\hat{L}(h,S_h)$}
 \addlegendimage{ybar interval,color=colAda,fill}
-\addlegendentry{$\rho_{\Ada}^*(h)$}
+\addlegendentry{$\rho_{\pi}(h)$}
 \addlegendimage{ybar interval,color=colPBkl,fill}
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
@@ -156,7 +156,7 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\Ben}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoAda] table[x=h,y=rho_ada]{\opttable};
+\addplot[RhoAda] table[x=h,y=rho_prior]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
