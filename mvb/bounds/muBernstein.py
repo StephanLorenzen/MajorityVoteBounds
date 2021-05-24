@@ -71,7 +71,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, de
         second = c2/(n2*gam) * (2*KL + log(pi**2/(6*delta2)) + 2*log(f_inv))
         return (mutandem_risk + first + second, gam)
     
-    # gradient for the Bernnett bound
+    # gradient for the Bennett bound
     def _gradient(gam):
         print('grad')
         gam = gam[0]
@@ -284,8 +284,8 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
 
 
     m = mutandemrisks.shape[0]
-    pi = uniform_distribution(m) if abc_pi is None else abc_pi
-    rho = uniform_distribution(m) if abc_pi is None else abc_pi
+    pi = uniform_distribution(m) if abc_pi == None else abc_pi
+    rho = uniform_distribution(m) if abc_pi == None else abc_pi
     b, mu, lam, gam = _bound(rho, mu=mu_input)
     bp = b + 1
     while abs(b - bp) > eps:

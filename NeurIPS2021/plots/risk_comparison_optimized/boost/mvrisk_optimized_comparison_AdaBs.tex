@@ -51,6 +51,22 @@
       enlarge x limits=0.13,
       xmin=0 ,xmax=2,
     },
+    AdaPr/.style={
+	color=colAda,
+	fill=colAda,
+	fill opacity=0.4,
+	error bars/.cd,
+	y dir=both,
+	y explicit,
+	},
+    Unf/.style={
+	color=colUnf,
+	fill=colUnf,
+	fill opacity=0.4,
+	error bars/.cd,
+	y dir=both,
+	y explicit,
+	},
     Lam/.style={
       color=colPBkl,
       fill=colPBkl,
@@ -96,8 +112,8 @@
 	},
 }
 
-\pgfplotstableread[col sep=semicolon]{datasets/bin.csv}\tbin
-\pgfplotstableread[col sep=semicolon]{datasets/mul.csv}\tmul
+\pgfplotstableread[col sep=semicolon]{datasets/bin-ada.csv}\tbin
+\pgfplotstableread[col sep=semicolon]{datasets/mul-ada.csv}\tmul
 
 \begin{tikzpicture}
 \pgfplotsset{every axis title/.append style={yshift=-2mm,font=\Large}}
@@ -110,7 +126,9 @@ vertical sep=0pt,
 horizontal sep=0pt,
 },
   ]
-\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\MV_{\rho_{\Ada}},\testset)$}]
+\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\AdaBs,\testset)$}]
+%\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tbin};
+\addplot [AdaPr]   table[x expr=\coordindex,y=prior_diff,y error minus=prior_q25,y error plus=prior_q75]{\tbin};
 \addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
 \addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
@@ -119,6 +137,10 @@ horizontal sep=0pt,
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 
 \nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
+%\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tmul};
+%\addlegendentry{$\rho_{\Unf}$}
+\addplot [AdaPr]   table[x expr=\coordindex,y=prior_diff,y error minus=prior_q25,y error plus=prior_q75]{\tmul};
+\addlegendentry{$\AdaPr$}
 \addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
 \addlegendentry{$\rho_{\FO}^*$}
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};

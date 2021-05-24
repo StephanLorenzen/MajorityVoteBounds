@@ -203,7 +203,7 @@ class MVBounds:
                     t_idx = self._prng.randint(n, size=n_sample)
                     t_X   = X[t_idx]
                     t_Y   = Y[t_idx]
-                    if np.unique(t_Y).shape[0] == self._classes:
+                    if np.unique(t_Y).shape[0] == self._classes.shape[0]:
                         break
 
                 # OOB sample
@@ -356,7 +356,7 @@ class MVBounds:
             util.warn('Warning, MVBase.bound: Cannot apply '+bound+' to non-binary data!')
             return 1.0
 
-        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi == None else np.copy(self._abc_pi)
         KL = util.kl(self._rho, pi)
         if stats is not None:
             if bound=='SH':
@@ -517,7 +517,7 @@ class MVBounds:
         #stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
          
-        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi == None else np.copy(self._abc_pi)
         stats['KL'] = util.kl(self._rho, pi)
        
         # Unlabeled

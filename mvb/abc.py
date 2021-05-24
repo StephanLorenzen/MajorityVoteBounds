@@ -114,7 +114,7 @@ class BaseAdaBoostClassifier():
     
     # predict and calculate the risk
     def predict(self, X, Y):
-        return 1.0 - self.abc.score(X, Y)
+        return self.abc.predict(X), 1.0 - self.abc.score(X, Y)
         
     # calculate the SH bound on validation data
     def bound(self):
@@ -122,7 +122,7 @@ class BaseAdaBoostClassifier():
         bounds = dict()
         
         X, Y = self.VAL
-        stats['mv_risk'] = self.predict(X, Y)
+        _, stats['mv_risk'] = self.predict(X, Y)
         stats['mv_n'] = len(self.VAL[1])
         
         bounds['SH'] = SH(stats['mv_risk'], stats['mv_n'])

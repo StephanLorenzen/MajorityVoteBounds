@@ -10,7 +10,7 @@ uniform:
 	./helpers/run_uniform.sh bootstrap
 
 optimize:
-	./helpers/run_optimize.sh boost 3
+	./helpers/run_optimize.sh bootstrap
 
 mu:
 	./helpers/run_mu.sh bootstrap

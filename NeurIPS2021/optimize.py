@@ -145,19 +145,18 @@ for rep in range(REPS):
     
     if SMODE == 'boost':
         pi = rf.optimize_rho('AdaBoost')
-        prior_mv_risk = rf.predict(testX, testY)
+        _, prior_mv_risk = rf.predict(testX, testY)
         rhos.append(pi)
 
         # Adaboost Baseline
         print("Calculate the baseline by AdaBoost...")
         abc = baseABC(n_estimators=M, max_depth=max_depth, random_state=RAND, n_splits = SPLITS)
         _ = abc.fit(trainX, trainY)
-        mv_risk = abc.predict(testX, testY)
+        _, mv_risk = abc.predict(testX, testY)
         bounds, stats = abc.bound()
         res_ada = (mv_risk, stats, bounds, -1, -1, -1)
-        print('Baseline:', mv_risk)
         
-
+    print('prior_mv_risk', prior_mv_risk, 'res_ada_risk', res_ada[0])
     # Uniform Weighting
     print('Uniform weighting...')
     _ = rf.optimize_rho('Uniform')

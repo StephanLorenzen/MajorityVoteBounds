@@ -116,8 +116,8 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
                     eps=eps,max_iterations=max_iterations)
 
     m = gibbs_risks.shape[0]
-    pi  = uniform_distribution(m) if abc_pi is None else abc_pi
-    rho = uniform_distribution(m) if abc_pi is None else abc_pi
+    pi  = uniform_distribution(m) if abc_pi == None else abc_pi
+    rho = uniform_distribution(m) if abc_pi == None else abc_pi
     b, mu, lam, gam  = _bound(rho, mu=mu_input)
     bp = b+1
     while abs(b-bp) > eps:

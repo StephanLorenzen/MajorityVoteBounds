@@ -15,21 +15,20 @@
 
 \begin{document}
 \begin{table}[th!]
-	\hskip-4.0cm
+	%\hskip-1.0cm
 	\pgfplotstabletypeset[
 		col sep=comma,
 		string type,
-		columns = {dataset, ada, unf, lam, tnd, mu, bern},
+		columns = {dataset, lam, tnd, mu, bern},
 		columns/dataset/.style={string type, column name=Dataset, column type={l}},
-		columns/ada/.style={column name=$\hat L(\MV_{ada}\mbox{,}\testset)$, column type={c}},
-		columns/unf/.style={column name=$\hat L(\MV_{u}\mbox{,}\testset)$, column type={c}},
-		columns/lam/.style={column name=$\hat L(\MV_{\rho_{\FO}^*}\mbox{,}\testset)$, column type={c}},
-		columns/tnd/.style={column name=$L(\MV_{\rho_{\TND}^*}\mbox{,}\testset)$, column type={c}},
-		columns/mu/.style={column name=$L(\MV_{\rho_{\MU}^*}\mbox{,}\testset)$, column type={c}},
-		columns/bern/.style={column name=$L(\MV_{\rho_{\Ben}^*}\mbox{,}\testset)$, column type={c}},
+		%columns/unf/.style={column name=$\hat L(\MV_{u}\mbox{,}\testset)$, column type={c}},
+		columns/lam/.style={column name=$\FO$, column type={c}},
+		columns/tnd/.style={column name=$\TND$, column type={c}},
+		columns/mu/.style={column name=$\MU$, column type={c}},
+		columns/bern/.style={column name=$\Ben$, column type={c}},
 		every head row/.style={before row=\toprule,after row=\midrule},
 		every last row/.style={after row=\bottomrule},
-	]{optimize/test_risk.csv}
+	]{optimize/bounds_optimized.csv}
 \end{table}
 
 
