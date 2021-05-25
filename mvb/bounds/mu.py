@@ -27,14 +27,22 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         bnd = muTandemUB / (0.5-mu)**2
         return (bnd, mu, muTandemUB)
     
+    """ We need grid in all cases to:
+        1. Consider the union bound (delta /= number)
+        2. Find the closest mu_i in the grid for mu_star to compute the bound
+    """
+    # define the grids
+    number = 200
+    mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
+    delta /= number
+    
     if len(mu_range)==1:
         # nothing to be optimized.
-        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_range[0])
+        mu_star = mu_range[0]
+        # find the closest mu_i in the grid
+        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
     else:
-        # define the grids
-        number = 200
-        mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-        delta /= number
         
         """ # Implemented by the closed-form solution """
         _, mu_star, _ = _bound(mu=None)
@@ -63,14 +71,17 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
 
     number = 200
     mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-    delta /= number
-    
-    """ # Implemented by the closed-form solution """
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
+    """ # Forget about the union bound during optimization. Turn on if needed. """
+    #delta /= number
     
     """# Implemented by Binary Search    
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
     """
+    
+    """ # Implemented by the closed-form solution """
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
+    
+
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
