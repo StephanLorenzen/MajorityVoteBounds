@@ -35,7 +35,7 @@ class MVBounds:
         if rho is None:
             self._rho = util.uniform_distribution(m)
         assert(self._rho.shape[0]==m)
-        self._abc_pi = None # initialize the weights by AdaBoost
+        self._abc_pi = util.uniform_distribution(m) # initialize the weights with the uniform distribution
 
         # Some fitting stats
         self._OOB = None
@@ -60,7 +60,7 @@ class MVBounds:
             preds = []
             n = X.shape[0]
             n_sample = ceil(n/2.) # number of samples to train the estimators
-            
+
             # sample points for training (wo. replacement)
             # all estimators share the same training/validation samples
             while True: 
@@ -221,7 +221,7 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Uniform", "Lambda", "TND", "DIS", "MU", "MUBernstein", "AdaBoost"}:
+        if bound not in {"Best", "Uniform", "Lambda", "TND", "DIS", "MU", "MUBernstein", "AdaBoost"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
@@ -260,6 +260,12 @@ class MVBounds:
             (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob, abc_pi=np.copy(self._abc_pi),options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
+        elif bound == 'Best':
+            risks, ns = self.risks(labeled_data, incl_oob)
+            risk = risks/ns
+            self._rho = np.zeros((self._actual_n_estimators,))
+            self._rho[np.argmin(risk)]=1.
+            return self._rho
         else: # Adaboost
             assert self._abc_pi is not None
             rho = np.copy(self._abc_pi)
