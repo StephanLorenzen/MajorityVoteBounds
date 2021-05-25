@@ -38,8 +38,10 @@ outpath = 'out/optimize/'
 
 SEED = 1000
 
-DIFF_DATASET = [
+ADA_DATASET = [
         'Protein',
+        'Connect-4',
+        'Shuttle',
         'Pendigits',
         'Letter',
         'SatImage',
@@ -49,7 +51,7 @@ DIFF_DATASET = [
         'Fashion-MNIST',
 ]
 
-if (SMODE == 'boost' and DATASET in DIFF_DATASET):
+if (SMODE == 'boost' and DATASET in ADA_DATASET):
     sys.exit(1)
 
 def _write_dist_file(name, rhos, risks):
@@ -203,7 +205,7 @@ for rep in range(REPS):
     print("Optimizing MUBennett (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_bern':mu_range})
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats, options={'mu_bern':(bmu,)}) # update rho-dependent stats
+    stats = rf.aggregate_stats(stats, options={'mu_bern':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
     print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)

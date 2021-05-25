@@ -376,7 +376,7 @@ class MVBounds:
             elif bound=='MU':
                 return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_kl'])
             elif bound == 'MUBernstein':
-                return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'])
+                return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'], stats['lam'], stats['gam'])
             else:
                 return None
         else:
@@ -530,7 +530,8 @@ class MVBounds:
             stats[key] = options[key]
         stats['mu_bern'] = options.get('mu_bern', (0.0,))
         stats['mu_kl'] = options.get('mu_kl', (0.0,))
-
+        stats['lam'] = options.get('lam', None)
+        stats['gam'] = options.get('gam', None)
         """
         # Reduced OOB
         stats['r_gibbs_risk'] = np.average(stats['r_risks'], weights=self._rho)
