@@ -17,6 +17,10 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         # LowerBound_GibbsRisk by inverse kl
         rhs_gr = ( KL + log(4.0*sqrt(n)/delta) ) / n
         lb_gr  = solve_kl_inf(gibbs_risk, rhs_gr)
+        
+        # if mu == None, calculate mu by the close-form formula
+        if mu is None:
+            mu = (0.5*lb_gr - ub_tr)/(0.5-lb_gr)
 
         # bound
         muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
@@ -28,10 +32,20 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_range[0])
     else:
         # define the grids
-        number = 200        
+        number = 200
         mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-        delta /= number        
+        delta /= number
+        
+        """ # Implemented by the closed-form solution """
+        _, mu_star, _ = _bound(mu=None)
+        # find the closest mu_i in the grid
+        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
+        
+        """ # Implemented by Binary Search    
         opt_bnd, opt_mu, opt_muTandemUB = Binary_Search(lambda x: _bound(x), mu_grid)
+        """
+        
 
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_muTandemUB))
 
@@ -49,9 +63,14 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
 
     number = 200
     mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-    delta /= number    
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
+    delta /= number
     
+    """ # Implemented by the closed-form solution """
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
+    
+    """# Implemented by Binary Search    
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
+    """
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
@@ -68,7 +87,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         return np.average(gibbs_risks, weights=rho)
     def _tnd(rho): # Compute disagreement from disagreements matrix and rho
         return np.average(np.average(tandem_risks, weights=rho, axis=0), weights=rho)
-    def _bound(rho, mu=0., lam=None, gam=None): # Compute bound
+    def _bound(rho, mu=None, lam=None, gam=None): # Compute bound
         rho = softmax(rho)
         gr  = _gr(rho)
         tnd = _tnd(rho)
@@ -81,6 +100,10 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         # Compute upper and lower bounds given lam and gam
         ub_tnd = tnd/(1-lam/2)+(2*KL+log(4*sqrt(n2)/delta))/(lam*(1-lam/2)*n2)
         lb_gr  = (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n)
+
+        # compute mu_star by ub_tnd and lb_gr if mu is not given
+        if mu is None:
+            mu = (0.5*lb_gr - ub_tnd)/(0.5-lb_gr)
          
         bound  = (ub_tnd - 2*mu*lb_gr + mu**2) / (0.5-mu)**2
         return (bound, mu, lam, gam)
@@ -124,7 +147,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         bp = b
         # Optimize rho
         nrho = _optRho(rho,mu,lam,gam)
-        # Optimize lam + gam
+        """ Optimize lam + gam ( also mu if mu_input is None; otherwise, mu is fixed to be mu_input) """
         b, nmu, nlam, ngam = _bound(nrho, mu=mu_input)
         if b > bp:
             b = bp
