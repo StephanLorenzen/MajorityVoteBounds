@@ -14,12 +14,12 @@ emp_tandem_loss = np.linspace(0., 0.495, npoints)
 axis_gibbs_loss, axis_tandem_loss = np.meshgrid(emp_gibbs_loss, emp_tandem_loss) # axis
 
 # Define the eps term
-KL = 1
+kl = 1
 lg = log(1/0.05)
 n1 = 10000.
-eps1 = (KL+lg)/n1 # for gibbs
+eps1 = (kl+lg)/n1 # for gibbs
 n2 = n1
-eps2 = (2.*KL+lg)/n2 # for tnd
+eps2 = (2.*kl+lg)/n2 # for tnd
 
 # helper functions for kl-1
 def KL(Q, P):
@@ -86,9 +86,15 @@ for i in range(npoints):
             mu_star[i,j]=np.nan
             secondOrderBound[i,j]=np.nan
             c2Bound[i,j]=np.nan
-
-gibbs_test = 0.2
-tnd_test = 0.08
+# test
+kl = 2.37
+lg = log(1/0.05/200)
+n1 = 22519
+eps1 = (kl+lg)/n1 # for gibbs
+n2 = n1/2.
+eps2 = (2.*kl+lg)/n2 # for tnd
+gibbs_test = 0.4138
+tnd_test = 0.24248
 gibbs_test = solve_kl_inf(gibbs_test, eps1)
 tnd_test = solve_kl_sup(tnd_test, eps2)
 mu_test = (0.5 * gibbs_test - tnd_test) / (0.5 - gibbs_test)

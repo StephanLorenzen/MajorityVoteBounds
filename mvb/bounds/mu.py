@@ -17,21 +17,44 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         # LowerBound_GibbsRisk by inverse kl
         rhs_gr = ( KL + log(4.0*sqrt(n)/delta) ) / n
         lb_gr  = solve_kl_inf(gibbs_risk, rhs_gr)
+        
+        # if mu == None, calculate mu by the close-form formula
+        if mu is None:
+            mu = (0.5*lb_gr - ub_tr)/(0.5-lb_gr)
 
         # bound
         muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
         bnd = muTandemUB / (0.5-mu)**2
         return (bnd, mu, muTandemUB)
     
+    """ We need grid in all cases to:
+        1. Consider the union bound (delta /= number)
+        2. Find the closest mu_i in the grid for mu_star to compute the bound
+    """
+    # define the grids
+    number = 200
+    delta /= number
+    
     if len(mu_range)==1:
         # nothing to be optimized.
-        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_range[0])
+        mu_star = mu_range[0]
+        # find the closest mu_i in the grid
+        mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
+        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
     else:
-        # define the grids
-        number = 200        
-        mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-        delta /= number        
+        
+        """ # Implemented by the closed-form solution """
+        _, mu_star, _ = _bound(mu=None)
+        # find the closest mu_i in the grid
+        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
+        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
+        
+        """ # Implemented by Binary Search    
         opt_bnd, opt_mu, opt_muTandemUB = Binary_Search(lambda x: _bound(x), mu_grid)
+        """
+        
 
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_muTandemUB))
 
@@ -48,10 +71,18 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
         return _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
 
     number = 200
-    mu_grid = [(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)]
-    delta /= number    
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
+    mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
+    """ # Forget about the union bound during optimization. Turn on if needed. """
+    #delta /= number
     
+    """# Implemented by Binary Search    
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
+    """
+    
+    """ # Implemented by the closed-form solution """
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
+    
+
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
@@ -81,6 +112,10 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         # Compute upper and lower bounds given lam and gam
         ub_tnd = tnd/(1-lam/2)+(2*KL+log(4*sqrt(n2)/delta))/(lam*(1-lam/2)*n2)
         lb_gr  = (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n)
+
+        # compute mu_star by ub_tnd and lb_gr if mu is not given
+        if mu is None:
+            mu = (0.5*lb_gr - ub_tnd)/(0.5-lb_gr)
          
         bound  = (ub_tnd - 2*mu*lb_gr + mu**2) / (0.5-mu)**2
         return (bound, mu, lam, gam)
@@ -116,15 +151,15 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
                     eps=eps,max_iterations=max_iterations)
 
     m = gibbs_risks.shape[0]
-    pi  = uniform_distribution(m) if abc_pi is None else abc_pi
-    rho = uniform_distribution(m) if abc_pi is None else abc_pi
+    pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
+    rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     b, mu, lam, gam  = _bound(rho, mu=mu_input)
     bp = b+1
     while abs(b-bp) > eps:
         bp = b
         # Optimize rho
         nrho = _optRho(rho,mu,lam,gam)
-        # Optimize lam + gam
+        """ Optimize lam + gam ( also mu if mu_input is None; otherwise, mu is fixed to be mu_input) """
         b, nmu, nlam, ngam = _bound(nrho, mu=mu_input)
         if b > bp:
             b = bp

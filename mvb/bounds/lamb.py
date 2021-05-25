@@ -24,7 +24,6 @@ def lamb(emp_risk, n, KL, delta=0.05):
 def optimizeLamb(emp_risks, n, delta=0.05, eps=10**-9, abc_pi=None):
     m = len(emp_risks)
     n = float(n)
-
     pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     KL = kl(rho,pi)
