@@ -68,7 +68,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         return np.average(gibbs_risks, weights=rho)
     def _tnd(rho): # Compute disagreement from disagreements matrix and rho
         return np.average(np.average(tandem_risks, weights=rho, axis=0), weights=rho)
-    def _bound(rho, mu=None, lam=None, gam=None): # Compute bound
+    def _bound(rho, mu=0., lam=None, gam=None): # Compute bound
         rho = softmax(rho)
         gr  = _gr(rho)
         tnd = _tnd(rho)
@@ -116,8 +116,8 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
                     eps=eps,max_iterations=max_iterations)
 
     m = gibbs_risks.shape[0]
-    pi  = uniform_distribution(m) if abc_pi == None else abc_pi
-    rho = uniform_distribution(m) if abc_pi == None else abc_pi
+    pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
+    rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     b, mu, lam, gam  = _bound(rho, mu=mu_input)
     bp = b+1
     while abs(b-bp) > eps:

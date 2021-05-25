@@ -307,12 +307,12 @@ class MVBounds:
             return None
         elif bound=='Lambda':
             risks, ns = self.risks(labeled_data, incl_oob)
-            (bound, rho, lam) = optimizeLamb(risks/ns, np.min(ns), abc_pi=np.copy(self._abc_pi))
+            (bound, rho, lam) = optimizeLamb(risks/ns, np.min(ns), abc_pi=self._abc_pi)
             self._rho = rho
             return (bound,rho,lam)
         elif bound=='TND':
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-            (bound,rho,lam) = optimizeTND(tand/n2s, np.min(n2s), abc_pi=np.copy(self._abc_pi), options=options)
+            (bound,rho,lam) = optimizeTND(tand/n2s, np.min(n2s), abc_pi=self._abc_pi, options=options)
             self._rho = rho
             return (bound, rho, lam)
         elif bound=='DIS':
@@ -327,11 +327,11 @@ class MVBounds:
         elif bound == 'MU':
             risks, ns = self.risks(labeled_data, incl_oob)
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-            (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s), abc_pi=np.copy(self._abc_pi),options=options)
+            (bound,rho,mu,lam,gam) = optimizeMU(tand/n2s,risks/ns,np.min(ns),np.min(n2s), abc_pi=self._abc_pi,options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
         elif bound == 'MUBernstein':
-            (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob, abc_pi=np.copy(self._abc_pi),options=options)
+            (bound,rho,mu,lam,gam) = optimizeMUBernstein(self, labeled_data, incl_oob, abc_pi=self._abc_pi,options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
         else: # Adaboost
@@ -356,7 +356,7 @@ class MVBounds:
             util.warn('Warning, MVBase.bound: Cannot apply '+bound+' to non-binary data!')
             return 1.0
 
-        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi == None else np.copy(self._abc_pi)
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
         KL = util.kl(self._rho, pi)
         if stats is not None:
             if bound=='SH':
@@ -516,8 +516,8 @@ class MVBounds:
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         #stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
-         
-        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi == None else np.copy(self._abc_pi)
+        
+        pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
         stats['KL'] = util.kl(self._rho, pi)
        
         # Unlabeled

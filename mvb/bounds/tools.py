@@ -119,6 +119,37 @@ def solve_kl_inf(q, right_hand_side):
     else:
         return optimize.brentq(f, 1e-11, q)
 
+def Lambert(c, branch):
+    """
+    Implement the Lambert W function, i.e., the solution of xe^x=c, by Newton's method.
+    Requirement : c\geq -1/e
+    branch W0 : the solution x\geq -1
+    branch W-1 : the solution x\leq -1
+    """
+    eps = 1e-9
+    
+    # fx(x, c) = xe^x-c
+    def _fx(x, c):
+        return x*np.exp(x)-c
+        
+    # fx_prime(x) = (x+1)e^x, first derivative of _fx
+    def _fx_prime(x):
+        return (x+1)*np.exp(x)
+    
+    if branch == 'W0':
+        x_old = 0 # initial guess for the principle branch
+    elif branch == 'W-1':
+        x_old = -5  # initial guess for the -1 branch
+    else:
+        Warning('No such branch')
+        
+    diff = abs(_fx(x_old, c))
+    while(diff > eps):
+        x_new = x_old - _fx(x_old, c)/_fx_prime(x_old)
+        x_old = x_new
+        diff = _fx(x_old, c)
+    
+    return x_new
 
 def maximize_c_bound_under_constraints(empirical_disagreement, empirical_joint_error, right_hand_side, sup_joint_error=0.5):
     """

@@ -55,8 +55,8 @@ def optimizeTND(tandem_risks, n2, delta=0.05, abc_pi=None, options=None):
         optimizer = 'GD'
     
     m   = tandem_risks.shape[0]
-    rho = uniform_distribution(m) if abc_pi == None else abc_pi
-    pi  = uniform_distribution(m) if abc_pi == None else abc_pi
+    rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
+    pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
 
     # Some helper functions
     def _tndr(rho): # Compute tandem risk from tandem risk matrix and rho

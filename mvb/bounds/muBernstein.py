@@ -3,7 +3,7 @@
 #
 import numpy as np
 from math import log, sqrt, exp, e, pi, ceil, nan
-from .tools import solve_kl_sup, solve_kl_inf
+from .tools import solve_kl_sup, solve_kl_inf, Lambert
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp
 
 
@@ -14,10 +14,10 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), delta=0.05
         # Compute the quantities depend on mu
         mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
-        # Compute a bound over the variance from Corollary 17
+        # Compute the bound for the variance
         varUB, _ = _varMUBernstein(vartandem_risk, n2, KL, mu, delta1= delta/2.)
 
-        # Plug the bound over variance to compute a bound over the muTandem loss following Corollary 20.
+        # Compute the bound for mu-tandem loss
         bernTandemUB, _ = _muBernstein(mutandem_risk, varUB, n2, KL, mu, delta1= delta/2., delta2= delta/2.)
   
         # Compute the overall bound
@@ -37,7 +37,7 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), delta=0.05
     #print('final bound', opt_bnd)
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
-#Corollary 20
+# PAC-Bayes Bennett
 def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
@@ -61,7 +61,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, de
     def _VarCoeff(gam):
         return (e**(Kmu*gam) - Kmu*gam - 1) / (gam * Kmu**2)
     
-    # Bernnett bound for a given gamma
+    # Bennett bound for a given gamma
     def _bound(gam):
         # From the proof of Collorary 20.
         first = _VarCoeff(gam) * a
@@ -144,7 +144,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, de
     
     # compute gamma_min
     c_min = 1/e * (4/n2*log(1/delta2) - 1)     
-    gam_min = (1. + W(c_min, 'W0'))/Kmu
+    gam_min = (1. + Lambert(c_min, 'W0'))/Kmu
     #print('gam_min', gam_min)
     
     # compute gamma_max
@@ -153,7 +153,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, de
 
     alpha = 1./ (1+(n2-1)/(2*Kmu*c1*log(nu1/delta1)))
     c_max = -alpha * e**(-alpha)
-    gam_max = - (W(c_max, 'W-1')+alpha)/Kmu
+    gam_max = - (Lambert(c_max, 'W-1')+alpha)/Kmu
     #print('gam_max', gam_max)
     
     # computer nu2
@@ -162,14 +162,14 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, de
 
     b = c2*(2*KL  + log(nu2/delta2))/n2
     c = 1/e * (b* Kmu**2/a - 1)
-    gam_star = (1+W(c, 'W0'))/Kmu
+    gam_star = (1+Lambert(c, 'W0'))/Kmu
 
     bound = mutandem_risk +  _VarCoeff(gam_star) * a + b / gam_star  
     
     return bound, gam_star
 
 
-#Corollary 17 : \label{cor:bound_variance_grid}
+# Compute the bound for the variance
 def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
 
     nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
@@ -284,8 +284,8 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
 
 
     m = mutandemrisks.shape[0]
-    pi = uniform_distribution(m) if abc_pi == None else abc_pi
-    rho = uniform_distribution(m) if abc_pi == None else abc_pi
+    pi = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
+    rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     b, mu, lam, gam = _bound(rho, mu=mu_input)
     bp = b + 1
     while abs(b - bp) > eps:
@@ -299,36 +299,6 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
             break
         rho, mu, lam, gam = nrho, nmu, nlam, ngam
     return (b, softmax(rho), mu, lam, gam)
-
-""" helper functions """
-# W(c) is the Lambert W function
-# i.e., W(c) is the solution of xe^x=c
-# solve by Newton's method
-def W(c, branch):
-    eps = 1e-9
-    
-    # fx(x, c) = xe^x-c
-    def _fx(x, c):
-        return x*np.exp(x)-c
-        
-    # fx_prime(x) = (x+1)e^x, first derivative of _fx
-    def _fx_prime(x):
-        return (x+1)*np.exp(x)
-    
-    if branch == 'W0':
-        x_old = 0 # initial guess for the principle branch
-    elif branch == 'W-1':
-        x_old = -5  # initial guess for the -1 branch
-    else:
-        Warning('No such branch')
-        
-    diff = abs(_fx(x_old, c))
-    while(diff > eps):
-        x_new = x_old - _fx(x_old, c)/_fx_prime(x_old)
-        x_old = x_new
-        diff = _fx(x_old, c)
-    
-    return x_new
 
 
 # Implement the Binary Search Algorithm to find the mu^* and the corresponding bound
