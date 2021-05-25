@@ -41,7 +41,7 @@ class MVBounds:
         if rho is None:
             self._rho = util.uniform_distribution(m)
         assert (self._rho.shape[0] == m)
-        self._abc_pi = None  # initialize the weights by AdaBoost
+        self._abc_pi = util.uniform_distribution(m) # initialize the weights with the uniform distribution
 
         # Some fitting stats
         self._OOB = None
