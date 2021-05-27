@@ -67,11 +67,11 @@ plt.contourf(grid_gibbs_loss, grid_tandem_loss, c2Bound / secondOrderBound, leve
 plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label='$\mu^*=0$')
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
 plt.colorbar()
-plt.title('mu-Bound/TNDBound')
+plt.title('C$\mu$T/TND')
 plt.xlabel('Expected Gibbs Loss')
 plt.ylabel('Expected Tandem Loss')
 plt.legend()
-plt.savefig(title+'muBound_vs_TNDBound.png')
+plt.savefig(title+'CmuT_vs_TND.png')
 
 
 
