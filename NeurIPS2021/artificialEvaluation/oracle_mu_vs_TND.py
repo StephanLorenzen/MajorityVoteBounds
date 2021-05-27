@@ -60,11 +60,21 @@ plt.xlabel('Expected Gibbs Loss')
 plt.ylabel('Expected Tandem Loss')
 plt.savefig(title+'muBound.png')
 
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "sans-serif",
+    "font.sans-serif": ["Helvetica"]})
+# for Palatino and other serif fonts use:
+plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ["Palatino"],
+})
 
 fig = plt.figure()
 #levels = np.linspace(0,1,11)
 plt.contourf(grid_gibbs_loss, grid_tandem_loss, c2Bound / secondOrderBound, levels = 30, cmap = "rainbow")
-plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label='$\mu^*=0$')
+plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label='$\mu$')
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
 plt.colorbar()
 plt.title('C$\mu$T/TND')

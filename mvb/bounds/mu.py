@@ -51,11 +51,6 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
         opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
         
-        """ # Implemented by Binary Search    
-        opt_bnd, opt_mu, opt_muTandemUB = Binary_Search(lambda x: _bound(x), mu_grid)
-        """
-        
-
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_muTandemUB))
 
 # Optimize MU
@@ -73,12 +68,8 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
     """ # Forget about the union bound during optimization. Turn on if needed. """
-    #delta /= number
-    
-    """# Implemented by Binary Search    
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid)
-    """
-    
+    delta /= number
+       
     """ # Implemented by the closed-form solution """
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
     

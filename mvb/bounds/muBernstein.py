@@ -45,7 +45,7 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, 
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
 # PAC-Bayes Bennett
-def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05, unionbound=False):
+def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05, unionbound=True):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
     
@@ -195,7 +195,7 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c
 
 
 # Compute the bound for the variance
-def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05, unionbound=False):
+def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05, unionbound=True):
 
     if unionbound == True:
         nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
@@ -255,7 +255,7 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
     """ # Forget about the union bound during optimization. Turn on if needed. """
-    #delta /= number
+    delta /= number
     
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
 
