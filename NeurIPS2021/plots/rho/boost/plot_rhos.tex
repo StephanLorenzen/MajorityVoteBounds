@@ -5,8 +5,8 @@
 \usetikzlibrary{patterns}
 \usepgfplotslibrary{fillbetween,groupplots}
 \begin{document}
-\pgfplotstableread[col sep=semicolon]{../../../out/optimize/rho-Cod-RNA.csv}\opttable
-\pgfplotstableread[col sep=semicolon]{../../../out/optimize/rho-Shuttle.csv}\popttable
+\pgfplotstableread[col sep=semicolon]{../../../out/optimize/rho-SVMGuide1.csv}\opttable
+\pgfplotstableread[col sep=semicolon]{../../../out/optimize/rho-Mushroom.csv}\popttable
 \pgfplotsset{
     RhoPlot/.style={
       scaled y ticks=false,
@@ -100,7 +100,7 @@ group name=g1,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYBin, title=\dataset{Cod-RNA}]
+\nextgroupplot[RhoPlot, RiskYBin, title=\dataset{SVMGuide1}]
 \addplot[MVrisk] table[x=h,y=risk]{\opttable};
 
 \addlegendentry{$\hat{L}(h,S_h)$}
@@ -141,7 +141,7 @@ group name=g2,
 },
 xlabel={$h$},
 ]
-\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Shuttle}, anchor=north, at={($(g1 c1r6.south) + (0,-10mm)$)}]
+\nextgroupplot[RhoPlot, RiskYMul, title=\dataset{Mushroom}, anchor=north, at={($(g1 c1r6.south) + (0,-10mm)$)}]
 \addplot[MVrisk] table[x=h,y=risk]{\popttable};
 
 \addlegendentry{$\hat{L}(h,S_h)$}

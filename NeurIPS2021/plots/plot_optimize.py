@@ -12,16 +12,17 @@ BASE = sys.argv[1] if len(sys.argv)>=2 else 'bootstrap'
 M = int(sys.argv[2]) if len(sys.argv)>=3 else 100
 
 if BASE == 'boost':
+    #M = [225, 750, 225, 225, 300]
     DATASETS = [
             'SVMGuide1',
             'Phishing',
             'Mushroom',
             'Splice',
-            'w1a',
-            'Cod-RNA',
+#            'w1a',
+#            'Cod-RNA',
             'Adult',
-            'Connect-4',
-            'Shuttle',
+#            'Connect-4',
+#            'Shuttle',
             ]
 else:
     DATASETS = [

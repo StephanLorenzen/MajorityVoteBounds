@@ -105,7 +105,6 @@ plt.contourf(axis_gibbs_loss, axis_tandem_loss, mu_star, levels = 30, cmap='rain
 #plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss - 0.006, c='black', label='our data') #rfc
 plt.plot(emp_gibbs_loss, 1.2355 * emp_gibbs_loss**2 - 0.01 * emp_gibbs_loss + 0.026, c='black', label='our data')  #abc
 plt.plot(emp_gibbs_loss, 0.5 * emp_gibbs_loss, 'b-', label='tnd=0.5gibbs')
-
 plt.colorbar()
 plt.title('muStar, n1='+str(n1))
 plt.xlabel('Empirical Gibbs Loss')

@@ -119,7 +119,7 @@
 \pgfplotsset{every axis title/.append style={yshift=-2mm,font=\Large}}
 \begin{groupplot}[
 group style={
-group size=2 by 1,
+group size=1 by 1,
 x descriptions at=edge bottom,
 y descriptions at=edge left,
 vertical sep=0pt,
@@ -129,28 +129,33 @@ horizontal sep=0pt,
 \nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\hat L(\MV_{\rho^*},\testset) / \hat L(\AdaBs,\testset)$}]
 %\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tbin};
 \addplot [AdaPr]   table[x expr=\coordindex,y=prior_diff,y error minus=prior_q25,y error plus=prior_q75]{\tbin};
+\addlegendentry{$\AdaPr$}
 \addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
+\addlegendentry{$\rho_{\FO}^*$}
 \addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
+\addlegendentry{$\rho_{\TND}^*$}
 \addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
+\addlegendentry{$\rho_{\MU}^*$}
 %\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
 \addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tbin};
+\addlegendentry{$\rho_{\Ben}^*$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 
-\nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
-%\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tmul};
-%\addlegendentry{$\rho_{\Unf}$}
-\addplot [AdaPr]   table[x expr=\coordindex,y=prior_diff,y error minus=prior_q25,y error plus=prior_q75]{\tmul};
-\addlegendentry{$\AdaPr$}
-\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
-\addlegendentry{$\rho_{\FO}^*$}
-\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
-\addlegendentry{$\rho_{\TND}^*$}
-\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
-\addlegendentry{$\rho_{\MU}^*$}
-%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
-%\addlegendentry{$\rho_{\MU-g}^*$}
-\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
-\addlegendentry{$\rho_{\Ben}^*$}
+%\nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
+%%\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tmul};
+%%\addlegendentry{$\rho_{\Unf}$}
+%\addplot [AdaPr]   table[x expr=\coordindex,y=prior_diff,y error minus=prior_q25,y error plus=prior_q75]{\tmul};
+%\addlegendentry{$\AdaPr$}
+%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
+%\addlegendentry{$\rho_{\FO}^*$}
+%\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
+%\addlegendentry{$\rho_{\TND}^*$}
+%\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
+%\addlegendentry{$\rho_{\MU}^*$}
+%%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
+%%\addlegendentry{$\rho_{\MU-g}^*$}
+%\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
+%\addlegendentry{$\rho_{\Ben}^*$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 \end{groupplot}
 \end{tikzpicture}
