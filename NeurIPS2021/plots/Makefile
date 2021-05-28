@@ -24,6 +24,7 @@ optimize_boost:
 optimize_rfc:
 	python plot_optimize.py bootstrap 100
 	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
+	cd bound_comparison_optimized/bootstrap; pdflatex bounds_optimized_comparison.tex; rm -f bounds_optimized_comparison.{log,aux}
 	cd table/bootstrap; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
 	cd table/bootstrap; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
 	cd rho/bootstrap; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
