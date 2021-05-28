@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib import ticker
+import matplotlib
 
 title = 'oracle_'
 
@@ -61,26 +62,21 @@ plt.ylabel('Expected Tandem Loss')
 plt.savefig(title+'muBound.png')
 
 plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "sans-serif",
-    "font.sans-serif": ["Helvetica"]})
-# for Palatino and other serif fonts use:
-plt.rcParams.update({
-    "text.usetex": True,
-    "font.family": "serif",
-    "font.serif": ["Palatino"],
+    'font.size': 8,
+    'text.usetex': True,
+    'text.latex.preamble': r'\usepackage{amsfonts}'
 })
 
 fig = plt.figure()
 #levels = np.linspace(0,1,11)
 plt.contourf(grid_gibbs_loss, grid_tandem_loss, c2Bound / secondOrderBound, levels = 30, cmap = "rainbow")
-plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label='$\mu$')
+plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label=r"$\mathbb{E}_{\rho^2}[L(h,h')]=0.5\mathbb{E}_{\rho}[L(h)]$")
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
 plt.colorbar()
-plt.title('C$\mu$T/TND')
+plt.title('C$\mu$TND/TND')
 plt.xlabel('Expected Gibbs Loss')
 plt.ylabel('Expected Tandem Loss')
-plt.legend()
+plt.legend(loc='upper left')
 plt.savefig(title+'CmuT_vs_TND.png')
 
 

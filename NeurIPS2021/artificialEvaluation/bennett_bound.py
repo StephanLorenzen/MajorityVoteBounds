@@ -140,7 +140,6 @@ def PBEBernstein_bound(emp_gibbs, var_bound, delta, kl, n):
     base = sqrt(4*log(1/delta2)/((e-2)*n))
     gam_grid = np.array([c2**i * base for i in range(nu2)])
     """
-    nu2=1
     # compute gam_star
     a = min(var_bound, 1./4)
     b = (kl  + log(1/delta))/n
@@ -150,7 +149,7 @@ def PBEBernstein_bound(emp_gibbs, var_bound, delta, kl, n):
     # find the closest gam_star in the grid to calculate the bound
     #gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
     #print('bernstein gam_star', gam_star)
-    return (emp_gibbs + (e-2)*gam_star*a + b/gam_star, gam_star)
+    return emp_gibbs + (e-2)*gam_star*a + b/gam_star
 
 """ Bennett Bound:
     Given the empirical gibbs and the bound for the empirical variance, return PBEBen_bound
@@ -178,7 +177,6 @@ def PBEBen_bound(emp_gibbs, var_bound, delta, kl, n):
     # computer nu2
     nu2 = ceil(log(gam_max/gam_min)/log(c2))
     """
-    #nu2 = 1
     """
     # construct the grid
     base = gam_min
@@ -189,17 +187,16 @@ def PBEBen_bound(emp_gibbs, var_bound, delta, kl, n):
     b = (kl  + log(1/delta))/n
     c = 1/e * (b/a - 1)
     gam_star = 1.+Lambert(c, 'W0')
-    #gam_star = 1. + lambertw(c, k=0)
     
     # find the closest gam_star in the grid to calculate the bound
     #gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
     #print('bennett gam_star', gam_star)
-    return (emp_gibbs + VarCoeff(gam_star)*a + b/gam_star, gam_star)
+    return emp_gibbs + VarCoeff(gam_star)*a + b/gam_star
 
 # Define the eps term
 kl = 5
 delta = 0.05
-n = 10000
+n = 1000
 
 """ construct the grid """
 npoints = 200
@@ -209,33 +206,24 @@ var = np.logspace(-3.4, -0.4, npoints)
 axis_gibbs, axis_var = np.meshgrid(gibbs, var) # axis
 
 
-""" calculate the bounds """
-PBkl = np.zeros((npoints,npoints))
-""" empirical variance """
-PBEBen = np.zeros((npoints,npoints))
-PBEBernstein = np.zeros((npoints,npoints))
 """ true variance """
 PBTBen = np.zeros((npoints,npoints))
 PBTBernstein = np.zeros((npoints,npoints))
-gamBen = np.zeros((npoints,npoints))
-gamBernstein = np.zeros((npoints,npoints))
 
 for i in range(npoints):
     for j in range(npoints):
         # if variance is larger than gibbs
         if (axis_var[i,j]> axis_gibbs[i,j]):
-            PBkl[i,j] = np.nan
-            PBEBen[i,j] = np.nan
-            PBEBernstein[i,j] = np.nan
+            #PBkl[i,j] = np.nan
+            PBTBen[i,j] = np.nan
+            PBTBernstein[i,j] = np.nan
         else:
-            # PBkl_bound = PBkl - Gibbs
-            PBkl[i,j] = PBkl_bound(axis_gibbs[i,j])
-
+            #PBkl[i,j] = PBkl_bound(axis_gibbs[i,j])
             #PBEBen[i,j] = PBEBen_bound(axis_gibbs[i,j], variance_bound(axis_var[i,j]))
             #PBEBernstein[i,j] = PBEBernstein_bound(axis_gibbs[i,j], variance_bound(axis_var[i,j]))
 
-            PBTBen[i,j], gamBen[i,j] = PBEBen_bound(axis_gibbs[i,j], axis_var[i,j], delta, kl, n)
-            PBTBernstein[i,j], gamBernstein[i,j] = PBEBernstein_bound(axis_gibbs[i,j], axis_var[i,j], delta, kl, n)
+            PBTBen[i,j] = PBEBen_bound(axis_gibbs[i,j], axis_var[i,j], delta, kl, n)
+            PBTBernstein[i,j] = PBEBernstein_bound(axis_gibbs[i,j], axis_var[i,j], delta, kl, n)
 
 """ plot """
 def plot1():
@@ -269,7 +257,7 @@ def plot1():
 def plot2():
     fig = plt.figure()
     plt.contourf(axis_gibbs, axis_var, PBTBen/PBTBernstein, levels=30, cmap = "rainbow")
-    plt.plot(gibbs, [(kl+log(1/delta))/n/(e-2) for i in range(npoints)], color='k', label='$\gamma=1$')
+    #plt.plot(gibbs, [(kl  + log(1/delta))/n/(e-2) for i in range(npoints)], color='k', label='$\gamma^*=1$')
     plt.colorbar()
     #CS = plt.contour(axis_gibbs, axis_var, PBEBen/PBEBernstein, [0.88,0.97], colors='k', linestyles='dashed' )
     #plt.clabel(CS, fontsize=10, inline=True)
@@ -279,8 +267,8 @@ def plot2():
     plt.ylabel('Expected variance')
     plt.xscale("log")
     plt.yscale("log")
-    plt.legend()
-    plt.savefig('PB-Bennett_vs_PB-Berinstein.png')
+    #plt.legend()
+    plt.savefig('PB-Bennett_vs_PB-Berinstein'+str(n)+'.png')
 plot2()
 
 def plot3():
