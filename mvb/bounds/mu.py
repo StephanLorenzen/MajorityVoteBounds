@@ -27,10 +27,6 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         bnd = muTandemUB / (0.5-mu)**2
         return (bnd, mu, muTandemUB)
     
-    """ We need grid in all cases to:
-        1. Consider the union bound (delta /= number)
-        2. Find the closest mu_i in the grid for mu_star to compute the bound
-    """
     # define the grids
     number = 200
     delta /= number

@@ -62,21 +62,26 @@ plt.ylabel('Expected Tandem Loss')
 plt.savefig(title+'muBound.png')
 
 plt.rcParams.update({
-    'font.size': 8,
+    'font.size': 30,
     'text.usetex': True,
     'text.latex.preamble': r'\usepackage{amsfonts}'
 })
 
-fig = plt.figure()
+fig = plt.figure(figsize=(12,9.6))
 #levels = np.linspace(0,1,11)
 plt.contourf(grid_gibbs_loss, grid_tandem_loss, c2Bound / secondOrderBound, levels = 30, cmap = "rainbow")
-plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', label=r"$\mathbb{E}_{\rho^2}[L(h,h')]=0.5\mathbb{E}_{\rho}[L(h)]$")
+plt.plot(expected_gibbs_loss, 0.5 * expected_gibbs_loss, c='black', linewidth=4, label=r"$\mathbb{E}_{\rho^2}[L(h,h')]=0.5\mathbb{E}_{\rho}[L(h)]$")
 #plt.plot(expected_gibbs_loss, 0.35 * expected_gibbs_loss, 'b-', label='tnd=0.35gibbs')
-plt.colorbar()
-plt.title('C$\mu$TND/TND')
-plt.xlabel('Expected Gibbs Loss')
-plt.ylabel('Expected Tandem Loss')
-plt.legend(loc='upper left')
+cbar = plt.colorbar()
+cbar.ax.tick_params(labelsize=40)
+cbar.ax.locator_params(nbins=8)
+plt.title('RHS-Thm7 / RHS-Thm3', fontsize=45)
+plt.xlabel(r"$\mathbb{E}_{\rho}[L(h)]$", fontsize=45)
+plt.xticks([0.1, 0.2, 0.3, 0.4], fontsize=42)
+plt.ylabel(r"$\mathbb{E}_{\rho^2}[L(h,h')]$", fontsize=45)
+plt.yticks([0.1, 0.2, 0.3, 0.4], fontsize=42)
+plt.legend(loc='upper left', framealpha=0., handlelength=1, fontsize=40)
+plt.tight_layout()
 plt.savefig(title+'CmuT_vs_TND.png')
 
 

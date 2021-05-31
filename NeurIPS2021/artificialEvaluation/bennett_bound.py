@@ -196,7 +196,7 @@ def PBEBen_bound(emp_gibbs, var_bound, delta, kl, n):
 # Define the eps term
 kl = 5
 delta = 0.05
-n = 1000
+n = 10000
 
 """ construct the grid """
 npoints = 200
@@ -255,20 +255,32 @@ def plot1():
 #plot1()
 
 def plot2():
-    fig = plt.figure()
-    plt.contourf(axis_gibbs, axis_var, PBTBen/PBTBernstein, levels=30, cmap = "rainbow")
+    fig = plt.figure(figsize=(12,9.6))
+    
+    plt.rcParams.update({
+    'font.size': 30,
+    'text.usetex': True,
+    'text.latex.preamble': r'\usepackage{amsfonts}'
+    })
+    
+    plt.contourf(axis_gibbs, axis_var, PBTBen/PBTBernstein, levels=25, cmap = "rainbow")
     #plt.plot(gibbs, [(kl  + log(1/delta))/n/(e-2) for i in range(npoints)], color='k', label='$\gamma^*=1$')
-    plt.colorbar()
+    cbar = plt.colorbar()
+    cbar.ax.tick_params(labelsize=40)
+    cbar.ax.locator_params(nbins=5)
     #CS = plt.contour(axis_gibbs, axis_var, PBEBen/PBEBernstein, [0.88,0.97], colors='k', linestyles='dashed' )
     #plt.clabel(CS, fontsize=10, inline=True)
-    plt.title('PB-Bennett/PB-Bernstein')
-    plt.xlabel('Empirical loss')
+    plt.title('PB-Bennett/PB-Bernstein', fontsize=45)
+    plt.xlabel(r"$\mathbb{E}_\rho[\hat{\tilde{L}}(h,S)] $", fontsize=45)
     #plt.ylabel('Empirical variance')
-    plt.ylabel('Expected variance')
+    plt.ylabel(r"$\mathbb{E}_{\rho}[\tilde\mathbb{V}(h)]$", fontsize=45)
+    plt.xticks(fontsize=42, rotation=30)
+    plt.yticks(fontsize=42)
     plt.xscale("log")
     plt.yscale("log")
     #plt.legend()
-    plt.savefig('PB-Bennett_vs_PB-Berinstein'+str(n)+'.png')
+    plt.tight_layout()
+    plt.savefig('Ben_vs_Bern_'+str(n)+'.png')
 plot2()
 
 def plot3():
