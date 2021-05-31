@@ -75,13 +75,13 @@ def _write_outfile(results):
         # Header
         f.write('repeat;n_train;n_test;d;c;prior_mv_risk')
         for name in ["ada","unf","lam","tnd","mu","bern"]:
-            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem', 'sh', 'pbkl', 'tnd', 'TandemUB', 'MU', 'muTandemUB', 'bern', 'mutandem_risk', 'vartandem_risk', 'KL', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
+            f.write(';'+';'.join([name+'_'+x for x in ['mv_risk', 'gibbs', 'tandem', 'sh', 'pbkl', 'tnd', 'TandemUB', 'MU', 'ub_tr', 'lb_gr', 'muTandemUB', 'bern', 'mutandem_risk', 'vartandem_risk', 'KL', 'varUB', 'bernTandemUB', 'bl', 'bg', 'bmu']]))
         f.write('\n')
         for (rep, n, prior, restup) in results:
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+str(prior));
             for (mv_risk, stats, bounds, bl, bg, bm) in restup:
                 f.write(
-                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(18)]))
+                        (';'+';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(20)]))
                         .format(mv_risk,
                             stats.get('gibbs_risk', -1.0),
                             stats.get('tandem_risk', -1.0),
@@ -94,6 +94,8 @@ def _write_outfile(results):
                             bounds.get('TND', -1.0),
                             stats.get('TandemUB', -1.0), # TandemUB is the empirical bound of tandem risk; 4*TandemBound = TND
                             bounds.get('MU', -1.0),
+                            stats.get('ub_tr', -1.0),   # kl^{-1}+ of tandem risk in the C\muTND bound
+                            stats.get('lb_gr', -1.0),   # kl^{-1}- of gibbs risk in the C\muTND bound
                             stats.get('muTandemUB', -1.0), # muTandemUB is the empirical bound for the numerator in Eq.(1)
                             bounds.get('MUBernstein', -1.0),
                             stats.get('mutandem_risk', -1.0),
@@ -124,7 +126,7 @@ for rep in range(REPS):
         print("####### Repeat = "+str(rep+1))
 
     rhos = []
-    # define the range of mu 'MUBernstein'
+    # define the range of mu  for 'C$\mu$TND' and 'COTND'
     mu_range = (-0.5, 0.5)
     
     # Prepare Data
@@ -141,7 +143,8 @@ for rep in range(REPS):
     # Training
     print("Training...")    
     _ = rf.fit(trainX,trainY)
-
+    
+    """ AdaBoost related """
     prior_mv_risk = -1
     res_ada = (-1, dict(), dict(), -1, -1, -1)
     
@@ -157,9 +160,9 @@ for rep in range(REPS):
         _, mv_risk = abc.predict(testX, testY)
         bounds, stats = abc.bound()
         res_ada = (mv_risk, stats, bounds, -1, -1, -1)
-        
     print('prior_mv_risk', prior_mv_risk, 'res_ada_risk', res_ada[0])
-    # Uniform Weighting
+    
+    """ Uniform Weighting """
     print('Uniform weighting...')
     _ = rf.optimize_rho('Uniform')
     _, mv_risk = rf.predict(testX,testY)
@@ -168,7 +171,7 @@ for rep in range(REPS):
     res_unf = (mv_risk, stats, bounds, -1, -1, -1)
     print('mv_risk', mv_risk)
       
-    # Optimize Lambda
+    """ Optimize Lambda """
     print("Optimizing lambda...")
     (_, rho, bl) = rf.optimize_rho('Lambda')
     _, mv_risk = rf.predict(testX,testY)
@@ -179,7 +182,7 @@ for rep in range(REPS):
     print('mv_risk', mv_risk)
 
         
-    # Optimize TND
+    """ Optimize TND """
     print("Optimizing TND...")
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
@@ -189,26 +192,26 @@ for rep in range(REPS):
     rhos.append(rho)
     print('mv_risk', mv_risk)
 
-    # Optimize MU with grid by Binary Search
-    print("Optimizing MU (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
+    """ Optimize C$\mu$TND with grid """
+    print("Optimizing C\mu TND for \mu in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_kl':mu_range})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_kl':(bmu,)}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_MU = (mv_risk, stats, bounds, bl, bg, bmu)
-    print('MU bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
+    print('C\muTND bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk)
     
     
-    # Optimize MUBennett with grid by Binary Search
-    print("Optimizing MUBennett (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
+    """ Optimize COTND with grid by Binary Search """
+    print("Optimizing COTND (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_bern':mu_range})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_bern':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
-    print('Bern bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
+    print('COTND bound: gamma, ', bg, 'lambda', bl, 'mu', bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk)
      
