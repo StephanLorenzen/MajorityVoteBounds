@@ -62,9 +62,10 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
     # Forget about the union bound during optimization. Turn on if needed.
     delta /= number
     
-    """ # Implemented by the closed-form solution """
-    # Return the result without rounding to the grid.
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
+    _, _, mu_star, _, _ = _bound(mu=None)
+    # find the closest mu_star in the grid
+    mu_star = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=mu_star)
     
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
