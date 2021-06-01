@@ -95,7 +95,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
 
         # Compute upper and lower bounds given lam and gam
         ub_tnd = tnd/(1-lam/2)+(2*KL+log(4*sqrt(n2)/delta))/(lam*(1-lam/2)*n2)
-        lb_gr  = (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n)
+        lb_gr  = max(0.0, (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n))
 
         # compute mu_star by ub_tnd and lb_gr if mu is not given
         if mu is None:
