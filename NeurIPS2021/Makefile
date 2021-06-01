@@ -12,6 +12,9 @@ uniform:
 optimize:
 	./helpers/run_optimize.sh bootstrap
 
+optimize_mce:
+	./helpers/run_optimize_mce.sh bootstrap
+
 mu:
 	./helpers/run_mu.sh bootstrap
 	
