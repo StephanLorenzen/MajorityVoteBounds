@@ -1,0 +1,148 @@
+\documentclass[crop,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\input{../../colors.tex}
+\usetikzlibrary{patterns}
+\usepgfplotslibrary{fillbetween,groupplots}
+\begin{document}
+\pgfplotsset{
+    RiskPlot/.style={
+      width=2\linewidth,
+      height=0.75\linewidth,
+      %scaled y ticks=false,
+      y label style={
+        font=\LARGE,
+      },
+      y tick label style={
+        font=\Large,
+        %rotate=-90,anchor=north,yshift=0.6mm,
+          %/pgf/number format/.cd,
+          %fixed,
+          %fixed zerofill,
+          %precision=2,
+          %/tikz/.cd
+        },
+      x tick label style={
+        font=\Large,
+          rotate=-45,anchor=west,xshift=-0.5mm,yshift=-0.4mm,
+          %font=\large,
+         },
+      legend style={
+        %font=\LARGE,
+        nodes={scale=1.8, transform shape},
+        anchor=north east,at={(0.96,0.91)},legend columns=1},
+      xtick=data,
+      nodes near coords align={vertical},
+      ymin=0.84,ymax=1.9,
+      ytick={0.9,1.0,1.2,1.5},
+      %extra y ticks={0.9},
+      extra y tick labels={},
+      ybar=0pt,bar width=2mm,
+      ymajorgrids,
+      log ticks with fixed point,
+    },
+    RiskPlotBin/.style={
+      width=8cm,  
+      enlarge x limits=0.1,
+      xmin=0,xmax=6,
+      title style={font=\huge}
+    },
+    RiskPlotMul/.style={
+      width=11cm,  
+      enlarge x limits=0.05,
+      xmin=0,xmax=9,
+      title style={font=\huge}
+    },
+    Unf/.style={
+      color=colAda,
+      fill=colAda,
+      fill opacity=0.4,
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    Lam/.style={
+      color=colPBkl,
+      fill=colPBkl,
+      fill opacity=0.4,
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    MV/.style={
+      color=colMV,
+      fill=colMV,
+      fill opacity=0.4,
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    MU/.style={
+      color=colMU,
+      fill=colMU,
+      fill opacity=0.4,
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    MUgrid/.style={
+      color=colMU,
+      fill=colMU,
+      fill opacity=0.4,
+	postaction={
+		pattern=north east lines
+	},
+      error bars/.cd,
+      y dir=both,
+      y explicit,
+    },
+    Ben/.style={
+		color=colBen,
+		fill=colBen,
+		fill opacity=0.4,
+		error bars/.cd,
+		y dir=both,
+		y explicit,
+	},
+}
+
+\pgfplotstableread[col sep=semicolon]{bounds/bin.csv}\tbin
+\pgfplotstableread[col sep=semicolon]{bounds/mul.csv}\tmul
+
+\begin{tikzpicture}
+\pgfplotsset{every axis title/.append style={yshift=-2mm,font=\Large}}
+\begin{groupplot}[
+group style={
+group size=2 by 1,
+x descriptions at=edge bottom,
+y descriptions at=edge left,
+vertical sep=0pt,
+horizontal sep=0pt,
+},
+]
+
+\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\BOUND (\rho^\star)/\TND(\rho^\star_{\TND})$}]
+%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
+%\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
+\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
+%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
+\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tbin};
+\addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
+
+\nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
+%\addplot [Unf]   table[x expr=\coordindex,y=unf_diff,y error minus=unf_q25,y error plus=unf_q75]{\tmul};
+%\addlegendentry{$\rho_{u}$}
+%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
+%\addlegendentry{$\rho_{\FO}^*$}
+%\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
+%\addlegendentry{$\rho_{\TND}^*$}
+\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
+\addlegendentry{$\CMUTND(\rho_{\scriptscriptstyle{\CMUTND}}^*)$}
+%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
+%\addlegendentry{$\rho_{\MU-g}^*$}
+\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
+\addlegendentry{$\COTND(\rho_{	{\COTND}}^*)$}
+\addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
+\end{groupplot}
+\end{tikzpicture}
+\end{document}

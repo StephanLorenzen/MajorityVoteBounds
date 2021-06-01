@@ -12,6 +12,7 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
+# List of classification models
 classifiers = [
     LinearDiscriminantAnalysis(),
     KNeighborsClassifier(n_neighbors=3),
