@@ -30,7 +30,7 @@ optimize_rfc:
 	rm -f texput.log
 
 optimize_mce:
-	python plot_optimize_mce.py bootstrap 5
+	python plot_optimize_mce.py bootstrap 7
 	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison_mce.tex; rm -f mvrisk_optimized_comparison_mce.{log,aux}
 	cd table/bootstrap; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
 	cd table/bootstrap; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
