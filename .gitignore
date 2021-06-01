@@ -121,3 +121,7 @@ Sparsification/mvb
 datasets
 datasets/*
 *.aux
+
+# Tables
+*.csv
+*_table.tex
