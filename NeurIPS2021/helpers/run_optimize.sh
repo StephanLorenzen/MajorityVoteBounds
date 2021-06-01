@@ -3,12 +3,12 @@ O=iRProp
 R=5
 
 
-#python optimize.py SVMGuide1     $M $1 $O $R $2
+python optimize.py SVMGuide1     $M $1 $O $R $2
 
-#python optimize.py Phishing      $M $1 $O $R $2
+python optimize.py Phishing      $M $1 $O $R $2
 
-#python optimize.py Mushroom      $M $1 $O $R $2
-#python optimize.py Splice        $M $1 $O $R $2
+python optimize.py Mushroom      $M $1 $O $R $2
+python optimize.py Splice        $M $1 $O $R $2
 
 python optimize.py w1a           $M $1 $O $R $2
 

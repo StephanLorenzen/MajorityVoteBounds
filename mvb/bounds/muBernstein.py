@@ -58,14 +58,19 @@ def _muBennett_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.0
     c_max = -alpha * e**(-alpha)
     gam_max = - (lambertw(c_max, k=-1).real +alpha)/(1-mu)**2
     
-    # computer k_gamma
+    # compute k_gamma
     k_gamma = ceil(log(gam_max/gam_min)/log(c2))
+    
+    # compute k_lambda
+    k_lambda  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
+    k_lambda = ceil(log(k_lambda)/log(c1))
 
     # E[varMuBound]<=Kmu^2/4
     a = min(varMuBound, Kmu**2/4)
-    bprime = (2*KL  + log(k_gamma/delta2))/n2
+    bprime = (2*KL  + log(k_gamma*k_lambda/delta2))/n2
     
     if gam is not None:
+        # when the optimal gam is provided
         gam_star = gam
     else:
         # when the optimal gam is not known ( when \rho=uniform )
@@ -100,6 +105,7 @@ def _varBound_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.
     bprime = Kmu**2*(2*KL + log(k_lambda/delta1)) / (2*(n2-1))
     
     if lam is not None:
+        # when the optimal lam is provided
         t_star = lam*n2/(2*(n2-1))
     else:
         # when the optimal lam is not known ( when \rho=uniform )
