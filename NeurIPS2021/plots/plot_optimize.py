@@ -132,14 +132,12 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
 
     with open(out_fname, 'w') as fout:
         # Header
-        fout.write("\\begin{tabular}{"+"c"*len(opts)+"}\n")
-        fout.write("\\hline\n")
+        fout.write("\\begin{tabular}{l"+"c"*len(opts)+"}\\toprule\n")
+        fout.write("Data set")
         for i,col in enumerate(copts):
-            if i>0:
-                fout.write(" & ")
-            fout.write(PRETTY_MAP[col])
+            fout.write(" & "+PRETTY_MAP[col])
         fout.write(" \\\\\n")
-        fout.write("\\hline\n")
+        fout.write("\\midrule\n")
 
         for ds in DATASETS:
             df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
@@ -150,7 +148,7 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
             v1 = np.min(df_mean[hl1]) if len(hl1)>0 else -1
             v2 = np.min(df_mean[hl2]) if len(hl2)>0 else -1
 
-            # Header
+            fout.write("\\dataset{"+RENAME.get(ds,ds)+"}")
             for i,col in enumerate(copts):
                 fval = df_mean[col]
                 val = str(round(fval,PREC))
@@ -160,19 +158,17 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
                     s = "\\textbf{"+s+"}"
                 if col in hl2 and abs(fval-v2)<EPS:
                     s = "\\underline{"+s+"}"
-                if i>0:
-                    fout.write(" & ")
-                fout.write(s)
+                fout.write(" & "+s)
             fout.write(" \\\\\n")
 
-        fout.write("\\hline\n") 
+        fout.write("\\bottomrule\n") 
         fout.write("\\end{tabular}\n")
     
 optimized_comparison_table('risk', hl2=["lam_mv_risk","tnd_mv_risk","mu_mv_risk","bern_mv_risk"])
 optimized_comparison_table('bound', hl2=["tnd_tnd","mu_MU","bern_bern"])
 
-import sys
-sys.exit(0)
+
+### Old csv table functions below
 
 # Prepare data for the table to compare the results for optimization
 def optimized_comparison_table(base='bootstrap'):
@@ -202,7 +198,7 @@ def optimized_comparison_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"test_risk.csv", sep=",", index=False)
 
-optimized_comparison_table(base=BASE)
+#optimized_comparison_table(base=BASE)
 
 
 # Prepare data for the table to compare tnd and Bern
@@ -239,7 +235,7 @@ def TND_Ben_comparison_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)
 
-TND_Ben_comparison_table(base=BASE)
+#TND_Ben_comparison_table(base=BASE)
 
 # Prepare data for the table to compare the bounds for the optimized rho
 def Bounds_optimized_table(base='bootstrap'):
@@ -269,4 +265,4 @@ def Bounds_optimized_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"bounds_optimized.csv", sep=",", index=False)
 
-Bounds_optimized_table(base=BASE)
+#Bounds_optimized_table(base=BASE)
