@@ -453,9 +453,9 @@ class MVBounds:
         (results['TND'], options['TandemUB']) = self.bound('TND', stats=stats)
         results['CTD'] = self.bound('CTD', stats=stats)
         if incl_oob:
-            (results['MU'], options['mu_kl'], options['muTandemUB']) = self.bound('MU', stats=stats)
-            (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'],
-             options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
+            (results['MU'], options['mu_kl'], options['ub_tr'], options['lb_gr'], options['muTandemUB']) = self.bound('MU', stats=stats)
+            (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'], options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
+
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         # if self._classes.shape[0]==2:

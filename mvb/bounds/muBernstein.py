@@ -2,49 +2,127 @@
 # Implements the MU Bernstein bound.
 #
 import numpy as np
+from scipy.special import lambertw
 from math import log, sqrt, exp, e, pi, ceil, nan
-from .tools import solve_kl_sup, solve_kl_inf, Lambert
+from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp
 
 
 ### Find mu^* by binary search
-def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):
-    """ If lam and gam are provided, find the closest points in the grid to compute the bound """
-    
+def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
         mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
         # Compute the bound for the variance
-        varUB, _ = _varMUBernstein(vartandem_risk, n2, KL, mu, lam, delta1= delta/2., unionbound=True)
+        varUB, _ = _varBound_bound(vartandem_risk, n2, KL, mu, lam, delta1= delta/2.)
 
         # Compute the bound for mu-tandem loss
-        bernTandemUB, _ = _muBernstein(mutandem_risk, varUB, n2, KL, mu, gam, delta1= delta/2., delta2= delta/2., unionbound=True)
+        bernTandemUB, _ = _muBennett_bound(mutandem_risk, varUB, n2, KL, mu, gam, delta1= delta/2., delta2= delta/2.)
   
         # Compute the overall bound
         bnd = bernTandemUB / (0.5-mu)**2
         return (bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB)
 
-    """ We need grid in all cases to:
-        1. Consider the union bound (delta /= number)
-        2. Find the closest mu_i in the grid for mu_star to compute the bound (no need here since the bound is already optimized using the grid)
-    """
-    # define the grids
+    # define the grids in (-0.5, 0.5)
     number = 200
+    mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
     delta /= number
     
     if len(mu_range)==1:
-        # nothing to be optimized.
+        """ # Already know the optimal \mu in the grid. Nothing to be optimized. """
         opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = _bound(mu_range[0])
     else:
-        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
+        """ # Don't know the optimal \mu ( when \rho=uniform ) """
         opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
     
     #print('final bound', opt_bnd)
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
-# PAC-Bayes Bennett
+# Compute the PAC-Bayes-Bennett for calculating the bound
+def _muBennett_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
+    # range factor
+    Kmu = max(1-mu, 1-2*mu)
+
+    def _var_coeff(gam):
+        return (e**((1-mu)**2*gam)-(1-mu)**2*gam-1) / (gam*(1-mu)**4)
+
+    # compute gamma_min
+    c_min = 1/e * (4*(1-mu)**4/(n2*Kmu**2) * log(1/delta2) - 1)     
+    gam_min = (1. + lambertw(c_min, k=0).real)/(1-mu)**2
+    
+    # compute gamma_max
+    Ubar = 2*Kmu**2*log(1/delta1)/(n2-1)
+    alpha = 1./ (1 + (1-mu)**4/Ubar)
+    c_max = -alpha * e**(-alpha)
+    gam_max = - (lambertw(c_max, k=-1).real +alpha)/(1-mu)**2
+    
+    # computer k_gamma
+    k_gamma = ceil(log(gam_max/gam_min)/log(c2))
+
+    # E[varMuBound]<=Kmu^2/4
+    a = min(varMuBound, Kmu**2/4)
+    bprime = (2*KL  + log(k_gamma/delta2))/n2
+    
+    if gam is not None:
+        gam_star = gam
+    else:
+        # when the optimal gam is not known ( when \rho=uniform )
+        # find the optimal gam in the grid constructed by the original b
+        b = (2*KL  + log(1/delta2))/n2
+    
+        # construct the grid
+        base = gam_min
+        gam_grid = np.array([c2**i * base for i in range(k_gamma)])
+        
+        # compute gam_star
+        c = 1/e * ((1-mu)**4*b/a - 1)
+        gam_star = (1. + lambertw(c, k=0).real)/(1-mu)**2
+        
+        # find the closest gam_star in the grid to calculate the bound
+        gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
+        
+    bound = mutandem_risk +  _var_coeff(gam_star) * a + bprime / gam_star
+    
+    return bound, gam_star
+
+# Compute the bound for the variance for calculating the bound
+def _varBound_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05):
+    # range factor
+    Kmu = max(1-mu, 1-2*mu)
+
+    k_lambda  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
+    k_lambda = ceil(log(k_lambda)/log(c1))
+
+    a = vartandem_risk
+    # consider union bound over G_\lambda when calculating the bound
+    bprime = Kmu**2*(2*KL + log(k_lambda/delta1)) / (2*(n2-1))
+    
+    if lam is not None:
+        t_star = lam*n2/(2*(n2-1))
+    else:
+        # when the optimal lam is not known ( when \rho=uniform )
+        # find the optimal t_star in the grid constructed by the original b
+        b = Kmu**2*(2*KL + log(1/delta1)) / (2*(n2-1))
+
+        # construct the grid for t = lam*n2/(2*(n2-1))
+        base = 1./(sqrt( (n2-1)/log(1/delta1)+1 ) + 1)
+        t_grid = np.array([c1**i * base for i in range(k_lambda)])
+        
+        # compute t_star
+        t_star = 1./ (sqrt(a/b+1)+1 )
+        
+        # find the closest t_star in the grid to calculate the bound
+        t_star = t_grid[np.argmin(abs(t_grid-t_star))]
+
+    varMuBound = a / (1 - t_star) +  bprime / (t_star * (1 - t_star))
+    lam_star = 2*(n2-1)*t_star/n2
+
+    return varMuBound, lam_star
+
+
+# PAC-Bayes Bennett <---- not used now
 def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05, unionbound=True):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
@@ -52,19 +130,8 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c
     # E[varMuBound]<=Kmu^2/4
     a = min(varMuBound, Kmu**2/4)
     
-    """ Bernstein bound """
-    """
-    nu2 = sqrt((e-2)*n2 / (4*log(1/delta2)))
-    nu2 = ceil(log(nu2)/log(c2))
-
-    b = c2*(2*KL  + log(nu2/delta2))/n2
-    
-    gam_star = sqrt(c2*b / ((e-2)*a))
-    bound = mutandem_risk + (e-2)*gam_star*a + b/gam_star
-    """
-    
     """ Bernnett bound """
-    # coefficient of the variance term : phi(Kmu*gam)/(gam*Kmu**2)
+    # coefficient of the variance term : phi((1-mu)**2*gam)/((1-mu)**4*gam)
     def _VarCoeff(gam):
         return (e**(Kmu*gam) - Kmu*gam - 1) / (gam * Kmu**2)
     """
@@ -193,46 +260,70 @@ def _muBernstein(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c
     
     return bound, gam_star
 
-
-# Compute the bound for the variance
-def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05, unionbound=True):
-
-    if unionbound == True:
-        nu1  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
-        nu1 = ceil(log(nu1)/log(c1))
-
-        # construct the grid
-        base = 2*(n2-1)/n2 * 1./(sqrt( (n2-1)/log(1/delta1)+1 ) + 1)
-        lam_grid = np.array([c1**i * base for i in range(nu1)])
-    else:
-        nu1 = sqrt(n2)
-    
-    
-    # From the proof of Collorary 17.
-    a = vartandem_risk
-    bprime = 2*KL + log(nu1) - log(delta1) / (2*(n2-1))
-    
+# Compute the PAC-Bayes-Bennett for optimization
+def _muBennett_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
+
+    def _var_coeff(gam):
+        return (e**((1-mu)**2*gam)-(1-mu)**2*gam-1) / (gam*(1-mu)**4)
+
+    # compute gamma_min
+    c_min = 1/e * (4*(1-mu)**4/(n2*Kmu**2) * log(1/delta2) - 1)     
+    gam_min = (1. + lambertw(c_min, k=0).real)/(1-mu)**2
     
-    if lam is None:
-        # compute lam_star
-        t_star = 1./ (sqrt(a/(Kmu**2 * bprime)+1)+1 )
-        lam_star = 2*(n2-1)*t_star/n2
-    else:
-        # lam_star is already provided by optimization
-        lam_star = lam
-        
-    if unionbound == True:
-        # find the closest lam_star in the grid to calculate the bound
-        lam_star = lam_grid[np.argmin(abs(lam_grid-lam_star))]
-        t_star = lam_star/2. * n2/(n2-1)
+    # compute gamma_max
+    Ubar = 2*Kmu**2*log(1/delta1)/(n2-1)
+    alpha = 1./ (1 + (1-mu)**4/Ubar)
+    c_max = -alpha * e**(-alpha)
+    gam_max = - (lambertw(c_max, k=-1).real +alpha)/(1-mu)**2
     
-    # From the proof of Collorary 17. Equation (10)
-    varMuBound = a / (1 - t_star) + Kmu**2 * bprime / (t_star * (1 - t_star))
+    # computer k_gamma
+    k_gamma = ceil(log(gam_max/gam_min)/log(c2))
+    
+    # construct the grid
+    base = gam_min
+    gam_grid = np.array([c2**i * base for i in range(k_gamma)])
+
+    # E[varMuBound]<=Kmu^2/4
+    a = min(varMuBound, Kmu**2/4)
+    b = (2*KL  + log(1/delta2))/n2
+    
+    # compute gam_star
+    c = 1/e * ((1-mu)**4*b/a - 1)
+    gam_star = (1. + lambertw(c, k=0).real)/(1-mu)**2
+    
+    # find the closest gam_star in the grid to calculate the bound
+    gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
+    bound = mutandem_risk +  _var_coeff(gam_star) * a + b / gam_star
+    
+    return bound, gam_star
+
+# Compute the bound for the variance for optimization
+def _varBound_opt(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
+    # range factor
+    Kmu = max(1-mu, 1-2*mu)
+
+    k_lambda  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
+    k_lambda = ceil(log(k_lambda)/log(c1))
+
+    # construct the grid for t = lam*n2/(2*(n2-1))
+    base = 1./(sqrt( (n2-1)/log(1/delta1)+1 ) + 1)
+    t_grid = np.array([c1**i * base for i in range(k_lambda)])
+    
+    a = vartandem_risk
+    b = Kmu**2*(2*KL + log(1/delta1)) / (2*(n2-1))
+    
+    # compute t_star
+    t_star = 1./ (sqrt(a/b+1)+1 )
+    
+    # find the closest t_star in the grid to calculate the bound
+    t_star = t_grid[np.argmin(abs(t_grid-t_star))]
+
+    varMuBound = a / (1 - t_star) +  b / (t_star * (1 - t_star))
+    lam_star = 2*(n2-1)*t_star/n2
 
     return varMuBound, lam_star
-
 
 # Optimize MUBennett
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
@@ -240,7 +331,6 @@ def _varMUBernstein(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.
 # Default for opt is iRProp
 def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
-    mu_range = options.get('mu_bern', (-0.5, 0.5))
     
     # calculate the optimized bound (over rho) for a given mu
     def _bound(mu):
@@ -252,9 +342,10 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
         return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
+    mu_range = options.get('mu_bern', (-0.5, 0.5))
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-    """ # Forget about the union bound during optimization. Turn on if needed. """
+    # Forget about the union bound during optimization. Turn on if needed.
     delta /= number
     
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
@@ -278,11 +369,11 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         mutandemrisk = np.average(np.average(mutandemrisks / n2s, weights=rho, axis=1), weights=rho)
         vartandemrisk = np.average(np.average(vartandemrisks, weights=rho, axis=1), weights=rho)
 
-        # Compute the bound for the true variance by Corollary 17
-        varMuBound, lam = _varMUBernstein(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2., unionbound=False)
+        # Compute the bound for the true variance
+        varMuBound, lam = _varBound_opt(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
-        # Compute the bound of the muTandem loss by Corollary 20.
-        muTandemBound, gam = _muBernstein(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2., unionbound=False)
+        # Compute the bound of the muTandem loss by PAC-Bayes-Bennett
+        muTandemBound, gam = _muBennett_opt(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2.)
 
         bound =  muTandemBound / ((0.5 - mu) ** 2)
 
@@ -293,19 +384,16 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         n2 = np.min(n2s)
         # range factor
         Kmu = max(1 - mu, 1 - 2 * mu)
-        phi = e**(Kmu*gam)-Kmu*gam-1
+        phi = e**((1-mu)**2*gam)-(1-mu)**2*gam-1
         
-        """ # Forget about the union bound during optimization. """
-        c1, c2 = 1., 1.
-        a = phi/(gam*Kmu**2) / (1 - n2*lam/(2*(n2-1)))
-        b = c2/(gam*n2) + phi/gam * c1 / (n2*lam*(1-n2*lam/(2*(n2-1))))
+        a = phi/((1-mu)**4*gam) / (1 - n2*lam/(2*(n2-1)))
+        b = 1/(gam*n2) + phi/((1-mu)**4*gam) * Kmu**2 / (n2*lam*(1-n2*lam/(2*(n2-1))))
 
         Srho = softmax(rho)
         # D_jS_i = S_i(1[i==j]-S_j)
         Smat = -np.outer(Srho, Srho)
         np.fill_diagonal(Smat, np.multiply(Srho, 1.0 - Srho))
-        # avoid log(0)
-        #Srho_p = np.where(Srho > 10 ** -10, Srho, -10)
+
         return 2 * np.dot(np.dot(mutandemrisks, Srho) + a * np.dot(vartandemrisks, Srho) + b * (1 + np.log(Srho / pi)), Smat)
 
     max_iterations = options.get('max_iterations', None)

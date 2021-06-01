@@ -139,7 +139,7 @@ def Lambert(c, branch):
     if branch == 'W0':
         x_old = 0 # initial guess for the principle branch
     elif branch == 'W-1':
-        x_old = -5  # initial guess for the -1 branch
+        x_old = -3  # initial guess for the -1 branch
     else:
         Warning('No such branch')
         

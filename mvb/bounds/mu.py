@@ -25,33 +25,25 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         # bound
         muTandemUB = ub_tr - 2*mu*lb_gr + mu**2
         bnd = muTandemUB / (0.5-mu)**2
-        return (bnd, mu, muTandemUB)
+        return (bnd, mu, ub_tr, lb_gr, muTandemUB)
     
-    """ We need grid in all cases to:
-        1. Consider the union bound (delta /= number)
-        2. Find the closest mu_i in the grid for mu_star to compute the bound
-    """
-    # define the grids
+    # define the grids in (-0.5, 0.5)
     number = 200
+    mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
     delta /= number
     
     if len(mu_range)==1:
-        # nothing to be optimized.
+        """ # Already know the optimal \mu. Nothing to be optimized. """
         mu_star = mu_range[0]
-        # find the closest mu_i in the grid
-        mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
-        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
-        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
     else:
+        """ # Don't know the optimal \mu ( when \rho=uniform ) """
+        _, mu_star, _, _, _ = _bound(mu=None)
         
-        """ # Implemented by the closed-form solution """
-        _, mu_star, _ = _bound(mu=None)
-        # find the closest mu_i in the grid
-        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-        mu_i = mu_grid[np.argmin(abs(mu_grid-mu_star))]
-        opt_bnd, opt_mu, opt_muTandemUB = _bound(mu_i)
+    # find the closest mu_i in the grid
+    mu_star = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+    opt_bnd, opt_mu, opt_ub_tr, opt_lb_gr, opt_muTandemUB = _bound(mu_star)
         
-    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_muTandemUB))
+    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_ub_tr), min(1.0, opt_lb_gr), min(1.0, opt_muTandemUB))
 
 # Optimize MU
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
@@ -59,21 +51,22 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
 # Default for opt is iRProp
 def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
-    mu_range = options.get('mu_kl', (-0.5, 0.5))
     
     # calculate the optimized bound (over rho) for a given mu
     def _bound(mu): 
         return _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
-
+    
+    mu_range = options.get('mu_kl', (-0.5, 0.5))
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-    """ # Forget about the union bound during optimization. Turn on if needed. """
+    # Forget about the union bound during optimization. Turn on if needed.
     delta /= number
-       
-    """ # Implemented by the closed-form solution """
-    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
     
-
+    _, _, mu_star, _, _ = _bound(mu=None)
+    # find the closest mu_star in the grid
+    mu_star = mu_grid[np.argmin(abs(mu_grid-mu_star))]
+    opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=mu_star)
+    
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
