@@ -107,7 +107,9 @@ def optimized_comparison_table(base='bootstrap'):
     else:
         opts = ["unf", "lam","tnd","mu","bern"]
     
-    cols = ["dataset"] + opts
+    cols = ["dataset"]
+    for opt in opts:
+        cols += [opt] + [opt + "_std"]
 
     rows = []
     for ds in DATASETS:
@@ -118,7 +120,8 @@ def optimized_comparison_table(base='bootstrap'):
         row = [ds]
         for opt in opts:
             risk = df_mean[opt+"_mv_risk"]
-            row += [risk]
+            std = df_std[opt+"_mv_risk"]
+            row += [risk] + [std]
         rows.append(row)
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"test_risk.csv", sep=",", index=False)
@@ -139,9 +142,9 @@ def TND_Ben_comparison_table(base='bootstrap'):
         if opt == "tnd":
             cols += [opt+suf for suf in ["_KL", "_gibbs", "_tandem", "_tnd", "_TandemUB"]]
         elif opt == "mu":
-            cols += [opt+suf for suf in ["_KL", "_MU", "_muTandemUB", "_bmu"]]
+            cols += [opt+suf for suf in ["_KL", "_gibbs", "_lb_gr", "_tandem", "_ub_tr", "_MU", "_muTandemUB", "_bmu"]]
         elif opt == "bern":
-            cols += [opt+suf for suf in ["_KL", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]
+            cols += [opt+suf for suf in ["_KL", "_gibbs", "_tandem", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]
     rows = []
     for ds in DATASETS:
         df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
@@ -153,9 +156,9 @@ def TND_Ben_comparison_table(base='bootstrap'):
             if opt == "tnd":
                 row += [df_mean[opt+suf] for suf in ["_KL", "_gibbs", "_tandem", "_tnd", "_TandemUB"]]
             elif opt == "mu":
-                row += [df_mean[opt+suf] for suf in ["_KL", "_MU", "_muTandemUB", "_bmu"]]
+                row += [df_mean[opt+suf] for suf in ["_KL", "_gibbs", "_lb_gr", "_tandem", "_ub_tr", "_MU", "_muTandemUB", "_bmu"]]
             elif opt == "bern":
-                row += [df_mean[opt+suf] for suf in ["_KL", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]            
+                row += [df_mean[opt+suf] for suf in ["_KL", "_gibbs", "_tandem", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]            
         rows.append(row)
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)
@@ -174,7 +177,9 @@ def Bounds_optimized_table(base='bootstrap'):
     else:
         opts = {"lam":'pbkl',"tnd":'tnd',"mu":'MU',"bern":'bern'}
     
-    cols = ["dataset"] + list(opts.keys())
+    cols = ["dataset"]
+    for key in list(opts.keys()):
+        cols += [key] + [key + "_std"]
 
     rows = []
     for ds in DATASETS:
@@ -185,7 +190,8 @@ def Bounds_optimized_table(base='bootstrap'):
         row = [ds]
         for key in list(opts.keys()):
             risk = df_mean[key+"_" + opts[key]]
-            row += [risk]
+            std = df_std[key+"_" + opts[key]]
+            row += [risk] + [std]
         rows.append(row)
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"bounds_optimized.csv", sep=",", index=False)
