@@ -1,11 +1,5 @@
 .PHONY: rho
 
-uniform_bounds:
-	python plot.py
-	cd bounds_uniform; pdflatex bounds_uniform_bin.tex; rm -f bounds_uniform_bin.{log,aux}
-	cd bounds_uniform; pdflatex bounds_uniform_mul.tex; rm -f bounds_uniform_mul.{log,aux}
-	rm -f texput.log
-
 mu:
 	python plot.py
 	cd mu_plot; pdflatex mu_bounds.tex; rm -f mu_bounds.{log,aux}
@@ -14,32 +8,42 @@ mu:
 
 optimize_boost:
 	python plot_optimize.py boost 300
-	cd risk_comparison_optimized/boost; pdflatex mvrisk_optimized_comparison_AdaBs.tex; rm -f mvrisk_optimized_comparison_AdaBs.{log,aux}
-	cd risk_comparison_optimized/boost; pdflatex mvrisk_optimized_comparison_AdaPr.tex; rm -f mvrisk_optimized_comparison_AdaPr.{log,aux}
-	cd table/boost; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
-	cd table/boost; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
-	cd rho/boost; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
+	cd figure/boost; pdflatex mvrisk_optimized_comparison_AdaBs.tex
+	cd figure/boost; pdflatex mvrisk_optimized_comparison_AdaPr.tex
+	cd figure/boost; rm -f mvrisk_*.{log,aux}
+	cd table/boost; pdflatex optimize_test_risk.tex
+	cd table/boost; pdflatex optimize_bound.tex
+	cd table/boost; rm -f optimize_*.{log,aux}
+	#cd rho/boost; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	rm -f texput.log
 
 optimize_rfc:
-	python plot_optimize.py bootstrap 100
-	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison.tex; rm -f mvrisk_optimized_comparison.{log,aux}
-	cd bound_comparison_optimized/bootstrap; pdflatex bounds_optimized_comparison.tex; rm -f bounds_optimized_comparison.{log,aux}
-	cd table/bootstrap; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
-	cd table/bootstrap; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
-	cd rho/bootstrap; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
+	python plot_optimize.py rfc 100
+	cd figure/rfc; pdflatex mvrisk_optimized_comparison.tex
+	cd figure/rfc; pdflatex bounds_optimized_comparison.tex
+	cd figure/rfc; rm -f *_optimized_comparison.{log,aux}
+	cd table/rfc; pdflatex optimize_test_risk.tex
+	cd table/rfc; pdflatex optimize_bound.tex
+	cd table/rfc; rm -f optimize_*.{log,aux}
+	#cd rho/bootstrap; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	rm -f texput.log
 
 optimize_mce:
-	python plot_optimize_mce.py bootstrap 7
-	cd risk_comparison_optimized/bootstrap; pdflatex mvrisk_optimized_comparison_mce.tex; rm -f mvrisk_optimized_comparison_mce.{log,aux}
-	cd table/bootstrap; pdflatex optimize_test_risk.tex; rm -f optimize_test_risk.{log,aux}
-	cd table/bootstrap; pdflatex optimize_bound.tex; rm -f optimize_bound.{log,aux}
+	python plot_optimize.py mce 7
+	cd figure/mce; pdflatex mvrisk_optimized_comparison.tex
+	cd figure/mce; pdflatex bounds_optimized_comparison.tex
+	cd figure/mce; rm -f *_optimized_comparison_mce.{log,aux}
+	cd table/mce; pdflatex optimize_test_risk.tex
+	cd table/mce; pdflatex optimize_bound.tex
+	cd table/mce; rm -f optimize_*.{log,aux}
 	rm -f texput.log
 
 clean:
-	cd bounds_uniform; rm -f *.pdf; rm -rf datasets
-	cd mu_plot; rm -f *.pdf; rm -rf datasets
-	cd rho; rm -f *.pdf
-	cd risk_comparison_optimized; rm -f *.pdf; rm -rf datasets
-	cd table; rm -f *.pdf; rm -rf optimize
+	cd figure/mce; rm -f *.pdf; rm -rf datasets
+	cd figure/rfc; rm -f *.pdf; rm -rf datasets
+	cd figure/boost; rm -f *.pdf; rm -rf datasets
+	#cd mu_plot; rm -f *.pdf; rm -rf datasets
+	#cd rho; rm -f *.pdf
+	cd table/mce; rm -f *.pdf; rm -rf optimize
+	cd table/rfc; rm -f *.pdf; rm -rf optimize
+	cd table/boost; rm -f *.pdf; rm -rf optimize

@@ -8,7 +8,7 @@ import numpy as np
 import pandas as pd
 import os
 
-BASE = sys.argv[1] if len(sys.argv)>=2 else 'bootstrap'
+BASE = sys.argv[1] if len(sys.argv)>=2 else 'rfc'
 M = int(sys.argv[2]) if len(sys.argv)>=3 else 100
 
 RENAME = {"Fashion-MNIST":"Fashion"}
@@ -27,7 +27,7 @@ if BASE == 'boost':
             ]
 else:
     DATASETS = [
-                        'SVMGuide1',
+            'SVMGuide1',
             'Phishing',
             'Mushroom',
             'Splice',
@@ -45,28 +45,34 @@ else:
             'MNIST',
             'Fashion-MNIST',
             ]
-EXP_PATH  = "../out/optimize/"
 
 
 # Prepare data for comparison of MV risk/bounds bewteen \rho=\rho* and \rho=uniform
 # The data will be recorded in risk_comparison_optimized/datasets
-# Ex. Figure 2 (a,c) in the NeurIPS 2021 paper
-def optimized_comparison(tp='risk', base='bootstrap'):
-    name = tp+"_comparison_optimized"
-    path = name+"/"+base+"/datasets/"
+# Ex. Figure 2 in the NeurIPS 2021 paper
+def optimized_comparison(tp='risk', base='rfc'):
+    path = "figure/"+base+"/datasets/"
     if not os.path.isdir(path):
         os.makedirs(path)
 
     opts, baseline = {
-        ("risk","boost"):     (["prior","unf","lam","tnd","mu","bern"],["ada", "prior"]),
-        ("risk","bootstrap"): (["lam","tnd","mu","bern"],["unf"]),
-        ("bound","boost"):    ([],[]),
-        ("bound","bootstrap"):([("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],[("tnd","tnd")])
+        ("risk","boost"): (["prior","unf","lam","tnd","mu","bern"],["ada", "prior"]),
+        ("risk","rfc"):   (["lam","tnd","mu","bern"],["unf"]),
+        ("risk","mce"):   (["best","lam","tnd","mu","bern"],["unf"]),
+        ("bound","boost"):([],[]),
+        ("bound","rfc"):  ([("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],[("tnd","tnd")]),
+        ("bound","mce"):  ([("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],[("tnd","tnd")])
     }[(tp,base)]
     if tp=='risk':
         opts = [(o,"mv_risk") for o in opts]
         baseline = [(b,"mv_risk") for b in baseline]
-    
+
+    exp_path, smet = {
+        "rfc":   ("../out/optimize/","bootstrap"),
+        "boost": ("../out/optimize/","boost"),
+        "mce":   ("../out/optimizeMCS6/","bootstrap"),
+    }[base]
+
     for bl,blbnd in baseline:
         cols = ["dataset"]
         for opt,_ in opts:
@@ -75,7 +81,7 @@ def optimized_comparison(tp='risk', base='bootstrap'):
         rows_mul = []
         blcol = bl+"_"+blbnd
         for ds in DATASETS:
-            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
+            df = pd.read_csv(exp_path+ds+"-"+str(M)+"-"+smet+"-iRProp.csv",sep=";")
             if (df[blcol]==0).sum() > 0:
                 continue
             row = [RENAME.get(ds,ds)]
@@ -89,16 +95,16 @@ def optimized_comparison(tp='risk', base='bootstrap'):
             else:
                 rows_mul.append(row)
         
-        pd.DataFrame(data=rows_bin, columns=cols).to_csv(path+"bin-"+bl + ".csv", sep=";", index_label="idx")
-        pd.DataFrame(data=rows_mul, columns=cols).to_csv(path+"mul-"+bl + ".csv", sep=";", index_label="idx")
+        pd.DataFrame(data=rows_bin, columns=cols).to_csv(path+tp+"-bin-"+bl + ".csv", sep=";", index_label="idx")
+        pd.DataFrame(data=rows_mul, columns=cols).to_csv(path+tp+"-mul-"+bl + ".csv", sep=";", index_label="idx")
 
 optimized_comparison("risk",base=BASE)
 optimized_comparison("bound",base=BASE)
 
 PREC = 4
-EPS  = 10**(-6)
 
 PRETTY_MAP = {
+    "best_mv_risk":"$L(h_{best})$",
     "unf_mv_risk":"$L(\\MV_{u})$",
     "lam_mv_risk":"$L(\\MV_{\\rho_\\lambda})$",
     "tnd_mv_risk":"$L(\\MV_{\\rho_{\\TND}})$",
@@ -110,7 +116,8 @@ PRETTY_MAP = {
     "bern_bern":"$\\COTND(\\rho_{\\COTND})$",
 }
 
-def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
+# Result tables for NeurIPS 2021 paper
+def optimized_comparison_table(tp='risk', base='rfc', hl1="all", hl2=[]):
     path = "table/"+base+"/optimize/"
     out_fname = path+tp+"_table.tex"
     if not os.path.isdir(path):
@@ -118,14 +125,22 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
 
     opts = {
         ("risk","boost"):     ["ada","prior","unf","lam","tnd","mu","bern"],
-        ("risk","bootstrap"): ["unf","lam","tnd","mu","bern"],
+        ("risk","rfc"):       ["unf","lam","tnd","mu","bern"],
+        ("risk","mce"):       ["unf","best","lam","tnd","mu","bern"],
         ("bound","boost"):    [],
-        ("bound","bootstrap"):[("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],
+        ("bound","rfc"):      [("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],
+        ("bound","mce"):      [("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],
     }[(tp,base)]
     if tp=='risk':
         opts = [(o,"mv_risk") for o in opts]
     
     copts = [pre+"_"+suf for pre,suf in opts]
+    
+    exp_path, smet = {
+        "rfc":   ("../out/optimize/","bootstrap"),
+        "boost": ("../out/optimize/","boost"),
+        "mce":   ("../out/optimizeMCS6/","bootstrap"),
+    }[base]
     
     if hl1=="all":
         hl1 = copts
@@ -140,13 +155,15 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
         fout.write("\\midrule\n")
 
         for ds in DATASETS:
-            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
+            df = pd.read_csv(exp_path+ds+"-"+str(M)+"-"+smet+"-iRProp.csv",sep=";")
             df_mean = df.mean()
             df_std  = df.std()
             
             # Highlight indices
             v1 = np.min(df_mean[hl1]) if len(hl1)>0 else -1
             v2 = np.min(df_mean[hl2]) if len(hl2)>0 else -1
+            v1 = str(round(v1,PREC))
+            v2 = str(round(v2,PREC))
 
             fout.write("\\dataset{"+RENAME.get(ds,ds)+"}")
             for i,col in enumerate(copts):
@@ -154,9 +171,9 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
                 val = str(round(fval,PREC))
                 std = str(round(df_std[col],PREC))
                 s = val + " ("+std+")"
-                if col in hl1 and abs(fval-v1)<EPS:
+                if col in hl1 and val==v1:
                     s = "\\textbf{"+s+"}"
-                if col in hl2 and abs(fval-v2)<EPS:
+                if col in hl2 and val==v2:
                     s = "\\underline{"+s+"}"
                 fout.write(" & "+s)
             fout.write(" \\\\\n")
@@ -164,8 +181,8 @@ def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
         fout.write("\\bottomrule\n") 
         fout.write("\\end{tabular}\n")
     
-optimized_comparison_table('risk', hl2=["lam_mv_risk","tnd_mv_risk","mu_mv_risk","bern_mv_risk"])
-optimized_comparison_table('bound', hl2=["tnd_tnd","mu_MU","bern_bern"])
+optimized_comparison_table('risk', base=BASE, hl2=["lam_mv_risk","tnd_mv_risk","mu_mv_risk","bern_mv_risk"])
+optimized_comparison_table('bound', base=BASE, hl2=["tnd_tnd","mu_MU","bern_bern"])
 
 
 ### Old csv table functions below
