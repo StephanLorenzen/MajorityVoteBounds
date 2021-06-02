@@ -1,34 +1,10 @@
 \documentclass{article}
-\usepackage{pgfplotstable}
-\pgfplotsset{compat=1.16}
-\usepackage{changepage}
-\usepackage{booktabs}           % for table rules
-%\usepackage{siunitx}			% for precision
+\usepackage{booktabs} % for professional tables
 \input{../../colors.tex}
 
-% Setup siunitx:
-%\sisetup{
-%	round-mode          = places, % Rounds numbers
-%	round-precision     = 3, % to 2 places
-%	per-mode        = symbol,
-%}
-
 \begin{document}
-\begin{table}[th!]
-	%\hskip-1.0cm
-	\pgfplotstabletypeset[
-		col sep=comma,
-		string type,
-		columns = {dataset, lam, tnd, mu, bern},
-		columns/dataset/.style={string type, column name=Dataset, column type={l}},
-		%columns/unf/.style={column name=$\hat L(\MV_{u}\mbox{,}\testset)$, column type={c}},
-		columns/lam/.style={column name=$\FO$, column type={c}},
-		columns/tnd/.style={column name=$\TND$, column type={c}},
-		columns/mu/.style={column name=$\MU$, column type={c}},
-		columns/bern/.style={column name=$\Ben$, column type={c}},
-		every head row/.style={before row=\toprule,after row=\midrule},
-		every last row/.style={after row=\bottomrule},
-	]{optimize/bounds_optimized.csv}
+\begin{table}[t]
+	\input{optimize/bound_table.tex}
 \end{table}
 
 

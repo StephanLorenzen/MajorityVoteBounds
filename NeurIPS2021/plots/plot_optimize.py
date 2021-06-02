@@ -95,6 +95,81 @@ def optimized_comparison(tp='risk', base='bootstrap'):
 optimized_comparison("risk",base=BASE)
 optimized_comparison("bound",base=BASE)
 
+PREC = 4
+EPS  = 10**(-6)
+
+PRETTY_MAP = {
+    "unf_mv_risk":"$L(\\MV_{u})$",
+    "lam_mv_risk":"$L(\\MV_{\\rho_\\lambda})$",
+    "tnd_mv_risk":"$L(\\MV_{\\rho_{\\TND}})$",
+    "mu_mv_risk":"$L(\\MV_{\\rho_{\\CMUTND}})$",
+    "bern_mv_risk":"$L(\\MV_{\\rho_{\\COTND}})$",
+    "lam_pbkl":"$\\FO(\\rho_\\lambda)$",
+    "tnd_tnd":"$\\TND(\\rho_{\\TND})$",
+    "mu_MU":"$\\CMUTND(\\rho_{\\CMUTND})$",
+    "bern_bern":"$\\COTND(\\rho_{\\COTND})$",
+}
+
+def optimized_comparison_table(tp='risk', base='bootstrap', hl1="all", hl2=[]):
+    path = "table/"+base+"/optimize/"
+    out_fname = path+tp+"_table.tex"
+    if not os.path.isdir(path):
+        os.makedirs(path)
+
+    opts = {
+        ("risk","boost"):     ["ada","prior","unf","lam","tnd","mu","bern"],
+        ("risk","bootstrap"): ["unf","lam","tnd","mu","bern"],
+        ("bound","boost"):    [],
+        ("bound","bootstrap"):[("lam","pbkl"),("tnd","tnd"),("mu","MU"),("bern","bern")],
+    }[(tp,base)]
+    if tp=='risk':
+        opts = [(o,"mv_risk") for o in opts]
+    
+    copts = [pre+"_"+suf for pre,suf in opts]
+    
+    if hl1=="all":
+        hl1 = copts
+
+    with open(out_fname, 'w') as fout:
+        # Header
+        fout.write("\\begin{tabular}{l"+"c"*len(opts)+"}\\toprule\n")
+        fout.write("Data set")
+        for i,col in enumerate(copts):
+            fout.write(" & "+PRETTY_MAP[col])
+        fout.write(" \\\\\n")
+        fout.write("\\midrule\n")
+
+        for ds in DATASETS:
+            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-"+base+"-iRProp.csv",sep=";")
+            df_mean = df.mean()
+            df_std  = df.std()
+            
+            # Highlight indices
+            v1 = np.min(df_mean[hl1]) if len(hl1)>0 else -1
+            v2 = np.min(df_mean[hl2]) if len(hl2)>0 else -1
+
+            fout.write("\\dataset{"+RENAME.get(ds,ds)+"}")
+            for i,col in enumerate(copts):
+                fval = df_mean[col]
+                val = str(round(fval,PREC))
+                std = str(round(df_std[col],PREC))
+                s = val + " ("+std+")"
+                if col in hl1 and abs(fval-v1)<EPS:
+                    s = "\\textbf{"+s+"}"
+                if col in hl2 and abs(fval-v2)<EPS:
+                    s = "\\underline{"+s+"}"
+                fout.write(" & "+s)
+            fout.write(" \\\\\n")
+
+        fout.write("\\bottomrule\n") 
+        fout.write("\\end{tabular}\n")
+    
+optimized_comparison_table('risk', hl2=["lam_mv_risk","tnd_mv_risk","mu_mv_risk","bern_mv_risk"])
+optimized_comparison_table('bound', hl2=["tnd_tnd","mu_MU","bern_bern"])
+
+
+### Old csv table functions below
+
 # Prepare data for the table to compare the results for optimization
 def optimized_comparison_table(base='bootstrap'):
     path = "table/"+base+"/optimize/"
@@ -126,7 +201,7 @@ def optimized_comparison_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"test_risk.csv", sep=",", index=False)
 
-optimized_comparison_table(base=BASE)
+#optimized_comparison_table(base=BASE)
 
 
 # Prepare data for the table to compare tnd and Bern
@@ -163,7 +238,7 @@ def TND_Ben_comparison_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"mu_comparison.csv", sep=",", index=False)
 
-TND_Ben_comparison_table(base=BASE)
+#TND_Ben_comparison_table(base=BASE)
 
 # Prepare data for the table to compare the bounds for the optimized rho
 def Bounds_optimized_table(base='bootstrap'):
@@ -196,4 +271,4 @@ def Bounds_optimized_table(base='bootstrap'):
     
     pd.DataFrame(data=rows, columns=cols).round(prec).to_csv(path+"bounds_optimized.csv", sep=",", index=False)
 
-Bounds_optimized_table(base=BASE)
+#Bounds_optimized_table(base=BASE)
