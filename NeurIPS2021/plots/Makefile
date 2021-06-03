@@ -5,7 +5,7 @@ optimize_rfc:
 	cd figure/rfc; pdflatex mvrisk_optimized_comparison.tex
 	cd figure/rfc; pdflatex bounds_optimized_comparison.tex
 	cd figure/rfc; rm -f *_optimized_comparison.{log,aux}
-	cp ../out/optimize/rho-{Phishing,Letter}.csv figure/rfc/datasets/
+	cp ../out/optimize/rfc/rho-{Phishing,Letter}.csv figure/rfc/datasets/
 	cd figure/rfc; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	cd table/rfc; pdflatex optimize_test_risk.tex
 	cd table/rfc; pdflatex optimize_bound.tex
@@ -17,7 +17,7 @@ optimize_mce:
 	cd figure/mce; pdflatex mvrisk_optimized_comparison.tex
 	cd figure/mce; pdflatex bounds_optimized_comparison.tex
 	cd figure/mce; rm -f *_optimized_comparison_mce.{log,aux}
-	cp ../out/optimizeMCS6/rho-{Phishing,Connect-4}.csv figure/mce/datasets/
+	cp ../out/optimize/mce/rho-{Phishing,Connect-4}.csv figure/mce/datasets/
 	cd figure/mce; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	cd table/mce; pdflatex optimize_test_risk.tex
 	cd table/mce; pdflatex optimize_bound.tex

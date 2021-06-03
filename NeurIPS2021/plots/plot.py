@@ -11,6 +11,7 @@ import os
 BASE = sys.argv[1] if len(sys.argv)>=2 else 'rfc'
 M = int(sys.argv[2]) if len(sys.argv)>=3 else 100
 
+EXP_PATH = "../out/optimize/"+BASE+"/"
 RENAME = {"Fashion-MNIST":"Fashion"}
 DATASETS = [
             'SVMGuide1',
@@ -33,6 +34,7 @@ DATASETS = [
             ]
 
 
+
 # Prepare data for comparison of MV risk/bounds bewteen \rho=\rho* and \rho=uniform
 # The data will be recorded in risk_comparison_optimized/datasets
 # Ex. Figure 2 in the NeurIPS 2021 paper
@@ -51,11 +53,6 @@ def optimized_comparison(tp='risk', base='rfc'):
         opts = [(o,"mv_risk") for o in opts]
         baseline = [(b,"mv_risk") for b in baseline]
 
-    exp_path, smet = {
-        "rfc":   ("../out/optimize/","bootstrap"),
-        "mce":   ("../out/optimizeMCS6/","bootstrap"),
-    }[base]
-
     for bl,blbnd in baseline:
         cols = ["dataset"]
         for opt,_ in opts:
@@ -64,7 +61,7 @@ def optimized_comparison(tp='risk', base='rfc'):
         rows_mul = []
         blcol = bl+"_"+blbnd
         for ds in DATASETS:
-            df = pd.read_csv(exp_path+ds+"-"+str(M)+"-"+smet+"-iRProp.csv",sep=";")
+            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
             if (df[blcol]==0).sum() > 0:
                 continue
             row = [RENAME.get(ds,ds)]
@@ -117,11 +114,6 @@ def optimized_comparison_table(tp='risk', base='rfc', hl1="all", hl2=[]):
     
     copts = [pre+"_"+suf for pre,suf in opts]
     
-    exp_path, smet = {
-        "rfc":   ("../out/optimize/","bootstrap"),
-        "mce":   ("../out/optimizeMCS6/","bootstrap"),
-    }[base]
-    
     if hl1=="all":
         hl1 = copts
 
@@ -135,7 +127,7 @@ def optimized_comparison_table(tp='risk', base='rfc', hl1="all", hl2=[]):
         fout.write("\\midrule\n")
 
         for ds in DATASETS:
-            df = pd.read_csv(exp_path+ds+"-"+str(M)+"-"+smet+"-iRProp.csv",sep=";")
+            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
             df_mean = df.mean()
             df_std  = df.std()
             
@@ -171,11 +163,6 @@ def TND_Ben_comparison_table(base='rfc'):
     if not os.path.isdir(path):
         os.makedirs(path)
     
-    exp_path, smet = {
-        "rfc":   ("../out/optimize/","bootstrap"),
-        "mce":   ("../out/optimizeMCS6/","bootstrap"),
-    }[base]
-    
     prec = 5
     opts = ["tnd", "mu", "bern"]
     cols = ["dataset", "c", "d"]
@@ -188,7 +175,7 @@ def TND_Ben_comparison_table(base='rfc'):
             cols += [opt+suf for suf in ["_KL", "_gibbs", "_tandem", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]
     rows = []
     for ds in DATASETS:
-        df = pd.read_csv(exp_path+ds+"-"+str(M)+"-"+smet+"-iRProp.csv",sep=";")
+        df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
         df_mean = df.mean()
         df_std  = df.std()
         
