@@ -39,7 +39,7 @@ SMODE   = SMODE if (SMODE=='bootstrap' or SMODE=='dim' or 'boost' in SMODE) else
 (SMODE,SPLITS) = ('boost', int(SMODE[-1])) if 'boost' in SMODE else (SMODE, None)
 OPT     = sys.argv[5] if len(sys.argv)>=6 else 'iRProp'
 REPS    = int(sys.argv[6]) if len(sys.argv)>=7 else 1
-if BASE is ('rfc' or 'abc' or 'mce'):
+if BASE not in ('rfc', 'abc', 'mce'):
     print("No such base classifier")
     sys.exit(1)
 
