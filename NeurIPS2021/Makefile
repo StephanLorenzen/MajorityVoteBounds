@@ -9,11 +9,14 @@ link:
 uniform:
 	./helpers/run_uniform.sh bootstrap
 
-optimize:
-	./helpers/run_optimize.sh bootstrap
+optimize_rfc:
+	./helpers/run_optimize.sh 100 rfc bootstrap
 
 optimize_mce:
-	./helpers/run_optimize_mce.sh bootstrap
+	./helpers/run_optimize.sh 7 mce bootstrap
+	
+optimize_abc:
+	./helpers/run_optimize.sh 100 abc boost-2
 
 mu:
 	./helpers/run_mu.sh bootstrap
