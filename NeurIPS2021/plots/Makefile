@@ -1,17 +1,5 @@
 .PHONY: rho
 
-optimize_boost:
-	python plot.py boost 300
-	cd figure/boost; pdflatex mvrisk_optimized_comparison_AdaBs.tex
-	cd figure/boost; pdflatex mvrisk_optimized_comparison_AdaPr.tex
-	cd figure/boost; rm -f mvrisk_*.{log,aux}
-	cp ../out/optimize/rho-{SVMGuide1,Mushroom}.csv figure/boost/datasets/
-	cd figure/boost; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
-	cd table/boost; pdflatex optimize_test_risk.tex
-	cd table/boost; pdflatex optimize_bound.tex
-	cd table/boost; rm -f optimize_*.{log,aux}
-	rm -f texput.log
-
 optimize_rfc:
 	python plot.py rfc 100
 	cd figure/rfc; pdflatex mvrisk_optimized_comparison.tex
@@ -39,7 +27,5 @@ optimize_mce:
 clean:
 	cd figure/mce; rm -f *.pdf; rm -rf datasets
 	cd figure/rfc; rm -f *.pdf; rm -rf datasets
-	cd figure/boost; rm -f *.pdf; rm -rf datasets
 	cd table/mce; rm -f *.pdf; rm -rf optimize
 	cd table/rfc; rm -f *.pdf; rm -rf optimize
-	cd table/boost; rm -f *.pdf; rm -rf optimize
