@@ -5,8 +5,8 @@
 \usetikzlibrary{patterns}
 \usepgfplotslibrary{fillbetween,groupplots}
 \begin{document}
-\pgfplotstableread[col sep=semicolon]{../../../out/optimizeMCS2/rho-Phishing.csv}\opttable
-\pgfplotstableread[col sep=semicolon]{../../../out/optimizeMCS2/rho-Connect-4.csv}\popttable
+\pgfplotstableread[col sep=semicolon]{datasets/rho-Phishing.csv}\opttable
+\pgfplotstableread[col sep=semicolon]{datasets/rho-Connect-4.csv}\popttable
 \pgfplotsset{
     RhoPlot/.style={
       scaled y ticks=false,
