@@ -43,7 +43,6 @@ n = 10000
 
 """ construct the grid """
 npoints = 200
-# Define grid for empirical gibbs and tandem loss
 gibbs = np.logspace(-3.4, -0.4, npoints)
 var = np.logspace(-3.4, -0.4, npoints)
 axis_gibbs, axis_var = np.meshgrid(gibbs, var) # axis
