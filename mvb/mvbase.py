@@ -77,36 +77,19 @@ class MVBounds:
                 t_idx, oob_idx = t_idx[0], oob_idx[0]  # only take the first fold
                 t_X, t_Y = X[t_idx], Y[t_idx]
                 oob_X, oob_Y = X[oob_idx], Y[oob_idx]
-                print('t_idx', t_idx[:10])
-                """
-                n_sample = ceil(n/2.) # number of training samples
 
-                # sample points for training (wo. replacement)
-                # all estimators share the same training/validation samples
-                while True:
-                    # Repeat until at least one example of each class
-                    t_idx = self._prng.choice(n, size=n_sample, replace=False)
-                    t_X = X[t_idx]
-                    t_Y = Y[t_idx]
-                    if np.unique(t_Y).shape[0] == self._classes.shape[0]:
-                        break
-                """
                 # fit the estimators
                 self._ensembled_estimators[0].fit(t_X, t_Y)
 
                 # record the estimators as a list
                 self._estimators = self._ensembled_estimators[0].estimators_
                 self._actual_n_estimators = len(self._estimators)
+                
                 if self.use_ada_prior == True:
-                    # the weight given by AdaBoost
+                    # use the prior given by AdaBoost
                     _abc_pi = self._ensembled_estimators[0].estimator_weights_
                     self._abc_pi = _abc_pi / np.sum(_abc_pi)
-                """
-                # validation samples
-                oob_idx = np.delete(np.arange(n),t_idx)
-                oob_X   = X[oob_idx]
-                oob_Y   = Y[oob_idx]
-                """
+
                 for est in self._estimators:
                     # Predict on validation
                     oob_P = est.predict(oob_X)
@@ -129,15 +112,7 @@ class MVBounds:
                 for val, train in skf.split(X, Y):
                     t_idx.append(train)
                     oob_idx.append(val)
-                """
-                # randomly divide n samples into k splits nearly equal-sized groups according to the index
-                t_idx = np.arange(n)
-                k = len(self._ensembled_estimators)
 
-                random.shuffle(t_idx)
-                t_idx = [t_idx[i::k] for i in range(k)]
-                t_Y = [Y[t_idx[i]] for i in range(k)]
-                """
                 pi = np.zeros(self._actual_n_estimators)
                 k_m = np.zeros(k + 1).astype(int)
                 # training
