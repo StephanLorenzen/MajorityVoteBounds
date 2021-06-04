@@ -4,6 +4,7 @@
 # Create date : 21 May, 2021
 #
 
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -35,6 +36,8 @@ REP = 3
 def run():
     for ds in DATASETS:
         outpath = 'AdaBoost-test/'
+        if not os.path.exists(outpath):
+            os.makedirs(outpath)
         result = []
         # Loading data
         print("Loading data...", ds)

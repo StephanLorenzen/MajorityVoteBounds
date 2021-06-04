@@ -1,6 +1,6 @@
 #
 # Runs experiments using standard random forest with uniform weighting.
-# Computes the MU bound for various values of mu \in [0,0.5)
+# Computes the MU bound for various values of mu \in (0.5,0.5)
 #
 # Usage: python uniform.py <data_set> [M] [sample_mode] [repeats]
 #        M           : number of trees

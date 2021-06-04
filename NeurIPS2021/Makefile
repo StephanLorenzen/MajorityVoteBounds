@@ -6,9 +6,6 @@ data:
 link:
 	ln -s ../mvb mvb
 
-uniform:
-	./helpers/run_uniform.sh bootstrap
-
 optimize_rfc:
 	./helpers/run_optimize.sh 100 rfc bootstrap
 
@@ -24,7 +21,12 @@ mu:
 muBernstein:
 	./helpers/run_muBernstein.sh bootstrap
 
+artificial:
+	cd artificialEvaluation; python bennett_bound.py; python oracle_mu_vs_TND.py 
+
 clean:
 	rm -f mvb
 	rm -rf data
 	rm -rf out
+	rm -f artificialEvaluation/*.png
+	rm -rf AdaBoost-test
