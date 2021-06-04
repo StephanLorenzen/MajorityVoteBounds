@@ -30,7 +30,7 @@ README                         : this file
 LICENSE_masegosa               : license from [1]
 mvb/rfc.py                     : implementation of random forest (from [1])
 mvb/mce.py                     : implementation of our multi classifier ensemble
-mvb/bounds/{mu,muBernstein}.py : implementation of our new bounds 
+mvb/bounds/{cmutnd,cotnd}.py   : implementation of our new bounds 
 experiments/                   : directory containing code for experiments
 experiments/optimize.py        : file for running experiments with optimized weighting
 experiments/Makefile           : Makefile for running full experimental setup in the paper
