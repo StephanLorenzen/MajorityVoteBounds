@@ -103,6 +103,8 @@ venv.bak/
 # mypy
 .mypy_cache/
 
+# irrelevant experiments
+AdaBoost_num_trees.py
 
 # Data and out
 data
