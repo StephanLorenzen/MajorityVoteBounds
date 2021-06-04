@@ -17,6 +17,7 @@ code of [1] is described below.
 
 The implementation is in Python 3. The implementation and provided scripts are tested in
 Arch Linux and Windows.
+
 The implementation uses the following standard python libraries:
 - numpy
 - scipy
@@ -77,7 +78,7 @@ A Makefile 'experiments/Makefile' is supplied for running all experiments from t
 
 
 *** References ***
-[1] Masegosa, Lorenzen, Igel, Seldin: Second order PAC-374Bayesian bounds for the weighted majority vote (NeurIPS 2020)
+[1] Masegosa, Lorenzen, Igel, Seldin: Second order PAC-Bayesian bounds for the weighted majority vote (NeurIPS 2020)
 [2] The sklearn.ensemble module (https://scikit-learn.org/stable/modules/ensemble.html)
 [3] The UCI Repository (https://archive.ics.uci.edu/ml/index.php)
 [4] LibSVM (https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/)
