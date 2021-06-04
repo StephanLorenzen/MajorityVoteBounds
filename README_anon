@@ -44,7 +44,7 @@ This downloads data sets from [3,4,5] and creates a link to mvb.
 
 Then, to train and optimize an M voter bagging ensemble (using 20% of data for testing), use: 
 
-	python optimize.py <M> <base_clf> <data_set> bootstrap iRProp [repeats]
+	python optimize.py <data_set> <M> <base_clf> bootstrap iRProp [repeats]
 
 where <base_clf> is one of 'rfc' (Random Forest), 'mce' (multi classifer ensemble) or 'abc'
 (adaboost).
