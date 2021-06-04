@@ -33,7 +33,7 @@ mvb/bounds/{mu,muBernstein}.py : implementation of our new bounds
 experiments/                   : directory containing code for experiments
 experiments/optimize.py        : file for running experiments with optimized weighting
 experiments/Makefile           : Makefile for running full experimental setup in the paper
-
+experiments/plots/             : utilities for creating the plots in the paper
 
 
 
@@ -58,17 +58,22 @@ for the first repeat.
 A Makefile 'experiments/Makefile' is supplied for running all experiments from the paper.
 
 1) cd to the directory 'experiments' and run 'make' to download data and create a link to mvb.
+
 2) Run the relevant experiment by using the corresponding make target:
    - 'make optimize_rfc':   random forest with optimized weights (Figure 2 (a,b) + E.2)
    - 'make optimize_mce':   multi classifier ensemble with optimized weights
                             (Figure 2 (c,d) + E.3)
+   Note that a seed is set in the top of 'experiments/optimize.py' for reproducibility.
    Results are saved in out/optimize/{rfc,mce} in separate files containing 5 repeats each.
-3) Recreate plots and tables from the paper, by cd'ing into the 'plots' directory and running:
+   To run the simulation comparing the bounds and plotting Figure 1 and A.4 from the paper run:
+   - 'make artificial':     Creates Figure 1 and A.4 in artificialEvaluation.
+
+3) Recreate remaining plots and tables from the paper, by cd'ing into the 'plots' directory
+   and running:
    - 'make optimize_rfc': figures and tables created in figure/rfc/ and table/rfc/
    - 'make optimize_mce': figures and tables created in figure/mce/ and table/mce/
-   - 'make artificial':   Figure 1 and A.4.
 
-Note that a seed is set in the top of 'experiments/optimize.py' for reproducibility.
+
 
 
 *** References ***
