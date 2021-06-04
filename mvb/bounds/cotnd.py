@@ -327,9 +327,6 @@ def Binary_Search(func_bnd, mu_grid, obj):
     bnd_star = None
 
     while (right - left > 3 and bnd_star is None):
-        #print('right-left', right-left)
-        #print('left', left, 'midleft', midleft, 'midright', midright, 'right', right)
-        #print('bnd_left', np.round(bnd_left[0], 4), 'bnd_midleft', np.round(bnd_midleft[0], 4), 'bnd_midright', np.round(bnd_midright[0], 4), 'bnd_right', np.round(bnd_right[0], 4))
         # if the midleft bound is larger than the midright bound
         if bnd_midleft[0] > bnd_midright[0]:
             # if the left bound is even larger
@@ -383,7 +380,6 @@ def Binary_Search(func_bnd, mu_grid, obj):
                 bnd_star = bnd_left
             # the function is not convex
             else:
-                warn('The ' + obj + ' function might be non-convex! else')
                 bnd_star = _Grid(mu_grid[left:right+1])
 
     if bnd_star is not None:
