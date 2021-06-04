@@ -11,15 +11,6 @@ optimize_rfc:
 
 optimize_mce:
 	./helpers/run_optimize.sh 7 mce bootstrap
-	
-optimize_abc:
-	./helpers/run_optimize.sh 100 abc boost-2
-
-mu:
-	./helpers/run_mu.sh bootstrap
-	
-muBernstein:
-	./helpers/run_muBernstein.sh bootstrap
 
 artificial:
 	cd artificialEvaluation; python bennett_bound.py; python oracle_mu_vs_TND.py 
