@@ -1,3 +1,4 @@
+SHELL=/bin/bash
 .PHONY: rho
 
 optimize_rfc:
