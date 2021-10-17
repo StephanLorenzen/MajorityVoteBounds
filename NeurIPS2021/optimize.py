@@ -119,7 +119,7 @@ for rep in range(REPS):
 
     rhos = []
     # define the range of mu  for 'C$\mu$TND' and 'COTND'
-    mu_range = (-0.5, 0.5)
+    mu_range = (0., 0.5)
     
     # Prepare Data
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)

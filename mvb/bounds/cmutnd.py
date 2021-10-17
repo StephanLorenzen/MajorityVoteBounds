@@ -7,7 +7,7 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp 
 
 # Implementation of MU
-def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
+def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (0., 0.5), delta=0.05):
     #calculate the bound for a given mu
     def _bound(mu):
         # UpperBound_TandemRisk by inverse kl
@@ -27,10 +27,10 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         bnd = muTandemUB / (0.5-mu)**2
         return (bnd, mu, ub_tr, lb_gr, muTandemUB)
     
-    # define the grids in (-0.5, 0.5)
+    # define the grids in (0., 0.5)
     number = 200
-    mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
-    delta /= number
+    mu_grid = np.array([(0.5/number * i) for i in range(number)])
+    #delta /= number # no need for union bound
     
     if len(mu_range)==1:
         """ # Already know the optimal \mu. Nothing to be optimized. """
@@ -56,11 +56,9 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
     def _bound(mu): 
         return _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
     
-    mu_range = options.get('mu_kl', (-0.5, 0.5))
+    mu_range = options.get('mu_kl', (0., 0.5))
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-    # Forget about the union bound during optimization. Turn on if needed.
-    delta /= number
     
     _, _, mu_star, _, _ = _bound(mu=None)
     # find the closest mu_star in the grid

@@ -9,7 +9,7 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 
 
 ### Find mu^* by binary search
-def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
+def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (0., 0.5), lam=None, gam=None, delta=0.05):   
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
@@ -27,8 +27,8 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, 
 
     # define the grids in (-0.5, 0.5)
     number = 200
-    mu_grid = np.array([(-0.5+(0.5 - (-0.5))/number * i) for i in range(number)])
-    delta /= number
+    mu_grid = np.array([(0.5/number * i) for i in range(number)])
+    #delta /= number
     
     if len(mu_range)==1:
         """ # Already know the optimal \mu in the grid. Nothing to be optimized. """
@@ -209,11 +209,9 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
         return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
-    mu_range = options.get('mu_bern', (-0.5, 0.5))
+    mu_range = options.get('mu_bern', (0., 0.5))
     number = 200
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-    # Forget about the union bound during optimization. Turn on if needed.
-    delta /= number
     
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
 

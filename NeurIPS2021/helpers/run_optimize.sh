@@ -1,5 +1,5 @@
 O=iRProp
-R=5
+R=10
 
 
 python optimize.py SVMGuide1     $1 $2 $3 $O $R
