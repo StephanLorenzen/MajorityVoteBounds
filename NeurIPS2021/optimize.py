@@ -77,12 +77,8 @@ def _write_outfile(results):
                         .format(mv_risk,
                             stats.get('gibbs_risk', -1.0),
                             stats.get('tandem_risk', -1.0),
-                            #stats.get('disagreement', -1.0),
                             bounds.get('SH', -1.0),
                             bounds.get('PBkl', -1.0),
-                            #bounds.get('C1', -1.0),
-                            #bounds.get('C2', -1.0),
-                            #bounds.get('CTD', -1.0),
                             bounds.get('TND', -1.0),
                             stats.get('TandemUB', -1.0), # TandemUB is the empirical bound of tandem risk; 4*TandemBound = TND
                             bounds.get('MU', -1.0),
@@ -119,7 +115,7 @@ for rep in range(REPS):
 
     rhos = []
     # define the range of mu  for 'C$\mu$TND' and 'COTND'
-    mu_range = (0., 0.5)
+    mu_range = (-0.5, 0.5)
     
     # Prepare Data
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
@@ -180,7 +176,7 @@ for rep in range(REPS):
     print('mv_risk', mv_risk)
 
     """ Optimize C$\mu$TND with grid """
-    print("Optimizing C\mu TND for \mu in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
+    print("Optimizing C\mu TND...")
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_kl':mu_range})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_kl':(bmu,)}) # update rho-dependent stats

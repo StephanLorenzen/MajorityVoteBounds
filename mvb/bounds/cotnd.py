@@ -1,5 +1,5 @@
 #
-# Implements the MU Bernstein bound.
+# Implements the CCPBB bound.
 #
 import numpy as np
 from scipy.special import lambertw
@@ -8,8 +8,8 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp
 
 
-### Find mu^* by binary search
-def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (0., 0.5), lam=None, gam=None, delta=0.05):   
+### Calculate the CCPBB bound
+def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
@@ -24,20 +24,18 @@ def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (0., 0.5), lam=None, ga
         # Compute the overall bound
         bnd = bernTandemUB / (0.5-mu)**2
         return (bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB)
-
-    # define the grids in (-0.5, 0.5)
-    number = 200
-    mu_grid = np.array([(0.5/number * i) for i in range(number)])
-    #delta /= number
     
     if len(mu_range)==1:
         """ # Already know the optimal \mu in the grid. Nothing to be optimized. """
         opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = _bound(mu_range[0])
     else:
-        """ # Don't know the optimal \mu ( when \rho=uniform ) """
+        """ # Don't know the optimal \mu """
+        # define the grids in (-0.5, 0.5)
+        number = 400
+        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
+        #delta /= number
         opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
     
-    #print('final bound', opt_bnd)
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
 
 # Compute the PAC-Bayes-Bennett for calculating the bound
@@ -209,8 +207,8 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
         return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
-    mu_range = options.get('mu_bern', (0., 0.5))
-    number = 200
+    mu_range = options.get('mu_bern', (-0.5, 0.5))
+    number = 400
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
     
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
