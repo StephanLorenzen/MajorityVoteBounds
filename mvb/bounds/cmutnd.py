@@ -22,12 +22,6 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
             # UpperBound_GibbsRisk by inverse kl
             rhs_gr = ( KL + log(4.0*sqrt(n)/delta) ) / n
             eb_gr  = solve_kl_sup(gibbs_risk, rhs_gr)
-        
-        """
-        # if mu == None, calculate mu by the close-form formula
-        if mu is None:
-            mu = (0.5*eb_gr - ub_tr)/(0.5-eb_gr)
-        """
 
         # bound
         muTandemUB = ub_tr - 2*mu*eb_gr + mu**2
@@ -147,7 +141,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
             c = 1.0/(lam*(1.0-lam/2.0)*n2) + mu/(gam*n)
         else:
             a = 1.0/(1.0-lam/2.0)
-            b = 1.0/(1.0-gam/2.0)
+            b = mu/(1.0-gam/2.0)
             c = 1.0/(lam*(1.0-lam/2.0)*n2) -mu/(gam*(1.0-gam/2.0)*n)
             
             
