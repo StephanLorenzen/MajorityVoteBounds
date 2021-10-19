@@ -94,6 +94,13 @@ PRETTY_MAP = {
     "tnd_tnd":"$\\TND(\\rho_{\\TND})$",
     "mu_MU":"$\\CMUTND(\\rho_{\\CMUTND})$",
     "bern_bern":"$\\COTND(\\rho_{\\COTND})$",
+    "lam":"$\\FO$",
+    "tnd":"$\\TND$",
+    "mu":"$\\CMUTND$",
+    "bern":"$\\COTND$",
+    "gibbs":"$\\E_\\rho[L]$",
+    "tandem":"$\\E_{\\rho^2}[L]$",
+    "bmu":"$\mu$",
 }
 
 # Result tables for NeurIPS 2021 paper
@@ -156,6 +163,54 @@ def optimized_comparison_table(tp='risk', base='rfc', hl1="all", hl2=[]):
 optimized_comparison_table('risk', base=BASE, hl2=["lam_mv_risk","tnd_mv_risk","mu_mv_risk","bern_mv_risk"])
 optimized_comparison_table('bound', base=BASE, hl2=["tnd_tnd","mu_MU","bern_bern"])
 
+# Table with various values = mu, gibbs loss and tandem loss
+def optimized_values_table(base="rfc"):
+    path = "table/"+base+"/optimize/"
+    out_fname = path+"values_table.tex"
+    if not os.path.isdir(path):
+        os.makedirs(path)
+    
+    opts = ["lam","tnd","mu","bern"]
+    cols = []
+    for o in opts:
+        cols += [o+"_"+suf for suf in ["gibbs","tandem"]]
+        if o in ("mu","bern"):
+            cols.append(o+"_bmu")
+    
+    with open(out_fname, 'w') as fout:
+        # Header
+        fout.write("\\begin{tabular}{l"+"c"*len(cols)+"}\\toprule\n")
+        for o in opts:
+            cnt = "3" if o in ("mu","bern") else "2"
+            fout.write(" & \multicolumn{"+cnt+"}{|c|}{"+PRETTY_MAP.get(o,o)+"}")
+        fout.write(" \\\\\n")
+        fout.write("Data set")
+        for i,col in enumerate(cols):
+            _,cn = col.split("_")
+            bl = "|" if i in (0,2,4,7) else ""
+            br = "|" if i==len(cols)-1 else ""
+            fout.write(" & \multicolumn{1}{"+bl+"c"+br+"}{"+PRETTY_MAP.get(cn,cn)+"}")
+        fout.write(" \\\\\n")
+        fout.write("\\midrule\n")
+
+        for ds in DATASETS:
+            df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
+            df_mean = df.mean()
+            df_std  = df.std()
+            
+            fout.write("\\dataset{"+RENAME.get(ds,ds)+"}")
+            for i,col in enumerate(cols):
+                fval = df_mean[col]
+                val = str(round(fval,PREC))
+                std = str(round(df_std[col],PREC))
+                s = val# + " ("+std+")"
+                fout.write(" & "+s)
+            fout.write(" \\\\\n")
+
+        fout.write("\\bottomrule\n") 
+        fout.write("\\end{tabular}\n")
+
+optimized_values_table(base=BASE)
 
 # Prepare data for the table to compare tnd and Bern
 def TND_Ben_comparison_table(base='rfc'):
