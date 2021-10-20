@@ -136,7 +136,7 @@ datasets/*
 
 # Tables
 *.csv
-*_table.tex
+#*_table.tex
 
 # png Plots
 *.png
