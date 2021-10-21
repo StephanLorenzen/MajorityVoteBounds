@@ -355,8 +355,7 @@ class MVBounds:
             elif bound == 'DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             elif bound == 'MU':
-                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL,
-                          stats['mu_kl'])
+                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_kl'])
             elif bound == 'MUBernstein':
                 return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'], stats['lam'], stats['gam'])
             else:

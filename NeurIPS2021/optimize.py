@@ -177,11 +177,11 @@ for rep in range(REPS):
 
     """ Optimize C$\mu$TND with grid """
     print("Optimizing C\mu TND...")
-    (_, rho, bmu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT,'mu_kl':mu_range})
+    (_, rho, bmu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT})
     print('bmu', bmu)
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_kl':(bmu,)}) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mu
     res_MU = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk)
