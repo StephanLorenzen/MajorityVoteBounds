@@ -42,6 +42,9 @@ REPS    = int(sys.argv[6]) if len(sys.argv)>=7 else 1
 if BASE not in ('rfc', 'abc', 'mce'):
     print("No such base classifier")
     sys.exit(1)
+    
+#if (BASE == 'rfc' and DATASET == 'Protein'):
+#    sys.exit(1)
 
 inpath  = 'data/'
 outpath = 'out/optimize/'+BASE+'/'
