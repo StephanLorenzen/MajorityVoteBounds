@@ -214,7 +214,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
             nrho = _optRho(rho,mu,lam,gam)
             # Optimize lam + gam ( also mu if mu_input is None; otherwise, mu is fixed to be mu_input)
             #print('finish rho')
-            b, nmu, nlam, ngam = _bound(nrho, mu=None, pm='plus')
+            b, nmu, nlam, ngam = _bound(nrho, mu=None, pm=pm)
             if b > bp:
                 b = bp
                 break
