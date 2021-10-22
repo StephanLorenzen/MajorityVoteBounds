@@ -12,17 +12,6 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.linear_model import LogisticRegression
 from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 
-# List of classification models
-classifiers = [
-    LinearDiscriminantAnalysis(),
-    KNeighborsClassifier(n_neighbors=3),
-    KNeighborsClassifier(n_neighbors=5),
-    KNeighborsClassifier(n_neighbors=5, weights='distance'),
-    DecisionTreeClassifier(),
-    LogisticRegression(),
-    GaussianNB()
-]
-
 class MultiClassifierEnsemble(mvbase.MVBounds):
     def __init__(
             self,
@@ -31,6 +20,18 @@ class MultiClassifierEnsemble(mvbase.MVBounds):
             sample_mode="bootstrap",
             random_state=None
             ):
+
+        # List of classification models
+        classifiers = [
+            LinearDiscriminantAnalysis(),
+            KNeighborsClassifier(n_neighbors=3),
+            KNeighborsClassifier(n_neighbors=5),
+            KNeighborsClassifier(n_neighbors=5, weights='distance'),
+            DecisionTreeClassifier(random_state=random_state),
+            LogisticRegression(random_state=random_state),
+            GaussianNB()
+        ]
+
         self._actual_n_estimators = len(classifiers)
 
         prng = check_random_state(random_state)
