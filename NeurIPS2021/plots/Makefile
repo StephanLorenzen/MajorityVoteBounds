@@ -10,6 +10,7 @@ optimize_rfc:
 	cd figure/rfc; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	cd table/rfc; pdflatex optimize_test_risk.tex
 	cd table/rfc; pdflatex optimize_bound.tex
+	cd table/rfc; pdflatex optimize_values.tex
 	cd table/rfc; rm -f optimize_*.{log,aux}
 	rm -f texput.log
 
@@ -22,6 +23,7 @@ optimize_mce:
 	cd figure/mce; pdflatex plot_rhos.tex; rm -f plot_rhos.{log,aux}
 	cd table/mce; pdflatex optimize_test_risk.tex
 	cd table/mce; pdflatex optimize_bound.tex
+	cd table/mce; pdflatex optimize_values.tex
 	cd table/mce; rm -f optimize_*.{log,aux}
 	rm -f texput.log
 
