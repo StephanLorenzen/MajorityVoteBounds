@@ -61,6 +61,8 @@ def optimized_comparison(tp='risk', base='rfc'):
         rows_mul = []
         blcol = bl+"_"+blbnd
         for ds in DATASETS:
+            if (base == 'rfc' and ds == 'Protein'):
+                continue
             df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
             if (df[blcol]==0).sum() > 0:
                 continue
@@ -134,6 +136,8 @@ def optimized_comparison_table(tp='risk', base='rfc', hl1="all", hl2=[]):
         fout.write("\\midrule\n")
 
         for ds in DATASETS:
+            if (base == 'rfc' and ds == 'Protein'):
+                continue
             df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
             df_mean = df.mean()
             df_std  = df.std()
@@ -194,6 +198,8 @@ def optimized_values_table(base="rfc"):
         fout.write("\\midrule\n")
 
         for ds in DATASETS:
+            if (base == 'rfc' and ds == 'Protein'):
+                continue
             df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
             df_mean = df.mean()
             df_std  = df.std()
@@ -230,6 +236,8 @@ def TND_Ben_comparison_table(base='rfc'):
             cols += [opt+suf for suf in ["_KL", "_gibbs", "_tandem", "_bern", '_mutandem_risk', '_vartandem_risk', "_varUB", "_bernTandemUB", "_bmu", "_bg", "_bl"]]
     rows = []
     for ds in DATASETS:
+        if (base == 'rfc' and ds == 'Protein'):
+            continue
         df = pd.read_csv(EXP_PATH+ds+"-"+str(M)+"-bootstrap-iRProp.csv",sep=";")
         df_mean = df.mean()
         df_std  = df.std()

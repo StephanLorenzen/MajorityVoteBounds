@@ -355,7 +355,7 @@ class MVBounds:
             elif bound == 'DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
             elif bound == 'MU':
-                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_kl'])
+                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_CCTND'])
             elif bound == 'MUBernstein':
                 return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'], stats['lam'], stats['gam'])
             else:
@@ -427,7 +427,7 @@ class MVBounds:
         (results['TND'], options['TandemUB']) = self.bound('TND', stats=stats)
         results['CTD'] = self.bound('CTD', stats=stats)
         if incl_oob:
-            (results['MU'], options['mu_kl'], options['ub_tr'], options['lb_gr'], options['muTandemUB']) = self.bound('MU', stats=stats)
+            (results['MU'], options['mu_CCTND'], options['ub_tr'], options['lb_gr'], options['muTandemUB']) = self.bound('MU', stats=stats)
             (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'], options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
 
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
@@ -511,7 +511,7 @@ class MVBounds:
         for key in options:
             stats[key] = options[key]
         stats['mu_bern'] = options.get('mu_bern', (0.0,))
-        stats['mu_kl'] = options.get('mu_kl', (0.0,))
+        stats['mu_CCTND'] = options.get('mu_CCTND', 0.0)
         stats['lam'] = options.get('lam', None)
         stats['gam'] = options.get('gam', None)
         """

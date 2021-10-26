@@ -43,8 +43,8 @@ if BASE not in ('rfc', 'abc', 'mce'):
     print("No such base classifier")
     sys.exit(1)
     
-#if (BASE == 'rfc' and DATASET == 'Protein'):
-#    sys.exit(1)
+if (BASE == 'rfc' and DATASET == 'Protein'):
+    sys.exit(1)
 
 inpath  = 'data/'
 outpath = 'out/optimize/'+BASE+'/'
@@ -85,15 +85,15 @@ def _write_outfile(results):
                             bounds.get('TND', -1.0),
                             stats.get('TandemUB', -1.0), # TandemUB is the empirical bound of tandem risk; 4*TandemBound = TND
                             bounds.get('MU', -1.0),
-                            stats.get('ub_tr', -1.0),   # kl^{-1}+ of tandem risk in the C\muTND bound
-                            stats.get('lb_gr', -1.0),   # kl^{-1}- of gibbs risk in the C\muTND bound
-                            stats.get('muTandemUB', -1.0), # muTandemUB is the empirical bound for the numerator in Eq.(1)
+                            stats.get('ub_tr', -1.0),   # kl^{-1}+ of tandem risk in the CCTND bound
+                            stats.get('lb_gr', -1.0),   # kl^{-1} of gibbs risk in the CCTND bound
+                            stats.get('muTandemUB', -1.0), # numerator of Thm 12
                             bounds.get('MUBernstein', -1.0),
                             stats.get('mutandem_risk', -1.0),
                             stats.get('vartandem_risk', -1.0),
                             stats.get('KL', -1.0),
                             stats.get('varUB', -1.0), # varUB is the empirical bound of the variance (Corollary 17)
-                            stats.get('bernTandemUB', -1.0), # bernTandemUB is the empirical bound of the mu tandem risk (Corollary 20); bernTandemUB/(1/2-mu)**2 = MUBernstein
+                            stats.get('bernTandemUB', -1.0), # numerator of Thm 15
                             bl,
                             bg,
                             bm
@@ -117,8 +117,6 @@ for rep in range(REPS):
         print("####### Repeat = "+str(rep+1))
 
     rhos = []
-    # define the range of mu  for 'C$\mu$TND' and 'COTND'
-    mu_range = (-0.5, 0.5)
     
     # Prepare Data
     trainX,trainY,testX,testY = mldata.split(X,Y,0.8,random_state=RAND)
@@ -161,8 +159,8 @@ for rep in range(REPS):
     print("Optimizing lambda...")
     (_, rho, bl) = rf.optimize_rho('Lambda')
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_bern = (0.0,)
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    stats = rf.aggregate_stats(stats) # update rho-dependent stats
+    bounds, stats = rf.bounds(stats=stats)
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
     print('mv_risk', mv_risk)
@@ -172,35 +170,37 @@ for rep in range(REPS):
     print("Optimizing TND...")
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats) # update rho-dependent stats, and reinitialize mu_bern = (0.0,)
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    stats = rf.aggregate_stats(stats) # update rho-dependent stats
+    bounds, stats = rf.bounds(stats=stats)
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
     print('mv_risk', mv_risk)
 
-    """ Optimize C$\mu$TND with grid """
-    print("Optimizing C\mu TND...")
+    """ Optimize CCTND """
+    print("Optimizing CCTND...")
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MU', options={'optimizer':OPT})
-    print('bmu', bmu)
+    print('bmu ', bmu)
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats, options={'mu_kl':(bmu,)}) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mu
+    stats = rf.aggregate_stats(stats, options={'mu_CCTND':bmu}) # update rho-dependent stats
+    bounds, stats = rf.bounds(stats=stats) # compute the bound with the above mu
     res_MU = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk)
     
     
-    """ Optimize COTND with grid by Binary Search """
-    print("Optimizing COTND (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
+    """ Optimize CCPBB with grid by Binary Search """
+    # define the range of mu  for 'CCPBB'
+    mu_range = (-0.5, 0.5)
+    
+    print("Optimizing CCPBB (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
     (_, rho, bmu, bl, bg) = rf.optimize_rho('MUBernstein', options={'optimizer':OPT,'mu_bern':mu_range})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_bern':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats) # compute the bounds and the stats with the above mus
+    bounds, stats = rf.bounds(stats=stats) # compute the bound with the above parameters
     res_Bern = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)
     print('mv_risk', mv_risk)
      
-    # opt = (bound, rho, lam, gam, mu)
     if rep==0:
         # record the \rho distribution by all optimization methods
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])

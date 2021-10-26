@@ -7,7 +7,7 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp 
 
 # Calculate the CCTND bound
-def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
+def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_opt = 0., delta=0.05):
     #calculate the bound for a given mu
     def _bound(mu):
         # UpperBound_TandemRisk by inverse kl
@@ -28,29 +28,8 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
         bnd = muTandemUB / (0.5-mu)**2
         return (bnd, mu, ub_tr, eb_gr, muTandemUB)
     
-    if len(mu_range)==1:
-        # Already know the optimal \mu. Nothing to be optimized. 
-        opt_bnd, opt_mu, opt_ub_tr, opt_eb_gr, opt_muTandemUB = _bound(mu=mu_range[0])
-    else:
-        # Not important now, just to return something
-        opt_bnd, opt_mu, opt_ub_tr, opt_eb_gr, opt_muTandemUB = _bound(mu=0.)
-    """
-    ### No longer needed
-    if len(mu_range)==1:
-        # Already know the optimal \mu. Nothing to be optimized. 
-        mu_star = mu_range[0]
-    else:
-        # Don't know the optimal \mu 
-        # define the grids in (-0.5, 0.5)
-        number = 400
-        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-        #delta /= number # no need for union bound
-        _, mu_star, _, _, _ = _bound(mu=None)
-    
-    # find the closest mu_i in the grid
-    mu_star = mu_grid[np.argmin(abs(mu_grid-mu_star))]
-    opt_bnd, opt_mu, opt_ub_tr, opt_eb_gr, opt_muTandemUB = _bound(mu_star)
-    """
+    opt_bnd, opt_mu, opt_ub_tr, opt_eb_gr, opt_muTandemUB = _bound(mu=mu_opt)
+
     return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_ub_tr), min(1.0, opt_eb_gr), min(1.0, opt_muTandemUB))
 
 # Optimize over CCTND bound
@@ -60,7 +39,6 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_range = (-0.5, 0.5), delta=0.05):
 def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     
-    # calculate the optimized bound (over rho) for a given mu
     def _bound(mu): 
         return _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
 
@@ -69,7 +47,7 @@ def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, option
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
-def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.05, options=None):
+def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     mu_input = mu
@@ -80,11 +58,9 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
 
     def _gr(rho): # Compute Gibbs risk from gibbs_risk list and rho
         return np.average(gibbs_risks, weights=rho)
-    def _tnd(rho): # Compute disagreement from disagreements matrix and rho
+    def _tnd(rho): # Compute Tandem risk from tandem_risk matrix and rho
         return np.average(np.average(tandem_risks, weights=rho, axis=0), weights=rho)
     def _bound(rho, mu=None, lam=None, gam=None, pm=None): # Compute bound
-        #print('begin', mu, lam, gam, pm)
-        #assert mu is not None
         rho = softmax(rho)
         gr  = _gr(rho)
         tnd = _tnd(rho)
@@ -108,13 +84,14 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
             eb_gr = gr/(1-gam/2)+(KL+log(4*sqrt(n)/delta))/(gam*(1-gam/2)*n)
         else:
             warn('something went wrong')
-        """
+        
         ### optimize using the mu from the previous round
         nmu  = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
         bound  = (ub_tnd - 2*mu*eb_gr + mu**2) / (0.5-mu)**2
         return (bound, nmu, lam, gam)
-        """
         
+        
+        """
         ### using f+ and f-
         if mu is None:
             mu = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
@@ -123,25 +100,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         elif pm == 'minus':
             mu = min(-1e-9, mu)
         bound  = (ub_tnd - 2*mu*eb_gr + mu**2) / (0.5-mu)**2
-        #print('end', mu, lam, gam, pm)
-        return (bound, mu, lam, gam)
-        
 
-        """
-        ### No longer needed
-        if lam is None:
-            lam = 2.0 / (sqrt((2.0*n2*tnd)/(2*KL+log(4.0*sqrt(n2)/delta)) + 1) + 1)
-        if gam is None:
-            gam = min(2.0, sqrt( (2.0*KL+log(16.0*n/delta**2)) / (n*gr) ))
-
-        # Compute upper and lower bounds given lam and gam
-        ub_tnd = tnd/(1-lam/2)+(2*KL+log(4*sqrt(n2)/delta))/(lam*(1-lam/2)*n2)
-        lb_gr  = max(0.0, (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n))
-
-        # compute mu_star by ub_tnd and lb_gr if mu is not given
-        if mu is None:
-            mu = (0.5*lb_gr - ub_tnd)/(0.5-lb_gr)
-        bound  = (ub_tnd - 2*mu*lb_gr + mu**2) / (0.5-mu)**2
         return (bound, mu, lam, gam)
         """
 
@@ -153,7 +112,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
         else:
             a = 1.0/(1.0-lam/2.0)
             b = mu/(1.0-gam/2.0)
-            c = 1.0/(lam*(1.0-lam/2.0)*n2) -mu/(gam*(1.0-gam/2.0)*n)
+            c = 1.0/(lam*(1.0-lam/2.0)*n2) - mu/(gam*(1.0-gam/2.0)*n)
             
             
         Srho = softmax(rho)
@@ -181,12 +140,31 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
             #print('optimize optrho')
             return iRProp(lambda x: _gradient(x,mu,lam,gam), lambda x: _bound(x,mu,lam,gam)[0], rho,\
                     eps=eps,max_iterations=max_iterations)
-    """
+    
     ### optimize use mu from the previous round
     m = gibbs_risks.shape[0]
     pi  = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
     rho = uniform_distribution(m) if abc_pi is None else np.copy(abc_pi)
-    init_mu = 0.
+    mu = 0.
+
+    b, nmu, lam, gam  = _bound(rho, mu=mu)
+    bp = b+1
+    while abs(b-bp) > eps:
+        bp = b
+        # Optimize rho
+        nrho = _optRho(rho,mu,lam,gam)
+        
+        rho, mu = nrho, nmu
+        # Optimize lam, gam, mu
+        b, nmu, lam, gam = _bound(rho, mu=mu)
+        if b > bp:
+            b = bp
+            break
+        #rho, mu, lam, gam = nrho, nmu, nlam, ngam
+    
+    return (b, softmax(rho), mu, lam, gam)
+    
+    """
     b, mu, lam, gam  = _bound(rho, mu=init_mu)
     bp = b+1
     while abs(b-bp) > eps:
@@ -203,7 +181,7 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
     return (b, softmax(rho), mu, lam, gam)
     """
     
-    
+    """
     ### initialize with f_0
     ### then optimize using f+ and f-
     ### choose the best of these three
@@ -236,5 +214,5 @@ def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, abc_pi=None, delta=0.
     if f_minus[0] < opt_f[0]:
         opt_f = f_minus
     return opt_f
-    
+    """
     
