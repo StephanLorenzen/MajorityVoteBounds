@@ -13,7 +13,7 @@ optimize_mce:
 	./helpers/run_optimize.sh 7 mce bootstrap
 
 artificial:
-	cd artificialEvaluation; python bennett_bound.py; python oracle_mu_vs_TND.py 
+	cd ArtificialEvaluation; python PBBennett_vs_PBBernstein.py; python CCOracle_vs_TND.py 
 
 clean:
 	rm -f mvb
