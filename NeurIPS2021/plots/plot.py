@@ -229,7 +229,7 @@ def optimized_values_table(base="rfc"):
 
 optimized_values_table(base=BASE)
 
-# Prepare data for the table to compare tnd and Bern
+# NOT USED
 def TND_Ben_comparison_table(base='rfc'):
     path = "table/"+base+"/optimize/"
     if not os.path.isdir(path):
