@@ -68,28 +68,17 @@
       y dir=both,
       y explicit,
     },
-    MU/.style={
-      color=colMU,
-      fill=colMU,
+    CCTND/.style={
+      color=colCCTND,
+      fill=colCCTND,
       fill opacity=0.4,
       error bars/.cd,
       y dir=both,
       y explicit,
     },
-    MUgrid/.style={
-      color=colMU,
-      fill=colMU,
-      fill opacity=0.4,
-	postaction={
-		pattern=north east lines
-	},
-      error bars/.cd,
-      y dir=both,
-      y explicit,
-    },
-    Ben/.style={
-		color=colBen,
-		fill=colBen,
+    CCPBB/.style={
+		color=colCCPBB,
+		fill=colCCPBB,
 		fill opacity=0.4,
 		error bars/.cd,
 		y dir=both,
@@ -111,25 +100,16 @@ vertical sep=0pt,
 horizontal sep=0pt,
 },
   ]
-	\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\BOUND(\rho^*) / \TND(\rho^*_{\TND})$}]
-%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tbin};
-%\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tbin};
-\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tbin};
-%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tbin};
-\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tbin};
+\nextgroupplot[ymode=log, RiskPlot, RiskPlotBin, title=Binary, xticklabels from table={\tbin}{dataset}, ylabel={$\BOUND(\rho^*) / \TND(\rho^*_{\TND})$}]
+\addplot [CCTND]   table[x expr=\coordindex,y=cctnd_diff,y error minus=cctnd_q25,y error plus=cctnd_q75]{\tbin};
+\addplot [CCPBB]   table[x expr=\coordindex,y=ccpbb_diff,y error minus=ccpbb_q25,y error plus=ccpbb_q75]{\tbin};
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 
 \nextgroupplot[ymode=log,RiskPlot, RiskPlotMul, title=Multiclass, xticklabels from table={\tmul}{dataset}]
-%\addplot [Lam]   table[x expr=\coordindex,y=lam_diff,y error minus=lam_q25,y error plus=lam_q75]{\tmul};
-%\addlegendentry{$\rho_{\FO}^*$}
-%\addplot [MV]   table[x expr=\coordindex,y=tnd_diff,y error minus=tnd_q25,y error plus=tnd_q75]{\tmul};
-	%\addlegendentry{$\TND(\rho_{\TND}^*)$}
-\addplot [MU]   table[x expr=\coordindex,y=mu_diff,y error minus=mu_q25,y error plus=mu_q75]{\tmul};
-	\addlegendentry{$\MU(\rho_{\MU}^*)$}
-%\addplot [MUgrid]   table[x expr=\coordindex,y=mug_diff,y error minus=mug_q25,y error plus=mug_q75]{\tmul};
-%\addlegendentry{$\rho_{\MU-g}^*$}
-\addplot [Ben]   table[x expr=\coordindex,y=bern_diff,y error minus=bern_q25,y error plus=bern_q75]{\tmul};
-	\addlegendentry{$\Ben(\rho_{\Ben}^*)$}
+\addplot [CCTND]   table[x expr=\coordindex,y=cctnd_diff,y error minus=cctnd_q25,y error plus=cctnd_q75]{\tmul};
+\addlegendentry{$\CCTND(\rho_{\CCTND}^*)$}
+\addplot [CCPBB]   table[x expr=\coordindex,y=ccpbb_diff,y error minus=ccpbb_q25,y error plus=ccpbb_q75]{\tmul};
+\addlegendentry{$\CCPBB(\rho_{\CCPBB}^*)$}
 \addplot[line legend, sharp plot, mark=None, black, samples=2,domain=-10:10] {0.0};
 \end{groupplot}
 \end{tikzpicture}

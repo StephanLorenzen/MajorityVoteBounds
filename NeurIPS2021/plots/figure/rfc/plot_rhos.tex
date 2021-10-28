@@ -62,20 +62,13 @@
       color=colMV,
       fill=colMV,
     },
-    RhoMU/.style={
-      color=colMU,
-      fill=colMU,
+    RhoCCTND/.style={
+      color=colCCTND,
+      fill=colCCTND,
     },
-    RhoMUgrid/.style={
-      color=colMU,
-      fill=colMU,
-	postaction={
-        	pattern=north east lines
-    	}
-    },
-    RhoBen/.style={
-      color=colBen,
-      fill=colBen,
+    RhoCCPBB/.style={
+      color=colCCPBB,
+      fill=colCCPBB,
     },
   RiskYBin/.style={
       ymin=0,ymax=0.08,
@@ -108,21 +101,19 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
-\addlegendimage{ybar interval,color=colMU,fill}
-\addlegendentry{$\rho_{\MU}^*(h)$}
-\addlegendimage{ybar interval,color=colBen,fill}
-\addlegendentry{$\rho_{\Ben}^*(h)$}
+\addlegendimage{ybar interval,color=colCCTND,fill}
+\addlegendentry{$\rho_{\CCTND}^*(h)$}
+\addlegendimage{ybar interval,color=colCCPBB,fill}
+\addlegendentry{$\rho_{\CCPBB}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMU] table[x=h,y=rho_mu]{\opttable};
-%\nextgroupplot[RhoPlot, FixedY]
-%\addplot[RhoMUgrid] table[x=h,y=rho_mug]{\opttable};
+\addplot[RhoCCTND] table[x=h,y=rho_cctnd]{\opttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoBen] table[x=h,y=rho_bern]{\opttable};
+\addplot[RhoCCPBB] table[x=h,y=rho_ccpbb]{\opttable};
 \end{groupplot}
 
 
@@ -145,19 +136,19 @@ xlabel={$h$},
 \addlegendentry{$\rho_{\FO}^*(h)$}
 \addlegendimage{ybar interval,color=colMV,fill}
 \addlegendentry{$\rho_{\TND}^*(h)$}
-\addlegendimage{ybar interval,color=colMU,fill}
-\addlegendentry{$\rho_{\MU}^*(h)$}
-\addlegendimage{ybar interval,color=colBen,fill}
-\addlegendentry{$\rho_{\Ben}^*(h)$}
+\addlegendimage{ybar interval,color=colCCTND,fill}
+\addlegendentry{$\rho_{\CCTND}^*(h)$}
+\addlegendimage{ybar interval,color=colCCPBB,fill}
+\addlegendentry{$\rho_{\CCPBB}^*(h)$}
 
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoLam] table[x=h,y=rho_lam]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
 \addplot[RhoTND] table[x=h,y=rho_tnd]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoMU] table[x=h,y=rho_mu]{\popttable};
+\addplot[RhoCCTND] table[x=h,y=rho_mu]{\popttable};
 \nextgroupplot[RhoPlot, FixedY]
-\addplot[RhoBen] table[x=h,y=rho_bern]{\popttable};
+\addplot[RhoCCPBB] table[x=h,y=rho_bern]{\popttable};
 \end{groupplot}
 \end{tikzpicture}
 \end{document}
