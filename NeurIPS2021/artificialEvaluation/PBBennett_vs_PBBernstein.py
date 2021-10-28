@@ -57,7 +57,9 @@ var = np.logspace(-3.4, -0.4, npoints)
 axis_loss, axis_var = np.meshgrid(loss, var) # axis
 
 """ Calculate the bounds """
+## PAC-Bayes-Bennett bound
 PBBennett = np.zeros((npoints,npoints))
+## PAC-Bayes-Bernstein bound
 PBBernstein = np.zeros((npoints,npoints))
 
 for i in range(npoints):
@@ -80,10 +82,15 @@ def plot():
     'text.latex.preamble': r'\usepackage{amsfonts}'
     })
     
+    # plot the contourf
     plt.contourf(axis_loss, axis_var, PBBennett/PBBernstein, levels=25, cmap = "rainbow")
+    
+    # plot the bar
     cbar = plt.colorbar()
     cbar.ax.tick_params(labelsize=40)
     cbar.ax.locator_params(nbins=5)
+    
+    # plot title and labels
     plt.title('PB-Bennett/PB-Bernstein', fontsize=45)
     plt.xlabel(r"$\mathbb{E}_\rho[\hat{\tilde{L}}(h,S)] $", fontsize=45)
     plt.ylabel(r"$\mathbb{E}_{\rho}[\tilde\mathbb{V}(h)]$", fontsize=45)
@@ -91,6 +98,7 @@ def plot():
     plt.yticks(fontsize=42)
     plt.xscale("log")
     plt.yscale("log")
+    
     plt.tight_layout()
     plt.savefig('Ben_vs_Bern_'+str(n)+'.png')
 plot()
