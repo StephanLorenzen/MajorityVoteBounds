@@ -14,8 +14,8 @@ import random
 
 from . import util
 from .data import split
-from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, MU, optimizeMU, \
-    MUBernstein, optimizeMUBernstein
+from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, CCTND, optimizeCCTND, \
+    CCPBB, optimizeCCPBB
 from math import ceil, log
 
 
@@ -61,7 +61,7 @@ class MVBounds:
                 est.fit(X, Y)
             return None
 
-        # for estimators that are trained recursively. ex.AdaBoost
+        # for estimators that are trained recursively. ex.AdaBoost (NOT USED)
         elif self._sample_mode == 'boost':
             preds = []
             n = X.shape[0]
@@ -269,14 +269,20 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Best", "Uniform", "Lambda", "TND", "DIS", "MU", "MUBernstein", "AdaBoost"}:
+        if bound not in {"Best", "Uniform", "Lambda", "TND", "DIS", "CCTND", "CCPBB"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
             util.warn('Warning, stats: Missing data!')
             return None
 
-        if bound == 'Uniform':
+        if bound == 'Best':
+            risks, ns = self.risks(labeled_data, incl_oob)
+            risk = risks/ns
+            self._rho = np.zeros((self._actual_n_estimators,))
+            self._rho[np.argmin(risk)]=1.
+            return self._rho
+        elif bound == 'Uniform':
             self._rho = util.uniform_distribution(self._actual_n_estimators)
             return None
         elif bound == 'Lambda':
@@ -298,36 +304,30 @@ class MVBounds:
             (bound, rho, lam, gam) = optimizeDIS(risks / ns, dis / n2s, np.min(ns), np.min(n2s), options=options)
             self._rho = rho
             return (bound, rho, lam, gam)
-        elif bound == 'MU':
+        elif bound == 'CCTND':
             risks, ns = self.risks(labeled_data, incl_oob)
             tand, n2s = self.tandem_risks(labeled_data, incl_oob)
-            (bound, rho, mu, lam, gam) = optimizeMU(tand / n2s, risks / ns, np.min(ns), np.min(n2s),
+            (bound, rho, mu, lam, gam) = optimizeCCTND(tand / n2s, risks / ns, np.min(ns), np.min(n2s),
                                                     abc_pi=self._abc_pi, options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
-        elif bound == 'MUBernstein':
-            (bound, rho, mu, lam, gam) = optimizeMUBernstein(self, labeled_data, incl_oob, abc_pi=self._abc_pi,
+        elif bound == 'CCPBB':
+            (bound, rho, mu, lam, gam) = optimizeCCPBB(self, labeled_data, incl_oob, abc_pi=self._abc_pi,
                                                              options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
-        elif bound == 'Best':
-            risks, ns = self.risks(labeled_data, incl_oob)
-            risk = risks/ns
-            self._rho = np.zeros((self._actual_n_estimators,))
-            self._rho[np.argmin(risk)]=1.
-            return self._rho
-        else:  # Adaboost
+        else:  # Adaboost (NOT USED)
             if self._abc_pi is not None:
                 rho = np.copy(self._abc_pi)
                 self._rho = rho
                 return rho
             return None
 
-    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU').
+    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB').
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'MU', 'MUBernstein']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound == 'SH' and labeled_data == None and (stats == None or 'mv_risk' not in stats):
@@ -354,10 +354,10 @@ class MVBounds:
                 return TND(stats['tandem_risk'], stats['n2_min'], KL)
             elif bound == 'DIS':
                 return DIS(stats['gibbs_risk'], stats['u_disagreement'], stats['n_min'], stats['u_n2_min'], KL)
-            elif bound == 'MU':
-                return MU(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_CCTND'])
-            elif bound == 'MUBernstein':
-                return MUBernstein(self, labeled_data, incl_oob, KL, stats['mu_bern'], stats['lam'], stats['gam'])
+            elif bound == 'CCTND':
+                return CCTND(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_CCTND'])
+            elif bound == 'CCPBB':
+                return CCPBB(self, labeled_data, incl_oob, KL, stats['mu_CCPBB'], stats['lam'], stats['gam'])
             else:
                 return None
         else:
@@ -392,28 +392,8 @@ class MVBounds:
                     ulX = unlabeled_data if ulX is None else np.concat((ulX, unlabeled_data), axis=0)
                 dis, n2_min = self.disagreement(ulX, incl_oob)
                 return DIS(grisk, dis, n_min, n2_min, KL)
-            elif bound == 'MU':
-                # Store full OOB
-                full_OOB = self._OOB
-                # Estimate MU and reduce OOB
-                mu, self._OOB = self.estimate_mu()
-                # Estimate randomized risk and tandem risk (with reduced OOB)
-                grisk, n_min = self.gibbs_risk(labeled_data, incl_oob)
-                tand, n2_min = self.tandem_risk(labeled_data, incl_oob)
-                # Reset OOB
-                self._OOB = full_OOB
-                return MU(tand, grisk, n_min, n2_min, KL, mu_grid=[mu])
-            elif bound == 'MUBernstein':
-                mu = 0.0
-                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(mu, labeled_data, incl_oob)
-                return MUBernstein(mutandem_risk, vartandem_risk, n2, KL, mu)
-            elif bound == 'MUVarBernstein':
-                mu = 0.0
-                mutandem_risk, vartandem_risk, n2 = self.mutandem_risk(mu, labeled_data, incl_oob)
-                varMUBound, _ = muBernstein.varMUBernstein(vartandem_risk, n2, KL, mu)
-                return varMUBound
-
             else:
+                util.warn('NOT MAINTAINED')
                 return None
 
     # Compute all bounds, given relevant stats object or data
@@ -424,18 +404,17 @@ class MVBounds:
             stats = self.stats(labeled_data, unlabeled_data, incl_oob)
 
         results['PBkl'] = self.bound('PBkl', stats=stats)
-        (results['TND'], options['TandemUB']) = self.bound('TND', stats=stats)
+        results['TND'] = self.bound('TND', stats=stats)
         results['CTD'] = self.bound('CTD', stats=stats)
-        if incl_oob:
-            (results['MU'], options['mu_CCTND'], options['ub_tr'], options['lb_gr'], options['muTandemUB']) = self.bound('MU', stats=stats)
-            (results['MUBernstein'], options['mu_bern'], options['mutandem_risk'], options['vartandem_risk'], options['varUB'], options['bernTandemUB']) = self.bound('MUBernstein', stats=stats)
+        (results['CCTND'], options['ub_tr'], options['eb_gr']) = self.bound('CCTND', stats=stats)
+        (results['CCPBB'], options['mu_ccpbb'], options['mutandem_risk'], options['vartandem_risk'], options['ub_var'], options['ub_mutandem']) = self.bound('CCPBB', stats=stats)
 
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
-        # if self._classes.shape[0]==2:
-        #    results['C1']  = self.bound('C1', stats=stats)
-        #    results['C2']  = self.bound('C2', stats=stats)
-        #    results['DIS'] = self.bound('DIS', stats=stats)
+        if self._classes.shape[0]==2:
+            results['C1']  = self.bound('C1', stats=stats)
+            results['C2']  = self.bound('C2', stats=stats)
+            results['DIS'] = self.bound('DIS', stats=stats)
 
         stats = self.aggregate_stats(stats, options)
         return results, stats
@@ -453,35 +432,16 @@ class MVBounds:
         stats['tandem_risks'], stats['n2'] = self.tandem_risks(labeled_data, incl_oob)
         stats['tandem_risks'] /= stats['n2']
 
-        # dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
-        # stats['disagreements'] = dis/stats['n2']
-        # if unlabeled_data is not None:
-        #    udis, un2 = self.disagreements(unlabeled_data, False)
-        #    stats['u_n2'] = stats['n2']+un2
-        #    stats['u_disagreements'] = (dis+udis) / stats['u_n2']
-        # else:
-        #    stats['u_n2'] = stats['n2']
-        #    stats['u_disagreements'] = dis / stats['u_n2']
-
-        """
-        if incl_oob:
-            # Estimate MU and risks and tandem risks with [r]educed OOB
-            full_OOB = self._OOB
-            stats['mu'], self._OOB = self.estimate_mu()
-            stats['r_risks'], stats['r_n'] = self.risks(labeled_data, incl_oob)
-            stats['r_risks'] /= stats['r_n']
-
-            stats['r_tandem_risks'], stats['r_n2'] = self.tandem_risks(labeled_data, incl_oob)
-            stats['r_tandem_risks'] /= stats['r_n2']
-            # Reset OOB
-            self._OOB = full_OOB
-
+        dis, _ = self.disagreements(labeled_data[0] if labeled_data!=None else None, incl_oob)
+        stats['disagreements'] = dis/stats['n2']
+        
+        if unlabeled_data is not None:
+            udis, un2 = self.disagreements(unlabeled_data, False)
+            stats['u_n2'] = stats['n2']+un2
+            stats['u_disagreements'] = (dis+udis) / stats['u_n2']
         else:
-            # Set to non-reduced stats => should just give the tandem bound.
-            stats['mu'] = 0.0
-            stats['r_risks'], stats['r_n'] = stats['risks'], stats['n']
-            stats['r_tandem_risks'], stats['r_n2'] = stats['tandem_risks'], stats['n2']
-        """
+            stats['u_n2'] = stats['n2']
+            stats['u_disagreements'] = dis / stats['u_n2']
 
         return self.aggregate_stats(stats, options)
 
@@ -496,21 +456,21 @@ class MVBounds:
 
         stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0),
                                           weights=self._rho)
-        # stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
 
         pi = util.uniform_distribution(len(self._estimators)) if self._abc_pi is None else np.copy(self._abc_pi)
         stats['KL'] = util.kl(self._rho, pi)
 
         # Unlabeled
-        # stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
-        # stats['u_n2_min'] = np.min(stats['u_n2'])
+        stats['u_disagreement'] = np.average(np.average(stats['u_disagreements'], weights=self._rho, axis=0), weights=self._rho)
+        stats['u_n2_min'] = np.min(stats['u_n2'])
 
-        # for 'MUBernstein' bounds
+        # for CCTND & CCPBB bounds
         options = dict() if options is None else options
         for key in options:
             stats[key] = options[key]
-        stats['mu_bern'] = options.get('mu_bern', (0.0,))
+        stats['mu_CCPBB'] = options.get('mu_CCPBB', (0.0,))
         stats['mu_CCTND'] = options.get('mu_CCTND', 0.0)
         stats['lam'] = options.get('lam', None)
         stats['gam'] = options.get('gam', None)

@@ -8,38 +8,38 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp
 
 
-### Calculate the CCPBB bound
-def MUBernstein(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
+""" Calculate the CCPBB bound """
+def CCPBB(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
         mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
-        # Compute the bound for the variance
-        varUB, _ = _varBound_bound(vartandem_risk, n2, KL, mu, lam, delta1= delta/2.)
+        # Compute the empirical bound of the variance
+        ub_var, _ = _VAR_bound(vartandem_risk, n2, KL, mu, lam, delta1= delta/2.)
 
-        # Compute the bound for mu-tandem loss
-        bernTandemUB, _ = _muBennett_bound(mutandem_risk, varUB, n2, KL, mu, gam, delta1= delta/2., delta2= delta/2.)
+        # Compute the empirical bound of the mu-tandem loss
+        ub_mutandem, _ = _PBB_bound(mutandem_risk, ub_var, n2, KL, mu, gam, delta1= delta/2., delta2= delta/2.)
   
         # Compute the overall bound
-        bnd = bernTandemUB / (0.5-mu)**2
-        return (bnd, mu, mutandem_risk, vartandem_risk, varUB, bernTandemUB)
+        bnd = ub_mutandem / (0.5-mu)**2
+        return (bnd, mu, mutandem_risk, vartandem_risk, ub_var, ub_mutandem)
     
     if len(mu_range)==1:
         """ # Already know the optimal \mu in the grid. Nothing to be optimized. """
-        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = _bound(mu_range[0])
+        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_ub_var, opt_ub_mutandem = _bound(mu_range[0])
     else:
         """ # Don't know the optimal \mu """
         # define the grids in (-0.5, 0.5)
         number = 400
         mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
         #delta /= number
-        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_varUB, opt_bernTandemUB = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
+        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_ub_var, opt_ub_mutandem = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
     
-    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_varUB), min(1.0, opt_bernTandemUB))
+    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_ub_var), min(1.0, opt_ub_mutandem))
 
-# Compute the PAC-Bayes-Bennett for calculating the bound
-def _muBennett_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
+""" Implement of the PAC-Bayes-Bennett bound """
+def _PBB_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
 
@@ -90,8 +90,8 @@ def _muBennett_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.0
     
     return bound, gam_star
 
-# Compute the bound for the variance for calculating the bound
-def _varBound_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05):
+""" Implementation of Theorem 13 in NeurIPS 2021 """
+def _VAR_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
 
@@ -125,8 +125,8 @@ def _varBound_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.
 
     return varMuBound, lam_star
 
-# Compute the PAC-Bayes-Bennett for optimization
-def _muBennett_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
+""" Optimization of PAC-Bayes-Bennett """
+def _PBB_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
 
@@ -164,8 +164,8 @@ def _muBennett_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, 
     
     return bound, gam_star
 
-# Compute the bound for the variance for optimization
-def _varBound_opt(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
+""" Optimization of Theorem 13 in NeurIPS 2021 """
+def _VAR_opt(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
     # range factor
     Kmu = max(1-mu, 1-2*mu)
 
@@ -190,11 +190,12 @@ def _varBound_opt(vartandem_risk, n2, KL, mu=0.0, c1=1.05, delta1=0.05):
 
     return varMuBound, lam_star
 
-# Optimize MUBennett
-# options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
-#
-# Default for opt is iRProp
-def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
+"""
+Optimize CCPBB
+options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
+Default for opt is iRProp
+"""
+def optimizeCCPBB(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     
     # calculate the optimized bound (over rho) for a given mu
@@ -204,10 +205,10 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
         vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
         
         # Return the optimized (over rho) bound for a given mu
-        return _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
+        return _optimizeCCPBB(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
-    mu_range = options.get('mu_bern', (-0.5, 0.5))
+    mu_range = options.get('mu_ccpbb', (-0.5, 0.5))
     number = 400
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
     
@@ -215,8 +216,10 @@ def optimizeMUBernstein(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, 
 
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
-# optimize over rho for a fixed mu
-def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
+"""
+Optimize CCPBB for a fixed mu
+"""
+def _optimizeCCPBB(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     mu_input = mu
@@ -233,10 +236,10 @@ def _optimizeMUBernstein(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c
         vartandemrisk = np.average(np.average(vartandemrisks, weights=rho, axis=1), weights=rho)
 
         # Compute the bound for the true variance
-        varMuBound, lam = _varBound_opt(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
+        varMuBound, lam = _VAR_opt(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
         # Compute the bound of the muTandem loss by PAC-Bayes-Bennett
-        muTandemBound, gam = _muBennett_opt(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2.)
+        muTandemBound, gam = _PBB_opt(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2.)
 
         bound =  muTandemBound / ((0.5 - mu) ** 2)
 
@@ -308,7 +311,7 @@ def Binary_Search(func_bnd, mu_grid, obj):
     
     # in case the binary search fails, use grid search instead
     def _Grid(grid):
-        print("Use _MUBernsteinGrid")
+        print("Use _CCPBBGrid")
         opt_bnd = (2000.0,)
         for mu in grid:
             grid_bound = func_bnd(mu)

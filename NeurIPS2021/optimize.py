@@ -204,10 +204,10 @@ for rep in range(REPS):
     mu_range = (-0.5, 0.5)
     
     print("Optimizing CCPBB (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
-    (_, rho, bmu, bl, bg) = rf.optimize_rho('CCPBB', options={'optimizer':OPT,'mu_ccpbb':mu_range})
+    (_, rho, bmu, bl, bg) = rf.optimize_rho('CCPBB', options={'optimizer':OPT,'mu_CCPBB':mu_range})
     print('bmu ', bmu)
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats, options={'mu_ccpbb':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
+    stats = rf.aggregate_stats(stats, options={'mu_CCPBB':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bound with the above parameters
     res_ccpbb = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)

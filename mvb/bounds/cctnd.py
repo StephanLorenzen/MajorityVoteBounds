@@ -7,7 +7,7 @@ from .tools import solve_kl_sup, solve_kl_inf
 from ..util import warn, kl, uniform_distribution, random_distribution, softmax, GD, RProp, iRProp 
 
 # Calculate the CCTND bound
-def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_opt = 0., delta=0.05):
+def CCTND(tandem_risk, gibbs_risk, n, n2, KL, mu_opt = 0., delta=0.05):
     #calculate the bound for a given mu
     def _bound(mu):
         # UpperBound_TandemRisk by inverse kl
@@ -24,30 +24,30 @@ def MU(tandem_risk, gibbs_risk, n, n2, KL, mu_opt = 0., delta=0.05):
             eb_gr  = solve_kl_sup(gibbs_risk, rhs_gr)
 
         # bound
-        muTandemUB = ub_tr - 2*mu*eb_gr + mu**2
-        bnd = muTandemUB / (0.5-mu)**2
-        return (bnd, mu, ub_tr, eb_gr, muTandemUB)
+        ub_mutandem = ub_tr - 2*mu*eb_gr + mu**2
+        bnd = ub_mutandem / (0.5-mu)**2
+        return (bnd, ub_tr, eb_gr)
     
-    opt_bnd, opt_mu, opt_ub_tr, opt_eb_gr, opt_muTandemUB = _bound(mu=mu_opt)
+    opt_bnd, opt_ub_tr, opt_eb_gr = _bound(mu=mu_opt)
 
-    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_ub_tr), min(1.0, opt_eb_gr), min(1.0, opt_muTandemUB))
+    return (min(1.0, opt_bnd), min(1.0, opt_ub_tr), min(1.0, opt_eb_gr))
 
 # Optimize over CCTND bound
 # options = {'optimizer':<opt>, 'max_iterations':<iter>, 'eps':<eps>, 'learning_rate':<lr>}
 #
 # Default for opt is iRProp
-def optimizeMU(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, options=None):
+def optimizeCCTND(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     
     def _bound(mu): 
-        return _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
+        return _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=mu, delta=delta, abc_pi=abc_pi, options=options)
 
     opt_bnd, opt_rho, opt_mu, opt_lam, opt_gam = _bound(mu=None)
 
     return (min(opt_bnd, 1.0), opt_rho, opt_mu, opt_lam, opt_gam)
 
 # Same as above, but mu is now a single value. If None, mu will be optimized
-def _optimizeMU(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi=None, options=None):
+def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
     mu_input = mu
