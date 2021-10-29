@@ -454,8 +454,7 @@ class MVBounds:
         stats['gibbs_risk'] = np.average(stats['risks'], weights=self._rho)
         stats['n_min'] = np.min(stats['n'])
 
-        stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0),
-                                          weights=self._rho)
+        stats['tandem_risk'] = np.average(np.average(stats['tandem_risks'], weights=self._rho, axis=0), weights=self._rho)
         stats['disagreement'] = np.average(np.average(stats['disagreements'], weights=self._rho, axis=0), weights=self._rho)
         stats['n2_min'] = np.min(stats['n2'])
 

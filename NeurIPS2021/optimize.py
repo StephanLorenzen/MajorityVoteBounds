@@ -176,7 +176,6 @@ for rep in range(REPS):
     rhos.append(rho)
     print('mv_risk', mv_risk)
 
-        
     """ Optimize TND """
     print("Optimizing TND...")
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
@@ -198,11 +197,9 @@ for rep in range(REPS):
     rhos.append(rho)
     print('mv_risk', mv_risk)
     
-    
     """ Optimize CCPBB with grid by Binary Search """
     # define the range of mu  for 'CCPBB'
     mu_range = (-0.5, 0.5)
-    
     print("Optimizing CCPBB (using binary search) in ({}, {})".format(str(mu_range[0]), str(mu_range[1])))
     (_, rho, bmu, bl, bg) = rf.optimize_rho('CCPBB', options={'optimizer':OPT,'mu_CCPBB':mu_range})
     print('bmu ', bmu)
