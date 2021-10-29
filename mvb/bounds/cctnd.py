@@ -1,5 +1,5 @@
 #
-# Implements the MU bound.
+# Implements the CCTND bound.
 #
 import numpy as np
 from math import log, sqrt, exp
@@ -85,9 +85,10 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         else:
             warn('something went wrong')
         
-        ### optimize using the mu from the previous round
-        nmu  = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
+        # bound
         bound  = (ub_tnd - 2*mu*eb_gr + mu**2) / (0.5-mu)**2
+        # new mu for the next round
+        nmu  = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
         return (bound, nmu, lam, gam)
 
 
