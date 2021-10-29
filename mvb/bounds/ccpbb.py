@@ -62,7 +62,7 @@ def _PBB_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=
         # when the optimal gam is provided
         gam_star = gam
     else:
-        # when the optimal gam is not known ( when \rho=uniform )
+        # when the optimal gam is not known
         # find the optimal gam in the grid constructed by the original b
         b = (2*KL  + log(1/delta2))/n2
     
@@ -90,14 +90,14 @@ def _VAR_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05):
     k_lambda = ceil(log(k_lambda)/log(c1))
 
     a = vartandem_risk
-    # consider union bound over G_\lambda when calculating the bound
+    # consider union bound over \lambda when calculating the bound
     bprime = Kmu**2*(2*KL + log(k_lambda/delta1)) / (2*(n2-1))
     
     if lam is not None:
         # when the optimal lam is provided
         t_star = lam*n2/(2*(n2-1))
     else:
-        # when the optimal lam is not known ( when \rho=uniform )
+        # when the optimal lam is not known
         # find the optimal t_star in the grid constructed by the original b
         b = Kmu**2*(2*KL + log(1/delta1)) / (2*(n2-1))
 
@@ -226,13 +226,13 @@ def _optimizeCCPBB(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05
         mutandemrisk = np.average(np.average(mutandemrisks / n2s, weights=rho, axis=1), weights=rho)
         vartandemrisk = np.average(np.average(vartandemrisks, weights=rho, axis=1), weights=rho)
 
-        # Compute the bound for the true variance
-        varMuBound, lam = _VAR_opt(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
+        # Compute the empirical bound of the variance
+        ub_var, lam = _VAR_opt(vartandemrisk, np.min(n2s), KL, mu, c1=c1, delta1=delta / 2.)
 
-        # Compute the bound of the muTandem loss by PAC-Bayes-Bennett
-        muTandemBound, gam = _PBB_opt(mutandemrisk, varMuBound, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2.)
+        # Compute the empirical bound of the mu-tandem loss
+        ub_mutandem, gam = _PBB_opt(mutandemrisk, ub_var, np.min(n2s), KL, mu, c1=c1, c2=c2, delta1=delta / 2., delta2=delta / 2.)
 
-        bound =  muTandemBound / ((0.5 - mu) ** 2)
+        bound =  ub_mutandem / ((0.5 - mu) ** 2)
 
         return (bound, mu, lam, gam)
     
