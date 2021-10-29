@@ -9,7 +9,7 @@ from ..util import warn, kl, uniform_distribution, random_distribution, softmax,
 
 
 """ Calculate the CCPBB bound """
-def CCPBB(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=None, delta=0.05):   
+def CCPBB(MVBounds, data, incl_oob, KL, mu_opt = 0., lam=None, gam=None, delta=0.05):   
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
@@ -23,20 +23,11 @@ def CCPBB(MVBounds, data, incl_oob, KL, mu_range = (-0.5, 0.5), lam=None, gam=No
   
         # Compute the overall bound
         bnd = ub_mutandem / (0.5-mu)**2
-        return (bnd, mu, mutandem_risk, vartandem_risk, ub_var, ub_mutandem)
+        return (bnd, mutandem_risk, vartandem_risk, ub_var, ub_mutandem)
     
-    if len(mu_range)==1:
-        """ # Already know the optimal \mu in the grid. Nothing to be optimized. """
-        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_ub_var, opt_ub_mutandem = _bound(mu_range[0])
-    else:
-        """ # Don't know the optimal \mu """
-        # define the grids in (-0.5, 0.5)
-        number = 400
-        mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
-        #delta /= number
-        opt_bnd, opt_mu, opt_mutandem_risk, opt_vartandem_risk, opt_ub_var, opt_ub_mutandem = Binary_Search(lambda x: _bound(x), mu_grid, 'mu')
-    
-    return (min(1.0, opt_bnd), (opt_mu,) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_ub_var), min(1.0, opt_ub_mutandem))
+    opt_bnd, opt_mutandem_risk, opt_vartandem_risk, opt_ub_var, opt_ub_mutandem = _bound(mu_opt)
+
+    return (min(1.0, opt_bnd) , min(1.0, opt_mutandem_risk), min(1.0, opt_vartandem_risk), min(1.0, opt_ub_var), min(1.0, opt_ub_mutandem))
 
 """ Implement of the PAC-Bayes-Bennett bound """
 def _PBB_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=1.05, delta1=0.05, delta2=0.05):

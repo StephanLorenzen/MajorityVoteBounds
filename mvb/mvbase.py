@@ -407,7 +407,7 @@ class MVBounds:
         results['TND'] = self.bound('TND', stats=stats)
         results['CTD'] = self.bound('CTD', stats=stats)
         (results['CCTND'], options['ub_tr'], options['eb_gr']) = self.bound('CCTND', stats=stats)
-        (results['CCPBB'], options['mu_ccpbb'], options['mutandem_risk'], options['vartandem_risk'], options['ub_var'], options['ub_mutandem']) = self.bound('CCPBB', stats=stats)
+        (results['CCPBB'], options['mutandem_risk'], options['vartandem_risk'], options['ub_var'], options['ub_mutandem']) = self.bound('CCPBB', stats=stats)
 
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
