@@ -60,7 +60,7 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         return np.average(gibbs_risks, weights=rho)
     def _tnd(rho): # Compute Tandem risk from tandem_risk matrix and rho
         return np.average(np.average(tandem_risks, weights=rho, axis=0), weights=rho)
-    def _bound(rho, mu=None, lam=None, gam=None, pm=None): # Compute bound
+    def _bound(rho, mu=None, lam=None, gam=None): # Compute bound
         rho = softmax(rho)
         gr  = _gr(rho)
         tnd = _tnd(rho)
@@ -72,12 +72,12 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         ub_tnd = tnd/(1-lam/2)+(2*KL+log(4*sqrt(n2)/delta))/(lam*(1-lam/2)*n2)
         
         # empirical bound of Gibbs loss
-        if (mu is not None and mu>=0) or pm=='plus':
+        if (mu is not None and mu>=0):
             # take the lower bound
             if gam is None:
                 gam = min(2.0, sqrt( (2.0*KL+log(16.0*n/delta**2)) / (n*gr) ))
             eb_gr = max(0.0, (1-gam/2.0)*gr-(KL+log(4*sqrt(n)/delta))/(gam*n))
-        elif (mu is not None and mu<0) or pm=='minus':
+        elif (mu is not None and mu<0):
             # take the upper bound
             if gam is None:
                 gam = 2.0 / (sqrt((2.0*n*gr)/(KL+log(4.0*sqrt(n)/delta)) + 1) + 1)
@@ -89,20 +89,7 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         nmu  = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
         bound  = (ub_tnd - 2*mu*eb_gr + mu**2) / (0.5-mu)**2
         return (bound, nmu, lam, gam)
-        
-        
-        """
-        ### using f+ and f-
-        if mu is None:
-            mu = (0.5*eb_gr - ub_tnd)/(0.5-eb_gr)
-        if pm == 'plus':
-            mu = max(0.0, mu)
-        elif pm == 'minus':
-            mu = min(-1e-9, mu)
-        bound  = (ub_tnd - 2*mu*eb_gr + mu**2) / (0.5-mu)**2
 
-        return (bound, mu, lam, gam)
-        """
 
     def _gradient(rho, mu, lam, gam):
         if mu >= 0:
@@ -160,59 +147,6 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         if b > bp:
             b = bp
             break
-        #rho, mu, lam, gam = nrho, nmu, nlam, ngam
     
     return (b, softmax(rho), mu, lam, gam)
-    
-    """
-    b, mu, lam, gam  = _bound(rho, mu=init_mu)
-    bp = b+1
-    while abs(b-bp) > eps:
-        bp = b
-        # Optimize rho
-        nrho = _optRho(rho,mu,lam,gam)
-        # Optimize lam + gam ( also mu if mu_input is None; otherwise, mu is fixed to be mu_input)
-        b, nmu, nlam, ngam = _bound(nrho, mu=mu)
-        if b > bp:
-            b = bp
-            break
-        rho, mu, lam, gam = nrho, nmu, nlam, ngam
-    
-    return (b, softmax(rho), mu, lam, gam)
-    """
-    
-    """
-    ### initialize with f_0
-    ### then optimize using f+ and f-
-    ### choose the best of these three
-    def f_half(mu_input=None, pm=None, rho_init=None): #pm = 'plus' or 'minus'
-        rho = uniform_distribution(m) if rho_init is None else rho_init
-        b, mu, lam, gam  = _bound(rho, mu=mu_input, pm=pm)
-        bp = b+1
-        while abs(b-bp) > eps:
-            bp = b
-            # Optimize rho
-            nrho = _optRho(rho,mu,lam,gam)
-            # Optimize lam + gam ( also mu if the mu_input is None; otherwise, mu is fixed to be mu_input)
-            b, nmu, nlam, ngam = _bound(nrho, mu=mu_input, pm=pm)
-            if b > bp:
-                b = bp
-                break
-            rho, mu, lam, gam = nrho, nmu, nlam, ngam
-        return (b, softmax(rho), mu, lam, gam)
-    
-    m = gibbs_risks.shape[0]
-    pi = uniform_distribution(m)
-    
-    f_0 = f_half(mu_input=0.)
-    f_plus = f_half(mu_input=None, pm='plus', rho_init=f_0[1])
-    f_minus = f_half(mu_input=None, pm='minus', rho_init=f_0[1])
-    
-    opt_f = f_0
-    if f_plus[0] <  opt_f[0]:
-        opt_f = f_plus
-    if f_minus[0] < opt_f[0]:
-        opt_f = f_minus
-    return opt_f
-    """
     
