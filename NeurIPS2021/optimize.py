@@ -207,7 +207,7 @@ for rep in range(REPS):
     (_, rho, bmu, bl, bg) = rf.optimize_rho('CCPBB', options={'optimizer':OPT,'mu_CCPBB':mu_range})
     print('bmu ', bmu)
     _, mv_risk = rf.predict(testX,testY)
-    stats = rf.aggregate_stats(stats, options={'mu_CCPBB':(bmu,), 'lam':bl, 'gam': bg}) # update rho-dependent stats
+    stats = rf.aggregate_stats(stats, options={'mu_CCPBB':bmu, 'lam':bl, 'gam': bg}) # update rho-dependent stats
     bounds, stats = rf.bounds(stats=stats) # compute the bound with the above parameters
     res_ccpbb = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)

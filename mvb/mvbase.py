@@ -470,7 +470,7 @@ class MVBounds:
         options = dict() if options is None else options
         for key in options:
             stats[key] = options[key]
-        stats['mu_CCPBB'] = options.get('mu_CCPBB', (0.0,))
+        stats['mu_CCPBB'] = options.get('mu_CCPBB', 0.0)
         stats['mu_CCTND'] = options.get('mu_CCTND', 0.0)
         stats['lam'] = options.get('lam', None)
         stats['gam'] = options.get('gam', None)
