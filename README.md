@@ -14,6 +14,7 @@ Furthermore, the sub-module `mvb.data` can be used for reading data, while funct
 Two directories with experiments are included in the repository:
 * **NeurIPS2021** provides the experiments of [1].
 * **NeurIPS2020** provides the experiments of [2].
+
 Each directory contains a README with a description of how to run the experiments of the given paper, including downloading of data from various sources [6,7,8].
 
 ## Basic usage
