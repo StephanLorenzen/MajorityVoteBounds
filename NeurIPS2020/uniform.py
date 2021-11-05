@@ -39,10 +39,10 @@ if not os.path.exists(outpath):
 def _write_outfile(results):
     prec = 5
     with open(outpath+DATASET+'-'+str(M)+'-'+str(SMODE)+'.csv', 'w') as f:
-        f.write('repeat;n_train;n_test;d;c;mv_risk;gibbs;n_min;disagreement;disagreement_t;tandem_risk;n2_min;n2_min_t;r_gibbs;r_n_min;r_tandem_risk;r_n2_min;mu;pbkl;c1;c2;tnd;ctd;dis;dis_t;mub;sh;best_tree;worst_tree\n')
+        f.write('repeat;n_train;n_test;d;c;mv_risk;gibbs;n_min;disagreement;disagreement_t;tandem_risk;n2_min;n2_min_t;pbkl;c1;c2;tnd;ctd;dis;dis_t;sh;best_tree;worst_tree\n')
         for (rep, risk_mv, n, bounds, stats) in results:
             f.write(str(rep+1)+';'+str(n[0])+';'+str(n[1])+';'+str(n[2])+';'+str(n[3])+';'+
-                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(24)])+'\n')
+                    (';'.join(['{'+str(i)+':.'+str(prec)+'f}' for i in range(18)])+'\n')
                     .format(risk_mv,
                         stats['gibbs_risk'],
                         stats['n_min'],
@@ -51,11 +51,6 @@ def _write_outfile(results):
                         stats['tandem_risk'],
                         stats['n2_min'],
                         stats['u_n2_min'],
-                        stats['r_gibbs_risk'],
-                        stats['r_n_min'],
-                        stats['r_tandem_risk'],
-                        stats['r_n2_min'],
-                        stats['mu'],
                         bounds['PBkl'],
                         bounds.get('C1', -1.0),
                         bounds.get('C2', -1.0),
@@ -63,7 +58,6 @@ def _write_outfile(results):
                         bounds['CTD'],
                         bounds.get('DIS',-1.0),
                         bounds.get('DIS-T',-1.0),
-                        bounds.get('MU',-1.0),
                         bounds.get('SH',-1.0),
                         np.min(stats['risks']),
                         np.max(stats['risks']))
@@ -90,7 +84,7 @@ for rep in range(REPS):
 
     print("Computing bounds...")
     stats  = rf.stats(unlabeled_data=X)
-    bounds = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats)
     results.append((rep, mv_risk, n, bounds, stats))
     
 _write_outfile(results)

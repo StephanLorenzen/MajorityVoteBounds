@@ -94,7 +94,7 @@ for rep in range(REPS):
     _, mv_risk = rf.predict(testX,testY)
     stats  = rf.stats()
     
-    bounds = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats)
     res_unf = (mv_risk, stats, bounds, -1, -1)
         
     # Optimize Lambda
@@ -102,7 +102,7 @@ for rep in range(REPS):
     (_, rho, bl) = rf.optimize_rho('Lambda')
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats)
-    bounds = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats)
     res_lam = (mv_risk, stats, bounds, bl, -1)
     rhos.append(rho)
         
@@ -111,7 +111,7 @@ for rep in range(REPS):
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats)
-    bounds = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats)
     res_mv2 = (mv_risk, stats, bounds, bl, -1)
     rhos.append(rho)
 
@@ -121,7 +121,7 @@ for rep in range(REPS):
         (_, rho, bl, bg) = rf.optimize_rho('DIS',options={'optimizer':OPT})
         _, mv_risk = rf.predict(testX,testY)
         stats = rf.aggregate_stats(stats)
-        bounds = rf.bounds(stats=stats)
+        bounds, stats = rf.bounds(stats=stats)
         res_mv2u = (mv_risk, stats, bounds, bl, bg)
         rhos.append(rho)
     else:

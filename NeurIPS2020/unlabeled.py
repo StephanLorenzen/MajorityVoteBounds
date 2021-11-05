@@ -79,7 +79,7 @@ for rep in range(REPS):
     
     print("Computing bounds...")
     stats  = rf.stats(unlabeled_data=ulX)
-    bounds = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats)
     results.append((rep, mv_risk, n, bounds, stats))
     
 _write_outfile(results)
