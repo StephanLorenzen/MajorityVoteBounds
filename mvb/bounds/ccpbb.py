@@ -35,17 +35,16 @@ def _PBB_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=
     Kmu = max(1-mu, 1-2*mu)
 
     def _var_coeff(gam):
-        return (e**((1-mu)**2*gam)-(1-mu)**2*gam-1) / (gam*(1-mu)**4)
+        return (e**(Kmu*gam)-Kmu*gam-1) / (gam*Kmu**2)
 
     # compute gamma_min
-    c_min = 1/e * (4*(1-mu)**4/(n2*Kmu**2) * log(1/delta2) - 1)     
-    gam_min = (1. + lambertw(c_min, k=0).real)/(1-mu)**2
+    c_min = 1/e * (4*Kmu**2/(n2*Kmu**2) * log(1/delta2) - 1)     
+    gam_min = (1. + lambertw(c_min, k=0).real)/Kmu
     
     # compute gamma_max
-    Ubar = 2*Kmu**2*log(1/delta1)/(n2-1)
-    alpha = 1./ (1 + (1-mu)**4/Ubar)
-    c_max = -alpha * e**(-alpha)
-    gam_max = - (lambertw(c_max, k=-1).real +alpha)/(1-mu)**2
+    Vmin = 2*Kmu**2*log(1/delta1)/(n2-1)
+    alpha = 1./ (1 + Kmu**2/Vmin)
+    gam_max = - (lambertw(-alpha * e**(-alpha), k=-1).real +alpha)/Kmu
     
     # compute k_gamma
     k_gamma = ceil(log(gam_max/gam_min)/log(c2))
@@ -55,29 +54,29 @@ def _PBB_bound(mutandem_risk, varMuBound, n2, KL, mu=0.0, gam=None, c1=1.05, c2=
     k_lambda = ceil(log(k_lambda)/log(c1))
 
     # E[varMuBound]<=Kmu^2/4
-    a = min(varMuBound, Kmu**2/4)
-    bprime = (2*KL  + log(k_gamma*k_lambda/delta2))/n2
+    var = min(varMuBound, Kmu**2/4)
+    comp = (2*KL  + log(k_gamma*k_lambda/delta2))/n2
     
     if gam is not None:
         # when the optimal gam is provided
         gam_star = gam
     else:
         # when the optimal gam is not known
-        # find the optimal gam in the grid constructed by the original b
-        b = (2*KL  + log(1/delta2))/n2
+        # find the optimal gam in the grid constructed by the original comp
+        comp_origin = (2*KL  + log(1/delta2))/n2
     
         # construct the grid
         base = gam_min
         gam_grid = np.array([c2**i * base for i in range(k_gamma)])
         
         # compute gam_star
-        c = 1/e * ((1-mu)**4*b/a - 1)
-        gam_star = (1. + lambertw(c, k=0).real)/(1-mu)**2
+        gam_star = 1/e * (Kmu**2*comp_origin/var - 1)
+        gam_star = (1. + lambertw(gam_star, k=0).real)/Kmu
         
         # find the closest gam_star in the grid to calculate the bound
         gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
         
-    bound = mutandem_risk +  _var_coeff(gam_star) * a + bprime / gam_star
+    bound = mutandem_risk +  _var_coeff(gam_star) * var + comp / gam_star
     
     return bound, gam_star
 
@@ -89,29 +88,29 @@ def _VAR_bound(vartandem_risk, n2, KL, mu=0.0, lam=None, c1=1.05, delta1=0.05):
     k_lambda  = 0.5 * sqrt( (n2-1)/log(1/delta1)+1 ) + 0.5
     k_lambda = ceil(log(k_lambda)/log(c1))
 
-    a = vartandem_risk
+    var = vartandem_risk
     # consider union bound over \lambda when calculating the bound
-    bprime = Kmu**2*(2*KL + log(k_lambda/delta1)) / (2*(n2-1))
+    comp = Kmu**2*(2*KL + log(k_lambda/delta1)) / (2*(n2-1))
     
     if lam is not None:
         # when the optimal lam is provided
         t_star = lam*n2/(2*(n2-1))
     else:
         # when the optimal lam is not known
-        # find the optimal t_star in the grid constructed by the original b
-        b = Kmu**2*(2*KL + log(1/delta1)) / (2*(n2-1))
+        # find the optimal t_star in the grid constructed by the original comp
+        comp_origin = Kmu**2*(2*KL + log(1/delta1)) / (2*(n2-1))
 
         # construct the grid for t = lam*n2/(2*(n2-1))
         base = 1./(sqrt( (n2-1)/log(1/delta1)+1 ) + 1)
         t_grid = np.array([c1**i * base for i in range(k_lambda)])
         
         # compute t_star
-        t_star = 1./ (sqrt(a/b+1)+1 )
+        t_star = 1./ (sqrt(var/comp_origin+1)+1 )
         
         # find the closest t_star in the grid to calculate the bound
         t_star = t_grid[np.argmin(abs(t_grid-t_star))]
 
-    varMuBound = a / (1 - t_star) +  bprime / (t_star * (1 - t_star))
+    varMuBound = var / (1 - t_star) +  comp / (t_star * (1 - t_star))
     lam_star = 2*(n2-1)*t_star/n2
 
     return varMuBound, lam_star
@@ -122,17 +121,16 @@ def _PBB_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1
     Kmu = max(1-mu, 1-2*mu)
 
     def _var_coeff(gam):
-        return (e**((1-mu)**2*gam)-(1-mu)**2*gam-1) / (gam*(1-mu)**4)
+        return (e**(Kmu*gam)-Kmu*gam-1) / (gam*Kmu**2)
 
     # compute gamma_min
-    c_min = 1/e * (4*(1-mu)**4/(n2*Kmu**2) * log(1/delta2) - 1)     
-    gam_min = (1. + lambertw(c_min, k=0).real)/(1-mu)**2
+    c_min = 1/e * (4*Kmu**2/(n2*Kmu**2) * log(1/delta2) - 1)     
+    gam_min = (1. + lambertw(c_min, k=0).real)/Kmu
     
     # compute gamma_max
-    Ubar = 2*Kmu**2*log(1/delta1)/(n2-1)
-    alpha = 1./ (1 + (1-mu)**4/Ubar)
-    c_max = -alpha * e**(-alpha)
-    gam_max = - (lambertw(c_max, k=-1).real +alpha)/(1-mu)**2
+    Vmin = 2*Kmu**2*log(1/delta1)/(n2-1)
+    alpha = 1./ (1 + Kmu**2/Vmin)
+    gam_max = - (lambertw(-alpha * e**(-alpha), k=-1).real +alpha)/Kmu
     
     # computer k_gamma
     k_gamma = ceil(log(gam_max/gam_min)/log(c2))
@@ -142,16 +140,16 @@ def _PBB_opt(mutandem_risk, varMuBound, n2, KL, mu=0.0, c1=1.05, c2=1.05, delta1
     gam_grid = np.array([c2**i * base for i in range(k_gamma)])
 
     # E[varMuBound]<=Kmu^2/4
-    a = min(varMuBound, Kmu**2/4)
-    b = (2*KL  + log(1/delta2))/n2
+    var = min(varMuBound, Kmu**2/4)
+    comp = (2*KL  + log(1/delta2))/n2
     
     # compute gam_star
-    c = 1/e * ((1-mu)**4*b/a - 1)
-    gam_star = (1. + lambertw(c, k=0).real)/(1-mu)**2
+    gam_star = 1/e * ((1-mu)**4*comp/var - 1)
+    gam_star = (1. + lambertw(gam_star, k=0).real)/Kmu
     
     # find the closest gam_star in the grid to calculate the bound
     gam_star = gam_grid[np.argmin(abs(gam_grid-gam_star))]
-    bound = mutandem_risk +  _var_coeff(gam_star) * a + b / gam_star
+    bound = mutandem_risk +  _var_coeff(gam_star) * var + comp / gam_star
     
     return bound, gam_star
 
@@ -241,10 +239,10 @@ def _optimizeCCPBB(mutandemrisks, vartandemrisks, n2s, mu=None, c1=1.05, c2=1.05
         n2 = np.min(n2s)
         # range factor
         Kmu = max(1 - mu, 1 - 2 * mu)
-        phi = e**((1-mu)**2*gam)-(1-mu)**2*gam-1
+        phi = e**(Kmu*gam)-Kmu*gam-1
         
-        a = phi/((1-mu)**4*gam) / (1 - n2*lam/(2*(n2-1)))
-        b = 1/(gam*n2) + phi/((1-mu)**4*gam) * Kmu**2 / (n2*lam*(1-n2*lam/(2*(n2-1))))
+        a = phi/(Kmu**2*gam) / (1 - n2*lam/(2*(n2-1)))
+        b = 1/(gam*n2) + phi/(Kmu**2*gam) * Kmu**2 / (n2*lam*(1-n2*lam/(2*(n2-1))))
 
         Srho = softmax(rho)
         # D_jS_i = S_i(1[i==j]-S_j)
