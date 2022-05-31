@@ -13,7 +13,7 @@ def CCPBB(MVBounds, data, incl_oob, KL, mu_opt = 0., lam=None, gam=None, delta=0
     # calculate the bound for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
-        mutandem_risk, vartandem_risk, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
+        mutandem_risk, _, _, vartandem_risk, _, n2 = MVBounds.mutandem_risk(mu, data, incl_oob)
 
         # Compute the empirical bound of the variance
         ub_var, _ = _VAR_bound(vartandem_risk, n2, KL, mu, lam, delta1= delta/2.)
@@ -190,14 +190,14 @@ def optimizeCCPBB(MVBounds, data, incl_oob, c1=1.05, c2=1.05, delta=0.05, abc_pi
     # calculate the optimized bound (over rho) for a given mu
     def _bound(mu):
         # Compute the quantities depend on mu
-        mutandemrisks, musquaretandem_risks, n2 = MVBounds.mutandem_risks(mu, data, incl_oob)
+        mutandemrisks, _, _, musquaretandem_risks, n2 = MVBounds.mutandem_risks(mu, data, incl_oob)
         vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutandemrisks / n2))
         
         # Return the optimized (over rho) bound for a given mu
         return _optimizeCCPBB(mutandemrisks, vartandemrisks, n2, mu=mu, c1=c1, c2=c2, delta=delta, abc_pi=abc_pi, options=options)
     
     # define the number of grids
-    mu_range = options.get('mu_ccpbb', (-0.5, 0.5))
+    mu_range = options.get('mu_CCPBB', (-0.5, 0.5))
     number = 400
     mu_grid = np.array([(mu_range[0]+(mu_range[1]-mu_range[0])/number * i) for i in range(number)])
     

@@ -171,7 +171,7 @@ for rep in range(REPS):
     (_, rho, bl) = rf.optimize_rho('Lambda')
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats, spec_bound='PBkl')
     res_lam = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
     print('mv_risk', mv_risk)
@@ -181,10 +181,10 @@ for rep in range(REPS):
     (_, rho, bl) = rf.optimize_rho('TND', options={'optimizer':OPT})
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats)
+    bounds, stats = rf.bounds(stats=stats, spec_bound='TND')
     res_tnd = (mv_risk, stats, bounds, bl, -1, -1)
     rhos.append(rho)
-    print('mv_risk', mv_risk)
+    print('mv_risk', mv_risk, 'bound', bounds.get('TND', -1.0))
 
     """ Optimize CCTND """
     print("Optimizing CCTND...")
@@ -192,10 +192,10 @@ for rep in range(REPS):
     print('bmu ', bmu)
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_CCTND':bmu}) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats) # compute the CCTND bound with bmu
+    bounds, stats = rf.bounds(stats=stats, spec_bound='CCTND') # compute the CCTND bound with bmu
     res_cctnd = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)
-    print('mv_risk', mv_risk)
+    print('mv_risk', mv_risk, 'bound', bounds.get('CCTND', -1.0))
     
     """ Optimize CCPBB with grid by Binary Search """
     # define the range of mu  for 'CCPBB'
@@ -205,11 +205,11 @@ for rep in range(REPS):
     print('bmu ', bmu)
     _, mv_risk = rf.predict(testX,testY)
     stats = rf.aggregate_stats(stats, options={'mu_CCPBB':bmu, 'lam':bl, 'gam': bg}) # update rho-dependent stats
-    bounds, stats = rf.bounds(stats=stats) # compute the bound with the above parameters
+    bounds, stats = rf.bounds(stats=stats, spec_bound='CCPBB') # compute the bound with the above parameters
     res_ccpbb = (mv_risk, stats, bounds, bl, bg, bmu)
     rhos.append(rho)
-    print('mv_risk', mv_risk)
-     
+    print('mv_risk', mv_risk, 'bound', bounds.get('CCPBB', -1.0))
+    
     if rep==0:
         # record the \rho distribution by all optimization methods
         _write_dist_file('rho-'+DATASET, rhos, stats['risks'])

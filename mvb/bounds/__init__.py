@@ -5,4 +5,6 @@ from .mv import TND, optimizeTND, DIS, optimizeDIS, CTD
 from .pbkl import PBkl
 from .cctnd import CCTND, optimizeCCTND
 from .ccpbb import CCPBB, optimizeCCPBB
+from .ccpbub import CCPBUB, optimizeCCPBUB
+from .ccpbskl import CCPBSkl, optimizeCCPBSkl
 from .sh import SH

@@ -15,7 +15,7 @@ import random
 from . import util
 from .data import split
 from .bounds import SH, PBkl, optimizeLamb, C1, C2, CTD, TND, optimizeTND, DIS, optimizeDIS, CCTND, optimizeCCTND, \
-    CCPBB, optimizeCCPBB
+    CCPBB, optimizeCCPBB, CCPBUB, optimizeCCPBUB, CCPBSkl, optimizeCCPBSkl
 from math import ceil, log
 
 
@@ -269,7 +269,7 @@ class MVBounds:
 
     # Optimizes the weights.
     def optimize_rho(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
-        if bound not in {"Best", "Uniform", "Lambda", "TND", "DIS", "CCTND", "CCPBB"}:
+        if bound not in {"Best", "Uniform", "Lambda", "TND", "DIS", "CCTND", "CCPBB", "CCPBUB", "CCPBSkl"}:
             util.warn('Warning, optimize_rho: unknown bound!')
             return None
         if labeled_data is None and not incl_oob:
@@ -316,6 +316,16 @@ class MVBounds:
                                                              options=options)
             self._rho = rho
             return (bound, rho, mu, lam, gam)
+        elif bound == 'CCPBUB':
+            (bound, rho, mu, gam) = optimizeCCPBUB(self, labeled_data, incl_oob, abc_pi=self._abc_pi,
+                                                             options=options)
+            self._rho = rho
+            return (bound, rho, mu, gam)
+        elif bound == 'CCPBSkl':
+            (bound, rho, mu, lam, gam) = optimizeCCPBSkl(self, labeled_data, incl_oob, abc_pi=self._abc_pi,
+                                                             options=options)
+            self._rho = rho
+            return (bound, rho, mu, lam, gam)
         else:  # Adaboost (NOT USED)
             if self._abc_pi is not None:
                 rho = np.copy(self._abc_pi)
@@ -323,11 +333,11 @@ class MVBounds:
                 return rho
             return None
 
-    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB').
+    # Computes the given bound ('SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB', 'CCPBUB', 'CCPBSkl').
     # A stats object or the relevant data must be given as input (unless classifier trained
     # with bagging, in which case this data can be used).
     def bound(self, bound, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
-        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB']:
+        if bound not in ['SH', 'PBkl', 'C1', 'C2', 'CTD', 'TND', 'DIS', 'CCTND', 'CCPBB', 'CCPBUB', 'CCPBSkl']:
             util.warn('Warning, MVBase.bound: Unknown bound!')
             return 1.0
         elif bound == 'SH' and labeled_data == None and (stats == None or 'mv_risk' not in stats):
@@ -358,6 +368,10 @@ class MVBounds:
                 return CCTND(stats['tandem_risk'], stats['gibbs_risk'], stats['n_min'], stats['n2_min'], KL, stats['mu_CCTND'])
             elif bound == 'CCPBB':
                 return CCPBB(self, labeled_data, incl_oob, KL, stats['mu_CCPBB'], stats['lam'], stats['gam'])
+            elif bound == 'CCPBUB':
+                return CCPBUB(self, labeled_data, incl_oob, KL, stats['mu_CCPBUB'], stats['gam'])
+            elif bound == 'CCPBSkl':
+                return CCPBSkl(self, labeled_data, incl_oob, KL, stats['mu_CCPBSkl'])
             else:
                 return None
         else:
@@ -397,18 +411,27 @@ class MVBounds:
                 return None
 
     # Compute all bounds, given relevant stats object or data
-    def bounds(self, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None):
+    def bounds(self, labeled_data=None, unlabeled_data=None, incl_oob=True, stats=None, spec_bound=None):
         results = dict()
         options = dict()
         if stats is None:
             stats = self.stats(labeled_data, unlabeled_data, incl_oob)
-
-        results['PBkl'] = self.bound('PBkl', stats=stats)
-        results['TND'] = self.bound('TND', stats=stats)
-        results['CTD'] = self.bound('CTD', stats=stats)
-        (results['CCTND'], options['ub_tr'], options['eb_gr']) = self.bound('CCTND', stats=stats)
-        (results['CCPBB'], options['mutandem_risk'], options['vartandem_risk'], options['ub_var'], options['ub_mutandem']) = self.bound('CCPBB', stats=stats)
-
+        
+        if (spec_bound is None or spec_bound == 'PBkl'):
+            results['PBkl'] = self.bound('PBkl', stats=stats)
+        if (spec_bound is None or spec_bound == 'TND'):
+            results['TND'] = self.bound('TND', stats=stats)
+        if (spec_bound is None or spec_bound == 'CTD'):
+            results['CTD'] = self.bound('CTD', stats=stats)
+        if (spec_bound is None or spec_bound == 'CCTND'):
+            (results['CCTND'], options['ub_tr'], options['eb_gr']) = self.bound('CCTND', stats=stats)
+        if (spec_bound is None or spec_bound == 'CCPBB'):
+            (results['CCPBB'], options['mutandem_risk'], options['vartandem_risk'], options['ub_var'], options['ub_mutandem']) = self.bound('CCPBB', stats=stats)
+        if (spec_bound is None or spec_bound == 'CCPBUB'):
+            (results['CCPBUB'], options['mutandem_risk'], options['muSQtandem_risk'], options['ub_mutandem']) = self.bound('CCPBUB', stats=stats)
+        if (spec_bound is None or spec_bound == 'CCPBSkl'):
+            (results['CCPBSkl'], options['mutandem_risk_P'], options['mutandem_risk_M'], options['ub_mutandem']) = self.bound('CCPBSkl', stats=stats)
+        
         if labeled_data is not None or (stats is not None and 'mv_risk' in stats):
             results['SH'] = self.bound('SH', stats=stats)
         if self._classes.shape[0]==2:
@@ -471,6 +494,8 @@ class MVBounds:
             stats[key] = options[key]
         stats['mu_CCPBB'] = options.get('mu_CCPBB', 0.0)
         stats['mu_CCTND'] = options.get('mu_CCTND', 0.0)
+        stats['mu_CCPBUB'] = options.get('mu_CCPBUB', 0.0)
+        stats['mu_CCPBSkl'] = options.get('mu_CCPBSkl', 0.0)
         stats['lam'] = options.get('lam', None)
         stats['gam'] = options.get('gam', None)
         """
@@ -562,13 +587,20 @@ class MVBounds:
         return tandem_risks, n2
 
     def mutandem_risk(self, mu, data=None, incl_oob=True):
-        mutrisks, musquaretandem_risks, n2 = self.mutandem_risks(mu, data, incl_oob)
+        mutrisks, mutrisksP, mutrisksM, musquaretandem_risks, n2 = self.mutandem_risks(mu, data, incl_oob)
         mutandemrisk = np.average(np.average(mutrisks / n2, weights=self._rho, axis=1), weights=self._rho)
-
+        # for CCPBUB
+        muSQtandemrisk = np.average(np.average(musquaretandem_risks / n2, weights=self._rho, axis=1), weights=self._rho)
+        
+        # for CCPBSkl
+        mutandemriskP = np.average(np.average(mutrisksP / n2, weights=self._rho, axis=1), weights=self._rho)
+        mutandemriskM = np.average(np.average(mutrisksM / n2, weights=self._rho, axis=1), weights=self._rho)
+        
+        # for CCPBB
         vartandemrisks = (n2 / (n2 - 1)) * (musquaretandem_risks / n2 - np.square(mutrisks / n2))
         vartandemrisk = np.average(np.average(vartandemrisks, weights=self._rho, axis=1), weights=self._rho)
 
-        return mutandemrisk, vartandemrisk, np.min(n2)
+        return mutandemrisk, mutandemriskP, mutandemriskM, vartandemrisk, muSQtandemrisk, np.min(n2)
 
     def mutandem_risks(self, mu, data=None, incl_oob=True):
         incl_oob = incl_oob and self._sample_mode is not None
@@ -578,14 +610,18 @@ class MVBounds:
         m = len(self._estimators)
         n2 = np.zeros((m, m))
         mutandem_risks = np.zeros((m, m))
+        mutandem_risks_P = np.zeros((m, m))
+        mutandem_risks_M = np.zeros((m, m))
         musquaretandem_risks = np.zeros((m, m))
 
         if incl_oob:
             (preds, targs) = self._OOB
             # preds = [(idx, preds)] * n_estimators
-            omutand, omusquaretand, on2 = util.oob_mutandem_risks(preds, targs, mu)
+            omutand, omutand_P, omutand_M, omusquaretand, on2 = util.oob_mutandem_risks(preds, targs, mu)
             n2 += on2
             mutandem_risks += omutand
+            mutandem_risks_P += omutand_P
+            mutandem_risks_M += omutand_M
             musquaretandem_risks += omusquaretand
 
         if data is not None:
@@ -594,11 +630,13 @@ class MVBounds:
             P = self.predict_all(X)
 
             n2 += X.shape[0]
-            mutand, musquaretand = util.mutandem_risks(P, Y, mu)
+            mutand, mutand_P, mutand_M, musquaretand = util.mutandem_risks(P, Y, mu)
             mutandem_risks += mutand
+            mutandem_risks_P += mutand_P
+            mutandem_risks_M += mutand_M
             musquaretandem_risks += musquaretand
 
-        return mutandem_risks, musquaretandem_risks, n2
+        return mutandem_risks, mutandem_risks_P, mutandem_risks_M, musquaretandem_risks, n2
 
     # Returns the disagreement
     def disagreement(self, data=None, incl_oob=True):

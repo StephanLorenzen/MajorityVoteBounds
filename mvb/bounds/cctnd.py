@@ -50,7 +50,6 @@ def optimizeCCTND(tandem_risks, gibbs_risks, n, n2, delta=0.05, abc_pi=None, opt
 def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi=None, options=None):
     options = dict() if options is None else options
     optimizer = options.get('optimizer', 'iRProp')
-    mu_input = mu
 
     if optimizer not in ['GD', 'RProp', 'iRProp']:
         warn('optimizeMU: unknown optimizer: \''+optimizer+'\', using iRProp')
@@ -107,8 +106,8 @@ def _optimizeCCTND(tandem_risks, gibbs_risks, n, n2, mu=None, delta=0.05, abc_pi
         # D_jS_i = S_i(1[i==j]-S_j)
         Smat = -np.outer(Srho, Srho)
         np.fill_diagonal(Smat, np.multiply(Srho,1.0-Srho))
-
-        return 2*np.dot(a*np.dot(tandem_risks, Srho)-b*gibbs_risks+c*(1+np.log(Srho/pi)), Smat)
+        inlog = np.where(Srho/pi>10**-9, Srho/pi, 10**-9)
+        return 2*np.dot(a*np.dot(tandem_risks, Srho)-b*gibbs_risks+c*(1+np.log(inlog)), Smat)
         
     max_iterations = options.get('max_iterations', None)
     eps = options.get('eps', 10**-9)

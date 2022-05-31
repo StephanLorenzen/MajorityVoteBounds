@@ -87,17 +87,27 @@ def tandem_risks(preds, targs):
 def mutandem_risks(preds, targs, mu):
     m,n = preds.shape
     mutandem_risks = np.zeros((m,m))
+    mutandem_risks_P = np.zeros((m,m))
+    mutandem_risks_M = np.zeros((m,m))
     musquaretandem_risks = np.zeros((m,m))
+    mu_prime = mu**2 if mu>=0 else -mu*(1-mu)
+
     for i in range(m):
         for j in range(i, m):
             tand = np.sum(np.multiply((preds[i]!=targs)-mu, (preds[j]!=targs)-mu))
+            tand_P = np.sum(np.max(0, np.multiply((preds[i]!=targs)-mu, (preds[j]!=targs)-mu)-mu_prime))
+            tand_M = np.sum(np.max(0, mu_prime-np.multiply((preds[i]!=targs)-mu, (preds[j]!=targs)-mu)))
             squaretand = np.sum(np.square(np.multiply((preds[i] != targs) - mu, (preds[j] != targs) - mu)))
             mutandem_risks[i,j] += tand
+            mutandem_risks_P[i,j] += tand_P
+            mutandem_risks_M[i,j] += tand_M
             musquaretandem_risks[i,j] += squaretand
             if i != j:
                 mutandem_risks[j,i] += tand
+                mutandem_risks_P[j,i] += tand_P
+                mutandem_risks_M[j,i] += tand_M
                 musquaretandem_risks[j, i] += squaretand
-    return mutandem_risks, musquaretandem_risks
+    return mutandem_risks, mutandem_risks_P, mutandem_risks_M, musquaretandem_risks
 
 #######################
 # OOB 
@@ -187,8 +197,11 @@ def oob_tandem_risks(preds, targs):
 def oob_mutandem_risks(preds, targs, mu):
     m = len(preds)
     mutandem_risks = np.zeros((m, m))
+    mutandem_risks_P = np.zeros((m, m))
+    mutandem_risks_M = np.zeros((m, m))
     musquaretandem_risks = np.zeros((m, m))
     n2 = np.zeros((m, m))
+    mu_prime = mu**2 if mu>=0 else -mu*(1-mu)
 
     for i in range(m):
         (M_i, P_i) = preds[i]
@@ -196,15 +209,20 @@ def oob_mutandem_risks(preds, targs, mu):
             (M_j, P_j) = preds[j]
             M = np.multiply(M_i, M_j)
             mutandem_risks[i, j] = np.sum(np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu))
+            zero_vector = np.zeros(int(np.sum(M)))
+            mutandem_risks_P[i, j] = np.sum(np.maximum(zero_vector, np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu)-mu_prime))
+            mutandem_risks_M[i, j] = np.sum(np.maximum(zero_vector, mu_prime-np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu)))
             musquaretandem_risks[i, j] = np.sum(np.square(np.multiply((P_i[M == 1] != targs[M == 1]) - mu, (P_j[M == 1] != targs[M == 1])-mu)))
             n2[i, j] = np.sum(M)
 
             if i != j:
                 mutandem_risks[j, i] = mutandem_risks[i, j]
+                mutandem_risks_P[j, i] = mutandem_risks_P[i, j]
+                mutandem_risks_M[j, i] = mutandem_risks_M[i, j]
                 musquaretandem_risks[j, i] = musquaretandem_risks[i, j]
                 n2[j, i] = n2[i, j]
 
-    return mutandem_risks, musquaretandem_risks, n2
+    return mutandem_risks, mutandem_risks_P, mutandem_risks_M, musquaretandem_risks, n2
 
 
 #######################
