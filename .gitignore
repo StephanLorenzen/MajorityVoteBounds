@@ -142,6 +142,13 @@ datasets/*
 # Tables
 *.csv
 *_table.tex
+NeurIPS2022/plots/figure/mce/bounds_optimized_comparison.tex
+NeurIPS2022/plots/figure/mce/mvrisk_optimized_comparison.tex
+NeurIPS2022/plots/figure/mce/plot_rhos.tex
+NeurIPS2022/plots/figure/rfc/bounds_optimized_comparison.tex
+NeurIPS2022/plots/figure/rfc/mvrisk_optimized_comparison.tex
+NeurIPS2022/plots/figure/rfc/plot_rhos.tex
+
 
 # png Plots
 *.png
