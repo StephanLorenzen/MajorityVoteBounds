@@ -20,5 +20,3 @@ optimize_mce:
 clean:
 	cd figure/mce; rm -f *.pdf; rm -rf datasets
 	cd figure/rfc; rm -f *.pdf; rm -rf datasets
-	cd table/mce; rm -f *.pdf; rm -rf optimize
-	cd table/rfc; rm -f *.pdf; rm -rf optimize
