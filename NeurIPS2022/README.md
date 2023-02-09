@@ -1,4 +1,4 @@
-# PAC-Bayes-Split-kl Inequality
+# Split-kl and PAC-Bayes-Split-kl Inequalities for Ternary Random Variables
 This repository contains the code needed to replicate the experiments
 - Ensemble of heterogeneous classifiers in Appendix E.3 of the preprint [1]
 - Random forest (RF) in Appendix E.4 of the preprint [1]
@@ -20,7 +20,7 @@ After running the experiments, the plots and LaTeX tables of the paper can be ge
 Output figures will be generated in the subdirectories `figure`.
 
 ## References
-\[1\] Wu and Seldin: Split-kl and PAC-Bayes-split-kl Inequalities
+\[1\] Wu and Seldin: Split-kl and PAC-Bayes-split-kl Inequalities for Ternary Random Variables (NeurIPS 2022)
 
 \[2\] [The UCI Repository](https://archive.ics.uci.edu/ml/index.php)
 
