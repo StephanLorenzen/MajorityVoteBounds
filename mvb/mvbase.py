@@ -443,7 +443,7 @@ class MVBounds:
         return results, stats
 
     # Compute stats object
-    def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True, options=None):
+    def stats(self, labeled_data=None, unlabeled_data=None, incl_oob=True):
         stats = dict()
         if labeled_data is not None:
             stats['mv_preds'] = (self.predict_all(labeled_data[0]), labeled_data[1])
@@ -466,7 +466,7 @@ class MVBounds:
             stats['u_n2'] = stats['n2']
             stats['u_disagreements'] = dis / stats['u_n2']
 
-        return self.aggregate_stats(stats, options)
+        return self.aggregate_stats(stats)
 
     # (Re-)Aggregate stats object. Useful if weighting has changed.
     def aggregate_stats(self, stats, options=None):
