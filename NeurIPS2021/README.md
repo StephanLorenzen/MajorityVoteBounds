@@ -4,9 +4,9 @@ This directory contains the code for running the experiment of the paper [1]:
 [Wu, Masegosa, Lorenzen, Igel and Seldin: Chebyshev-Cantelli PAC-Bayes-Bennett Inequality for the Weighted Majority Vote (NeurIPS 2021)](https://arxiv.org/abs/2106.13624)
 
 ## Usage
-To run the experiments, run `make`. This will download the data [6,7,8] needed for the experiments.
+To run the experiments, run `make`. This will download the data [2,3,4] needed for the experiments.
 Experiments can now be run by using the `optimize.py` python script in the folder. See the files for how-to. Output files will be created in directory `out/`.
-The full experiments from [3] can be run as follows:
+The full experiments from [1] can be run as follows:
 
 * Optimization of RF: `make optimize_rfc`
 * Optimization of heterogeneous classifier ensemble: `make optimize_mce`
@@ -19,3 +19,12 @@ After running the experiments, the plots and LaTeX tables of the paper can be ge
 * Plots for optimized heterogeneous classifier ensemble: `make optimize_mce`
 
 Output figures and tables will be generated in the subdirectories `figure` and `table`.
+
+## References
+\[1\] [Wu, Masegosa, Lorenzen, Igel and Seldin: Chebyshev-Cantelli PAC-Bayes-Bennett Inequality for the Weighted Majority Vote (NeurIPS 2021)](https://arxiv.org/abs/2106.13624)
+
+\[2\] [The UCI Repository](https://archive.ics.uci.edu/ml/index.php)
+
+\[3\] [LibSVM](https://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/)
+
+\[4\] [Zalando Research](https://research.zalando.com/welcome/mission/research-projects/fashion-mnist/)
