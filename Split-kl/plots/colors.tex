@@ -1,0 +1,40 @@
+\usepackage{mathtools}
+
+\usepackage{amssymb}
+\usepackage{xifthen}
+\usepackage{xparse}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+\usepackage{xcolor}
+\definecolor{colMVRisk}{rgb}{0,0,0}
+\definecolor{colPBkl}{rgb}{0.2, 0.6, 0.2}
+\definecolor{colPBB}{rgb}{1,0.5,0}
+\definecolor{colPBUB}{rgb}{1,0,0}
+\definecolor{colTND}{rgb}{0.1,0.1,0.1}
+\definecolor{colPBSkl}{rgb}{0,0,1}
+
+\DeclareMathOperator{\trainset}{T}
+\DeclareMathOperator{\oobset}{S}
+\DeclareMathOperator{\testset}{S_{test}}
+
+\newcommand{\lrs}[1]{\left [#1 \right]}
+\DeclareMathOperator{\MV}{MV}
+\newcommand{\dataset}[1]{\textsc{#1}}
+\NewDocumentCommand{\E}{o}{\mathbb E\IfValueT{#1}{\lrs{#1}}}
+
+\DeclareMathOperator{\AdaPr}{\pi}
+\newcommand{\AdaBs}{\operatorname{AdaBs}}
+\newcommand{\Unf}{\operatorname{Unf}}
+\newcommand{\FO}{\operatorname{FO}}
+\newcommand{\TND}{\operatorname{TND}}
+\newcommand{\DIS}{\operatorname{DIS}}
+\newcommand{\Cone}{\operatorname{C1}}
+\newcommand{\Ctwo}{\operatorname{C2}}
+\newcommand{\CTD}{\operatorname{CTD}}
+
+\newcommand{\CCTND}{\operatorname{CCTND}}
+\newcommand{\CCPBB}{\operatorname{CCPBB}}
+\newcommand{\CCPBUB}{\operatorname{CCPBUB}}
+\newcommand{\CCPBSkl}{\operatorname{CCPBSkl}}
+\newcommand{\BOUND}{\operatorname{BOUND}}

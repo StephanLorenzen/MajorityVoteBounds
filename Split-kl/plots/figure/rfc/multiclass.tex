@@ -1,0 +1,55 @@
+\documentclass[border=2pt,tikz]{standalone}% 'crop' is the default for v1.0, before it was 'preview'
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\input{../../colors.tex}
+\usepgfplotslibrary{fillbetween,groupplots}
+\usetikzlibrary{patterns}
+\begin{document}
+\input{../setup.tex}
+
+\begin{tikzpicture}
+  \pgfplotsset{
+    every axis title/.append style={yshift=-2mm},
+    legend style={
+      %font=\footnotesize,
+      anchor=west,
+      at={(1.4,0.5)},
+      legend columns=1,
+      legend cell align=left,
+    },
+  }
+\begin{groupplot}[
+group style={
+group size=5 by 2,
+x descriptions at=edge bottom,
+vertical sep=24pt,
+horizontal sep=21pt,
+},
+]
+\nextgroupplot[Plot, PlotBoth, title=\dataset{Connect-4}]
+\input{datasets/Connect-4.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{Letter}]
+\input{datasets/Letter.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{MNIST}]
+\input{datasets/MNIST.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{Pendigits}]
+\input{datasets/Pendigits.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{SatImage}]
+\input{datasets/SatImage.tex}
+\nextgroupplot[Plot, PlotBoth, YTwoDec, title=\dataset{Sensorless}]
+\input{datasets/Sensorless.tex}
+\nextgroupplot[Plot, PlotBoth, YTwoDec, title=\dataset{Shuttle}]
+\input{datasets/Shuttle.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{USPS}]
+\input{datasets/USPS.tex}
+\nextgroupplot[Plot, PlotBoth, title=\dataset{Fashion-MNIST}]
+\input{datasets/Fashion-MNIST.tex}
+
+\addlegendentry{$\TND$}
+\addlegendentry{$\CCTND$}
+\addlegendentry{$\CCPBB$}
+\addlegendentry{$\CCPBUB$}
+\addlegendentry{$\CCPBSkl$}
+\end{groupplot}
+\end{tikzpicture}
+\end{document}

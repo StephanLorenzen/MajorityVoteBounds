@@ -110,11 +110,6 @@ NeurIPS2021/muBernstein.py
 NeurIPS2021/helpers/run_mu.sh
 NeurIPS2021/helpers/run_muBernstein.sh
 
-# some tests
-Split-kl/
-mvb/bounds/ccpbskl.py
-mvb/bounds/ccpbub.py
-
 # abc related
 NeurIPS2021/plots/figure/abc
 NeurIPS2021/plots/figure/abc/*
